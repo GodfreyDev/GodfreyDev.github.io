@@ -20,11 +20,15 @@
     <script>
         function updateCountdown() {
             const now = new Date();
-            const nextMonday = new Date();
-            nextMonday.setDate(now.getDate() + (1 + 7 - now.getDay()) % 7); // Set to next Monday
-            nextMonday.setHours(0, 0, 0, 0); // Reset hours, minutes, seconds, and ms for the start of Monday
+            const nextWednesday = new Date();
+            nextWednesday.setDate(now.getDate() + (3 - now.getDay() + 7) % 7); // Adjust for next Wednesday
+            if (now.getDay() === 3 && now.getHours() >= 0 && now.getMinutes() >= 0 && now.getSeconds() >= 0) {
+                // If it's already Wednesday, move to next Wednesday
+                nextWednesday.setDate(now.getDate() + 7);
+            }
+            nextWednesday.setHours(0, 0, 0, 0); // Reset hours, minutes, seconds, and ms for the start of Wednesday
 
-            const diff = nextMonday - now; // Difference in milliseconds
+            const diff = nextWednesday - now; // Difference in milliseconds
 
             const days = Math.floor(diff / (1000 * 60 * 60 * 24));
             const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
