@@ -17,46 +17,51 @@
             text-align: center;
         }
     </style>
-    <script>
-        // Store the custom date globally
-        let customDate = null;
+   <script>
+    // Store the custom date globally
+    let customDate = null;
 
-        function updateCountdown() {
-            const now = new Date();
-            let targetDate;
-            
-            if (customDate) {
-                targetDate = new Date(customDate);
-            } else {
-                // Calculate next Wednesday
-                targetDate = new Date();
-                targetDate.setDate(now.getDate() + (3 - now.getDay() + 7) % 7);
-                if (now.getDay() === 3 && now.getHours() >= 0 && now.getMinutes() >= 0 && now.getSeconds() >= 0) {
-                    targetDate.setDate(now.getDate() + 7);
-                }
-                targetDate.setHours(0, 0, 0, 0);
+    function updateCountdown() {
+        const now = new Date();
+        let targetDate;
+        
+        if (customDate) {
+            targetDate = new Date(customDate);
+        } else {
+            // Calculate next Wednesday
+            targetDate = new Date();
+            targetDate.setDate(now.getDate() + (3 - now.getDay() + 7) % 7);
+            if (now.getDay() === 3 && now.getHours() >= 0 && now.getMinutes() >= 0 && now.getSeconds() >= 0) {
+                targetDate.setDate(now.getDate() + 7);
             }
-
-            const diff = targetDate - now;
-
-            const days = Math.floor(diff / (1000 * 60 * 60 * 24));
-            const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
-            const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
-            const seconds = Math.floor((diff % (1000 * 60)) / 1000);
-
-            document.getElementById('countdown').innerHTML = "Finish demo by: " + days + "d " + hours + "h " +
-            minutes + "m " + seconds + "s ";
-
-            setTimeout(updateCountdown, 1000);
+            targetDate.setHours(0, 0, 0, 0); // Start of the day
         }
 
-        function setCountdownDate() {
-            customDate = document.getElementById('dateInput').value;
-            updateCountdown();
-        }
+        let diff = targetDate - now;
+        let isNegative = diff < 0;
+        diff = Math.abs(diff); // Work with absolute value for calculation
 
-        document.addEventListener('DOMContentLoaded', updateCountdown);
-    </script>
+        const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+        const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+        const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+        const seconds = Math.floor((diff % (1000 * 60)) / 1000);
+
+        // Prepend a negative sign if the countdown is negative
+        const sign = isNegative ? "-" : "";
+
+        document.getElementById('countdown').innerHTML = "Finish demo by: " + sign + days + "d " + hours + "h " +
+        minutes + "m " + seconds + "s ";
+
+        setTimeout(updateCountdown, 1000);
+    }
+
+    function setCountdownDate() {
+        customDate = document.getElementById('dateInput').value;
+        updateCountdown();
+    }
+
+    document.addEventListener('DOMContentLoaded', updateCountdown);
+</script>
 </head>
 <body>
     <header>
