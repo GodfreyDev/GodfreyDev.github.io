@@ -18,31 +18,43 @@
         }
     </style>
     <script>
+        // Store the custom date globally
+        let customDate = null;
+
         function updateCountdown() {
             const now = new Date();
-            const nextWednesday = new Date();
-            nextWednesday.setDate(now.getDate() + (3 - now.getDay() + 7) % 7); // Adjust for next Wednesday
-            if (now.getDay() === 3 && now.getHours() >= 0 && now.getMinutes() >= 0 && now.getSeconds() >= 0) {
-                // If it's already Wednesday, move to next Wednesday
-                nextWednesday.setDate(now.getDate() + 7);
+            let targetDate;
+            
+            if (customDate) {
+                targetDate = new Date(customDate);
+            } else {
+                // Calculate next Wednesday
+                targetDate = new Date();
+                targetDate.setDate(now.getDate() + (3 - now.getDay() + 7) % 7);
+                if (now.getDay() === 3 && now.getHours() >= 0 && now.getMinutes() >= 0 && now.getSeconds() >= 0) {
+                    targetDate.setDate(now.getDate() + 7);
+                }
+                targetDate.setHours(0, 0, 0, 0);
             }
-            nextWednesday.setHours(0, 0, 0, 0); // Reset hours, minutes, seconds, and ms for the start of Wednesday
 
-            const diff = nextWednesday - now; // Difference in milliseconds
+            const diff = targetDate - now;
 
             const days = Math.floor(diff / (1000 * 60 * 60 * 24));
             const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
             const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
             const seconds = Math.floor((diff % (1000 * 60)) / 1000);
 
-            document.getElementById('countdown').innerHTML = "Finish demo by: " + days + "d " + hours + "h "
-            + minutes + "m " + seconds + "s ";
+            document.getElementById('countdown').innerHTML = "Finish demo by: " + days + "d " + hours + "h " +
+            minutes + "m " + seconds + "s ";
 
-            // Update the count down every 1 second
             setTimeout(updateCountdown, 1000);
         }
 
-        // When the document is loaded, start the countdown
+        function setCountdownDate() {
+            customDate = document.getElementById('dateInput').value;
+            updateCountdown();
+        }
+
         document.addEventListener('DOMContentLoaded', updateCountdown);
     </script>
 </head>
@@ -59,6 +71,10 @@
     <section id="about">
         <p>Hello! I'm Gavin, and I'm a Student. I'm passionate about game development and programming in general. Welcome to my personal website!</p>
         <div id="countdown"></div>
+        <div>
+            <input type="date" id="dateInput" min="2024-01-01"> <!-- Adjust 'min' as necessary -->
+            <button onclick="setCountdownDate()">Set Date</button>
+        </div>
     </section>
     <section id="skills">
         <h2>Skills & Interests</h2>
