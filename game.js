@@ -1,22 +1,31 @@
-// Ensure the 'player' object is initialized correctly at the top level
+// Initialize player position in the middle of the world
 let player = {
-    x: 400, // Initial player X position
-    y: 300, // Initial player Y position
+    x: 400, // Center of the game world initially
+    y: 300,
     width: 32,
     height: 32,
     speed: 2,
 };
 
-// World and NPCs remain the same
+// Define a larger world map
 const world = {
     width: 800,
     height: 600,
 };
 
+// Define NPCs with positions and messages
 let npcs = [
     { x: 210, y: 210, width: 32, height: 32, message: "Hello, I'm NPC 1!" },
     { x: 310, y: 310, width: 32, height: 32, message: "Hi there, I'm NPC 2!" }
 ];
+
+// Track the state of arrow keys
+const keysPressed = {
+    ArrowLeft: false,
+    ArrowRight: false,
+    ArrowUp: false,
+    ArrowDown: false
+};
 
 document.addEventListener('DOMContentLoaded', function() {
     const canvas = document.getElementById('gameCanvas');
@@ -28,29 +37,55 @@ document.addEventListener('DOMContentLoaded', function() {
         x: 0,
         y: 0,
         update: function() {
-            // Camera should center on the player, but it doesn't move the player itself
-            this.x = player.x - canvas.width / 2;
-            this.y = player.y - canvas.height / 2;
+            // Update camera to center on the player
+            this.x = player.x - canvas.width / 2 + player.width / 2;
+            this.y = player.y - canvas.height / 2 + player.height / 2;
         }
     };
 
     function drawPlayer() {
         ctx.fillStyle = '#FF0000';
-        // Always draw the player in the center of the canvas
         ctx.fillRect(canvas.width / 2 - player.width / 2, canvas.height / 2 - player.height / 2, player.width, player.height);
     }
 
     function drawNPCs() {
         ctx.fillStyle = '#0000FF';
         npcs.forEach(npc => {
-            // NPCs are drawn relative to the camera's position
             ctx.fillRect(npc.x - camera.x, npc.y - camera.y, npc.width, npc.height);
         });
     }
 
+    function updatePlayerPosition() {
+        let dx = 0;
+        let dy = 0;
+    
+        if (keysPressed.ArrowLeft) {
+            dx -= 1;
+        }
+        if (keysPressed.ArrowRight) {
+            dx += 1;
+        }
+        if (keysPressed.ArrowUp) {
+            dy -= 1;
+        }
+        if (keysPressed.ArrowDown) {
+            dy += 1;
+        }
+    
+        // Normalize diagonal speed
+        if (dx !== 0 && dy !== 0) {
+            dx /= Math.sqrt(2);
+            dy /= Math.sqrt(2);
+        }
+    
+        player.x = Math.max(0, Math.min(world.width - player.width, player.x + dx * player.speed));
+        player.y = Math.max(0, Math.min(world.height - player.height, player.y + dy * player.speed));
+    }    
+
     function gameLoop() {
         ctx.clearRect(0, 0, canvas.width, canvas.height);
-        camera.update(); // Ensure the camera updates to follow the player
+        updatePlayerPosition();
+        camera.update();
         drawPlayer();
         drawNPCs();
         requestAnimationFrame(gameLoop);
@@ -59,23 +94,33 @@ document.addEventListener('DOMContentLoaded', function() {
     gameLoop();
 });
 
-// Key movement logic
+// Modify event listeners for smooth and diagonal movement
 document.addEventListener('keydown', function(event) {
-    switch (event.key) {
-        case 'ArrowLeft': player.x = Math.max(0, player.x - player.speed); break;
-        case 'ArrowRight': player.x = Math.min(world.width - player.width, player.x + player.speed); break;
-        case 'ArrowUp': player.y = Math.max(0, player.y - player.speed); break;
-        case 'ArrowDown': player.y = Math.min(world.height - player.height, player.y + player.speed); break;
-        case ' ': checkNPCInteraction(); break; // Space bar for interaction
+    if (keysPressed.hasOwnProperty(event.key)) {
+        keysPressed[event.key] = true;
+        event.preventDefault(); // Prevent the default action (scroll / move page)
+    }
+});
+
+document.addEventListener('keyup', function(event) {
+    if (keysPressed.hasOwnProperty(event.key)) {
+        keysPressed[event.key] = false;
     }
 });
 
 function checkNPCInteraction() {
     npcs.forEach(npc => {
-        // Check collision with NPCs for interaction
-        if (Math.abs(player.x - npc.x) < player.width && Math.abs(player.y - npc.y) < player.height) {
-            alert(npc.message);
+        if (player.x < npc.x + npc.width && player.x + player.width > npc.x && player.y < npc.y + npc.height && player.y + player.height > npc.y) {
+            alert(npc.message); // Show NPC message
             return;
         }
     });
 }
+
+// Adjust the interaction key to work with the new movement system
+document.addEventListener('keydown', function(event) {
+    if (event.key === ' ') {
+        checkNPCInteraction();
+        event.preventDefault(); // Prevent any default space bar actions
+    }
+});

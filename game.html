@@ -49,7 +49,16 @@
         const dialogueBox = document.getElementById('dialogueBox');
         const gameAspectRatio = 4 / 3;
         
+        window.onload = function() {
+            resizeCanvas();
+        };
+
+        window.addEventListener('resize', resizeCanvas);
+
         function resizeCanvas() {
+            const canvas = document.getElementById('gameCanvas');
+            const gameAspectRatio = 4 / 3;
+            
             const widthToHeight = gameAspectRatio;
             let newWidth = window.innerWidth;
             let newHeight = window.innerHeight;
@@ -57,20 +66,20 @@
 
             if (newWidthToHeight > widthToHeight) {
                 newWidth = newHeight * widthToHeight;
-                canvas.style.height = newHeight + 'px';
-                canvas.style.width = newWidth + 'px';
+                canvas.style.height = `${newHeight}px`;
+                canvas.style.width = `${newWidth}px`;
             } else {
                 newHeight = newWidth / widthToHeight;
-                canvas.style.width = newWidth + 'px';
-                canvas.style.height = newHeight + 'px';
+                canvas.style.width = `${newWidth}px`;
+                canvas.style.height = `${newHeight}px`;
             }
 
             canvas.width = newWidth;
             canvas.height = newHeight;
-            gameLoop(true);
+            // Trigger a redraw if necessary
+            gameLoop();
         }
 
-        window.addEventListener('resize', resizeCanvas);
         resizeCanvas();
 
         // Adjusted game initialization and loop here
