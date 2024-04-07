@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Game - Fullscreen Experience</title>
+    <style>
+        body, html {
+            margin: 0;
+            padding: 0;
+            height: 100%;
+            overflow: hidden; /* Prevent scrolling */
+            background-color: #000; /* Background color for areas outside canvas */
+        }
+        #gameContainer {
+            position: relative;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        canvas {
+            background-color: #000; /* Game background color */
+            image-rendering: pixelated; /* Optional: for pixel art games */
+        }
+        #dialogueBox {
+            position: absolute;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background-color: rgba(0, 0, 0, 0.8);
+            color: white;
+            padding: 10px;
+            border-radius: 5px;
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <div id="gameContainer">
+        <canvas id="gameCanvas"></canvas>
+        <div id="dialogueBox"></div>
+    </div>
+    <script src="game.js"></script>
+    <script>
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+        const dialogueBox = document.getElementById('dialogueBox');
+        const gameAspectRatio = 4 / 3;
+        
+        function resizeCanvas() {
+            const widthToHeight = gameAspectRatio;
+            let newWidth = window.innerWidth;
+            let newHeight = window.innerHeight;
+            let newWidthToHeight = newWidth / newHeight;
+
+            if (newWidthToHeight > widthToHeight) {
+                newWidth = newHeight * widthToHeight;
+                canvas.style.height = newHeight + 'px';
+                canvas.style.width = newWidth + 'px';
+            } else {
+                newHeight = newWidth / widthToHeight;
+                canvas.style.width = newWidth + 'px';
+                canvas.style.height = newHeight + 'px';
+            }
+
+            canvas.width = newWidth;
+            canvas.height = newHeight;
+            gameLoop(true);
+        }
+
+        window.addEventListener('resize', resizeCanvas);
+        resizeCanvas();
+
+        // Adjusted game initialization and loop here
+
+        function showNPCDialogue(message) {
+            dialogueBox.textContent = message;
+            dialogueBox.style.display = 'block';
+            setTimeout(() => {
+                dialogueBox.style.display = 'none';
+            }, 3000); // Hide after 3 seconds
+        }
+
+        function checkNPCInteraction() {
+            npcs.forEach(npc => {
+                if (player.x < npc.x + npc.width && player.x + player.width > npc.x && player.y < npc.y + npc.height && player.y + player.height > npc.y) {
+                    showNPCDialogue(npc.message);
+                    return; // Exit after first interaction
+                }
+            });
+        }
+    </script>    
+</body>
+</html>
