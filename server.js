@@ -4,7 +4,13 @@ const socketIo = require('socket.io');
 
 const app = express();
 const server = http.createServer(app);
-const io = socketIo(server);
+const io = require('socket.io')(server, {
+    cors: {
+      origin: "*", // This allows all origins
+      methods: ["GET", "POST"] // Allows only these methods
+    }
+  });
+  
 
 app.use(express.static(__dirname)); // Serve static files from the directory where this script is located.
 

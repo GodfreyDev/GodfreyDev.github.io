@@ -1,4 +1,4 @@
-const socket = io.connect('https://glamorous-longing-stick.glitch.me');
+const socket = io.connect('https://cool-accessible-pint.glitch.me');
 
 
 let player = {
