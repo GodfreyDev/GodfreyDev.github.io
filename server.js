@@ -6,10 +6,12 @@ const app = express();
 const server = http.createServer(app);
 const io = require('socket.io')(server, {
     cors: {
-      origin: "*", // This allows all origins
-      methods: ["GET", "POST"] // Allows only these methods
+        origin: "https://godfreydev.github.io", // Only allow this origin
+        methods: ["GET", "POST"], // Specify allowed request methods
+        credentials: true // Allow cookies and other credentials
     }
-  });
+});
+
   
 
 app.use(express.static(__dirname)); // Serve static files from the directory where this script is located.
