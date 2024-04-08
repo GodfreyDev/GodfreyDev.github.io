@@ -1,136 +1,160 @@
-// Define game state variables
-let player, world, npcs, keysPressed, canvas, ctx, dialogueBox;
+const socket = io.connect('https://glamorous-longing-stick.glitch.me');
 
-function initializeGame() {
-    // Initialize game elements
-    player = {
-        x: 400,
-        y: 300,
-        width: 32,
-        height: 32,
-        speed: 2,
-    };
 
-    world = {
-        width: 800,
-        height: 600,
-    };
+let player = {
+    id: null,
+    x: 400,
+    y: 300,
+    width: 32,
+    height: 32,
+    color: 'red',
+    health: 100
+};
+let players = {};
+let projectiles = [];
 
-    npcs = [
-        { x: 210, y: 210, width: 32, height: 32, message: "Hello, I'm NPC 1!" },
-        { x: 310, y: 310, width: 32, height: 32, message: "Hi there, I'm NPC 2!" }
-    ];
+const movementSpeed = 150; // pixels per second
+let zoomLevel = 1; // 1 is default, <1 is zoomed out, >1 is zoomed in
+const keysPressed = {};
 
-    keysPressed = {
-        ArrowLeft: false,
-        ArrowRight: false,
-        ArrowUp: false,
-        ArrowDown: false
-    };
+const canvas = document.getElementById('gameCanvas');
+const ctx = canvas.getContext('2d');
+canvas.width = 800; // Consider making dynamic based on window size or desired gameplay area
+canvas.height = 600;
 
-    canvas = document.getElementById('gameCanvas');
-    ctx = canvas.getContext('2d');
-    dialogueBox = document.getElementById('dialogueBox');
+let lastRenderTime = 0;
 
-    // Setup event listeners for input and resizing
-    setupEventListeners();
-    resizeCanvas(); // Initial canvas setup to fit the screen
-    gameLoop(); // Start the game loop
-}
-
-function setupEventListeners() {
-    window.addEventListener('resize', resizeCanvas);
-
-    document.addEventListener('keydown', function(event) {
-        if (keysPressed.hasOwnProperty(event.key)) {
-            keysPressed[event.key] = true;
-            event.preventDefault(); // Prevent default for arrow keys and space to avoid scrolling
-        }
-        if (event.key === ' ') {
-            checkNPCInteraction();
-            event.preventDefault();
-        }
-    });
-
-    document.addEventListener('keyup', function(event) {
-        if (keysPressed.hasOwnProperty(event.key)) {
-            keysPressed[event.key] = false;
-        }
-    });
-}
-
-function resizeCanvas() {
-    const gameAspectRatio = 4 / 3;
-    let newWidth = window.innerWidth;
-    let newHeight = window.innerHeight;
-    let newWidthToHeight = newWidth / newHeight;
-    
-    if (newWidthToHeight > gameAspectRatio) {
-        newWidth = newHeight * gameAspectRatio;
-        canvas.style.height = `${newHeight}px`;
-        canvas.style.width = `${newWidth}px`;
-    } else {
-        newHeight = newWidth / gameAspectRatio;
-        canvas.style.width = `${newWidth}px`;
-        canvas.style.height = `${newHeight}px`;
+function gameLoop(timeStamp) {
+    requestAnimationFrame(gameLoop);
+    const deltaTime = (timeStamp - lastRenderTime) / 1000;
+    if (player.id) {
+        updatePlayerPosition(deltaTime);
     }
-
-    canvas.width = newWidth;
-    canvas.height = newHeight;
+    drawPlayers();
+    drawProjectiles();
+    lastRenderTime = timeStamp;
 }
 
-function updatePlayerPosition() {
+function updatePlayerPosition(deltaTime) {
     let dx = 0;
     let dy = 0;
 
-    if (keysPressed.ArrowLeft) dx -= 1;
-    if (keysPressed.ArrowRight) dx += 1;
-    if (keysPressed.ArrowUp) dy -= 1;
-    if (keysPressed.ArrowDown) dy += 1;
+    if (keysPressed['ArrowLeft']) dx -= movementSpeed * deltaTime;
+    if (keysPressed['ArrowRight']) dx += movementSpeed * deltaTime;
+    if (keysPressed['ArrowUp']) dy -= movementSpeed * deltaTime;
+    if (keysPressed['ArrowDown']) dy += movementSpeed * deltaTime;
 
-    if (dx !== 0 && dy !== 0) {
-        dx /= Math.sqrt(2);
-        dy /= Math.sqrt(2);
+    // Adjust for zoom level
+    dx /= zoomLevel;
+    dy /= zoomLevel;
+
+    const newX = player.x + dx;
+    const newY = player.y + dy;
+
+    if (newX !== player.x || newY !== player.y) {
+        player.x = newX;
+        player.y = newY;
+        socket.emit('playerMovement', { x: player.x, y: player.y });
     }
-
-    player.x = Math.max(0, Math.min(world.width - player.width, player.x + dx * player.speed));
-    player.y = Math.max(0, Math.min(world.height - player.height, player.y + dy * player.speed));
 }
 
-function drawPlayer() {
-    ctx.fillStyle = '#FF0000';
-    ctx.fillRect(canvas.width / 2 - player.width / 2, canvas.height / 2 - player.height / 2, player.width, player.height);
-}
-
-function drawNPCs() {
-    ctx.fillStyle = '#0000FF';
-    npcs.forEach(npc => {
-        ctx.fillRect(npc.x - player.x + canvas.width / 2 - player.width / 2, npc.y - player.y + canvas.height / 2 - player.height / 2, npc.width, npc.height);
-    });
-}
-
-function checkNPCInteraction() {
-    npcs.forEach(npc => {
-        if (Math.abs(player.x - npc.x) < player.width && Math.abs(player.y - npc.y) < player.height) {
-            showNPCDialogue(npc.message);
-            return;
-        }
-    });
-}
-
-function showNPCDialogue(message) {
-    dialogueBox.textContent = message;
-    dialogueBox.style.display = 'block';
-    setTimeout(() => dialogueBox.style.display = 'none', 3000);
-}
-
-function gameLoop() {
+function drawPlayers() {
     ctx.clearRect(0, 0, canvas.width, canvas.height);
-    updatePlayerPosition();
-    drawPlayer();
-    drawNPCs();
-    requestAnimationFrame(gameLoop);
+    ctx.save(); // Save the default state
+    ctx.scale(zoomLevel, zoomLevel); // Scale everything based on the current zoom level
+    Object.values(players).forEach(p => {
+        ctx.fillStyle = p.color;
+        // Adjust drawing positions to make the player appear in the center
+        const x = p.x - player.x + canvas.width / 2 / zoomLevel;
+        const y = p.y - player.y + canvas.height / 2 / zoomLevel;
+        ctx.fillRect(x, y, p.width, p.height);
+    });
+    ctx.restore(); // Restore to the default state to prevent scaling issues in other drawing functions
 }
 
-// Start the game once everything is loaded
-window.onload = initializeGame;
+function drawProjectiles() {
+    ctx.save(); // Save the current drawing context
+    ctx.scale(zoomLevel, zoomLevel); // Apply zoom level
+
+    // Calculate the center of the screen relative to the player
+    const centerX = canvas.width / 2 / zoomLevel;
+    const centerY = canvas.height / 2 / zoomLevel;
+
+    projectiles.forEach(projectile => {
+        ctx.fillStyle = 'yellow';
+
+        // Calculate projectile's position relative to the center (player's position)
+        const projectileX = centerX + (projectile.x - player.x);
+        const projectileY = centerY + (projectile.y - player.y);
+
+        // Draw projectile
+        ctx.fillRect(projectileX, projectileY, 5, 10);
+    });
+
+    ctx.restore(); // Restore the drawing context
+}
+
+function shoot() {
+    // Example shooting mechanism - shoots directly upwards
+    const dx = 0; // Change dx for shooting in different horizontal directions
+    const dy = -5; // Negative for shooting up, positive for down. Adjust for speed and direction
+    
+    // Emit the shootProjectile event to the server with the calculated dx, dy
+    socket.emit('shootProjectile', { dx: dx, dy: dy });
+}
+
+
+// Add zoom in and zoom out functionality
+document.addEventListener('keydown', (e) => {
+    keysPressed[e.key] = true;
+    if (e.key === " " || e.key === "Spacebar") {
+        shoot();
+    } else if (e.key === 'z') {
+        zoomLevel = Math.max(0.5, zoomLevel - 0.1); // Zoom out
+    } else if (e.key === 'x') {
+        zoomLevel = Math.min(2, zoomLevel + 0.1); // Zoom in
+    }
+});
+
+document.addEventListener('keyup', (e) => {
+    keysPressed[e.key] = false;
+});
+
+
+socket.on('currentPlayers', (playersData) => {
+    players = playersData;
+    if (socket.id in players) {
+        player.id = socket.id;
+    }
+});
+
+socket.on('newPlayer', (playerData) => {
+    players[playerData.id] = playerData;
+});
+
+socket.on('playerMoved', (playerData) => {
+    if (players[playerData.playerId]) {
+        players[playerData.playerId].x = playerData.x;
+        players[playerData.playerId].y = playerData.y;
+    }
+});
+
+socket.on('playerDisconnected', (playerId) => {
+    delete players[playerId];
+});
+
+socket.on('updateProjectiles', (updatedProjectiles) => {
+    projectiles = updatedProjectiles;
+});
+
+socket.on('playerDied', (data) => {
+    if (data.playerId === player.id) {
+        // The current player has died, refresh the game
+        window.location.reload(); // This refreshes the page
+    } else {
+        // Another player died, handle accordingly (if needed)
+        console.log(`Player ${data.playerId} has died.`);
+    }
+});
+
+requestAnimationFrame(gameLoop);
