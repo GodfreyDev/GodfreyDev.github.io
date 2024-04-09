@@ -26,7 +26,7 @@ let player = {
   frameCount: 8, // Total frames per direction
 };
 
-player.sprite.src = 'Images/colored_sprite_sheet_with_numbers'; // Update with the correct path
+player.sprite.src = 'Images/colored_sprite_sheet_with_numbers.png';
 
 let players = {};
 const movementSpeed = 150;
