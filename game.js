@@ -192,6 +192,9 @@ function drawBackground() {
     const cameraX = player.x - canvas.width / 2;
     const cameraY = player.y - canvas.height / 2;
   
+    // Additional safeguard: Only draw if all images are loaded
+    if (loadedImages !== tileTypes.length) return;
+  
     for (let y = 0; y < CAMERA_HEIGHT; y++) {
       for (let x = 0; x < CAMERA_WIDTH; x++) {
         const worldX = Math.floor(cameraX / TILE_SIZE) + x;
@@ -199,9 +202,10 @@ function drawBackground() {
   
         if (worldX >= 0 && worldX < WORLD_WIDTH && worldY >= 0 && worldY < WORLD_HEIGHT) {
           const tile = gameWorld[worldY][worldX];
-          if (tileImages[tile]) {
+          if (tileImages[tile] && tileImages[tile].complete && tileImages[tile].naturalHeight !== 0) {
             ctx.drawImage(tileImages[tile], x * TILE_SIZE, y * TILE_SIZE, TILE_SIZE, TILE_SIZE);
           } else {
+            // Fallback fill if image isn't ready, could log or handle differently here
             ctx.fillStyle = '#000';
             ctx.fillRect(x * TILE_SIZE, y * TILE_SIZE, TILE_SIZE, TILE_SIZE);
           }
@@ -212,6 +216,7 @@ function drawBackground() {
       }
     }
   }
+  
 
 // Render players on canvas
 function drawPlayers() {
