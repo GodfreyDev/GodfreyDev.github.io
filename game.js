@@ -17,10 +17,10 @@ player.sprite.onload = () => requestAnimationFrame(gameLoop);
 player.sprite.onerror = e => console.error("Failed to load player sprite:", e);
 
 let background = {
-    image: new Image(),
-    width: 800,
-    height: 600
-  };
+  image: new Image(),
+  width: 800,
+  height: 600
+};
 background.image.src = 'Images/background.png';
 background.image.onload = () => requestAnimationFrame(gameLoop);
 background.image.onerror = e => console.error("Failed to load background image:", e);
@@ -40,6 +40,7 @@ function gameLoop(timeStamp) {
     updatePlayerPosition(deltaTime);
     handleAnimation(deltaTime);
   }
+  drawBackground();
   drawPlayers();
   lastRenderTime = timeStamp;
 }
@@ -55,90 +56,91 @@ function sendMessage() {
 
 // Update player position based on input
 function updatePlayerPosition(deltaTime) {
-    let dx = 0, dy = 0;
-    player.moving = false;
-  
-    // Determine direction and set moving flag
-    if (keysPressed['a'] || keysPressed['ArrowLeft']) { dx -= movementSpeed; player.moving = true; }
-    if (keysPressed['d'] || keysPressed['ArrowRight']) { dx += movementSpeed; player.moving = true; }
-    if (keysPressed['w'] || keysPressed['ArrowUp']) { dy -= movementSpeed; player.moving = true; }
-    if (keysPressed['s'] || keysPressed['ArrowDown']) { dy += movementSpeed; player.moving = true; }
-  
-    // Adjust direction based on movement
-    if (dy < 0 && dx < 0) player.direction = DIRECTIONS.UP_LEFT;
-    else if (dy < 0 && dx > 0) player.direction = DIRECTIONS.UP_RIGHT;
-    else if (dy > 0 && dx < 0) player.direction = DIRECTIONS.DOWN_LEFT;
-    else if (dy > 0 && dx > 0) player.direction = DIRECTIONS.DOWN_RIGHT;
-    else if (dy < 0) player.direction = DIRECTIONS.UP;
-    else if (dy > 0) player.direction = DIRECTIONS.DOWN;
-    else if (dx < 0) player.direction = DIRECTIONS.LEFT;
-    else if (dx > 0) player.direction = DIRECTIONS.RIGHT;
-  
-    // Apply zoom adjustment and update position
-    dx /= zoomLevel; dy /= zoomLevel;
-    const newX = player.x + dx * deltaTime;
-    const newY = player.y + dy * deltaTime;
-  
-    // Update player position
-    player.x = newX;
-    player.y = newY;
-  
-    // Emit movement if position or frameIndex changed
-    if (newX !== player.x || newY !== player.y || player.frameIndex !== player.lastFrameIndex) {
-      player.lastFrameIndex = player.frameIndex;
-      socket.emit('playerMovement', { x: player.x, y: player.y, direction: player.direction, frameIndex: player.frameIndex });
-    }
+  let dx = 0, dy = 0;
+  player.moving = false;
+
+  // Determine direction and set moving flag
+  if (keysPressed['a'] || keysPressed['ArrowLeft']) { dx -= movementSpeed; player.moving = true; }
+  if (keysPressed['d'] || keysPressed['ArrowRight']) { dx += movementSpeed; player.moving = true; }
+  if (keysPressed['w'] || keysPressed['ArrowUp']) { dy -= movementSpeed; player.moving = true; }
+  if (keysPressed['s'] || keysPressed['ArrowDown']) { dy += movementSpeed; player.moving = true; }
+
+  // Adjust direction based on movement
+  if (dy < 0 && dx < 0) player.direction = DIRECTIONS.UP_LEFT;
+  else if (dy < 0 && dx > 0) player.direction = DIRECTIONS.UP_RIGHT;
+  else if (dy > 0 && dx < 0) player.direction = DIRECTIONS.DOWN_LEFT;
+  else if (dy > 0 && dx > 0) player.direction = DIRECTIONS.DOWN_RIGHT;
+  else if (dy < 0) player.direction = DIRECTIONS.UP;
+  else if (dy > 0) player.direction = DIRECTIONS.DOWN;
+  else if (dx < 0) player.direction = DIRECTIONS.LEFT;
+  else if (dx > 0) player.direction = DIRECTIONS.RIGHT;
+
+  // Apply zoom adjustment and update position
+  dx /= zoomLevel; dy /= zoomLevel;
+  const newX = player.x + dx * deltaTime;
+  const newY = player.y + dy * deltaTime;
+
+  // Update player position
+  player.x = newX;
+  player.y = newY;
+
+  // Emit movement if position or frameIndex changed
+  if (newX !== player.x || newY !== player.y || player.frameIndex !== player.lastFrameIndex) {
+    player.lastFrameIndex = player.frameIndex;
+    socket.emit('playerMovement', { x: player.x, y: player.y, direction: player.direction, frameIndex: player.frameIndex });
   }
+}
 
 // Handle animation based on player movement
 function handleAnimation(deltaTime) {
-    if (player.moving) {
-      animationTimer += deltaTime;
-      if (animationTimer >= animationSpeed) {
-        player.frameIndex = (player.frameIndex + 1) % player.frameCount;
-        animationTimer = 0;
-      }
-    } else {
-      player.frameIndex = 0; // Reset animation frame if not moving
+  if (player.moving) {
+    animationTimer += deltaTime;
+    if (animationTimer >= animationSpeed) {
+      player.frameIndex = (player.frameIndex + 1) % player.frameCount;
+      animationTimer = 0;
     }
-    player.frameIndex = Math.max(0, Math.min(player.frameIndex, player.frameCount - 1)); // Ensure frameIndex is within valid range
+  } else {
+    player.frameIndex = 0; // Reset animation frame if not moving
   }
+  player.frameIndex = Math.max(0, Math.min(player.frameIndex, player.frameCount - 1)); // Ensure frameIndex is within valid range
+}
+
+// Draw the background
+function drawBackground() {
+  ctx.save();
+  ctx.translate(-player.x + canvas.width / 2, -player.y + canvas.height / 2);
+  ctx.drawImage(background.image, 0, 0, background.width, background.height);
+  ctx.restore();
+}
 
 // Render players on canvas
 function drawPlayers() {
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
-  
-    // Draw background at a fixed position
-    const backgroundX = (canvas.width - background.width) / 2;
-    const backgroundY = (canvas.height - background.height) / 2;
-    ctx.drawImage(background.image, backgroundX, backgroundY, background.width, background.height);
-  
-    ctx.save();
-    ctx.translate(canvas.width / 2, canvas.height / 2);
-    ctx.scale(zoomLevel, zoomLevel);
-  
-    Object.values(players).forEach(drawPlayer);
-    drawPlayer(player); // Draw current player last to be on top
-  
-    ctx.restore();
-  }
+  ctx.save();
+  ctx.translate(canvas.width / 2 - player.x, canvas.height / 2 - player.y);
+  ctx.scale(zoomLevel, zoomLevel);
+
+  Object.values(players).forEach(drawPlayer);
+  drawPlayer(player); // Draw current player last to be on top
+
+  ctx.restore();
+}
 
 // Draw a single player on the canvas
 function drawPlayer(p) {
-    if (!p.sprite.complete || p.frameIndex === undefined) return;
-    const srcX = p.frameIndex * p.width;
-    const srcY = p.direction * p.height;
-    const screenX = p.x - player.x + canvas.width / 2 - p.width / 2;
-    const screenY = p.y - player.y + canvas.height / 2 - p.height / 2;
-  
-    ctx.drawImage(p.sprite, srcX, srcY, p.width, p.height, screenX, screenY, p.width, p.height);
-    ctx.fillStyle = 'white'; ctx.textAlign = 'center'; ctx.font = '14px Arial';
-    ctx.fillText(p.name, screenX + p.width / 2, screenY - 10);
-    if (playerMessages[p.id]) {
-      ctx.fillStyle = 'yellow';
-      ctx.fillText(playerMessages[p.id], screenX + p.width / 2, screenY - 25);
-    }
+  if (!p.sprite.complete || p.frameIndex === undefined) return;
+  const srcX = p.frameIndex * p.width;
+  const srcY = p.direction * p.height;
+  const screenX = p.x;
+  const screenY = p.y;
+
+  ctx.drawImage(p.sprite, srcX, srcY, p.width, p.height, screenX, screenY, p.width, p.height);
+  ctx.fillStyle = 'white'; ctx.textAlign = 'center'; ctx.font = '14px Arial';
+  ctx.fillText(p.name, screenX + p.width / 2, screenY - 10);
+  if (playerMessages[p.id]) {
+    ctx.fillStyle = 'yellow';
+    ctx.fillText(playerMessages[p.id], screenX + p.width / 2, screenY - 25);
   }
+}
 
 // Keyboard event listeners for movement
 document.addEventListener('keydown', e => keysPressed[e.key] = true);
@@ -159,13 +161,13 @@ socket.on('newPlayer', playerData => {
 });
 
 socket.on('playerMoved', data => {
-    if (data.playerId in players) {
-      players[data.playerId].x = data.x;
-      players[data.playerId].y = data.y;
-      players[data.playerId].direction = data.direction;
-      players[data.playerId].frameIndex = data.frameIndex;
-    }
-  });
+  if (data.playerId in players) {
+    players[data.playerId].x = data.x;
+    players[data.playerId].y = data.y;
+    players[data.playerId].direction = data.direction;
+    players[data.playerId].frameIndex = data.frameIndex;
+  }
+});
 
 socket.on('playerDisconnected', id => delete players[id]);
 socket.on('chatMessage', data => {
