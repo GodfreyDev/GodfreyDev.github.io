@@ -8,8 +8,10 @@ let player = {
     y: 300,
     width: 32,
     height: 32,
-    color: 'red'
+    color: 'red',
+    sprite: new Image() // Use sprite images for players
 };
+player.sprite.src = 'Images/player_sprite.png'; // Set the source of the player sprite
 let players = {};
 const movementSpeed = 150;
 let zoomLevel = 1;
@@ -18,8 +20,9 @@ let playerMessages = {};
 
 const canvas = document.getElementById('gameCanvas');
 const ctx = canvas.getContext('2d');
-canvas.width = 800;
-canvas.height = 600;
+// Make canvas responsive and high resolution
+canvas.width = window.innerWidth;
+canvas.height = window.innerHeight;
 
 let lastRenderTime = 0;
 
@@ -34,7 +37,7 @@ function gameLoop(timeStamp) {
 }
 
 function sendMessage() {
-    const messageInput = document.getElementById('chatInput');
+    const messageInput = document.getElementById('chatInput'); // Style this input for better appearance
     const message = messageInput.value;
     socket.emit('chatMessage', { message: message });
     messageInput.value = '';
@@ -70,12 +73,17 @@ function drawPlayers() {
         const screenX = p.x - player.x + canvas.width / 2 / zoomLevel;
         const screenY = p.y - player.y + canvas.height / 2 / zoomLevel;
 
-        ctx.fillStyle = p.color;
-        ctx.fillRect(screenX, screenY, p.width, p.height);
+        if (p.sprite) { // If the player has a sprite
+            ctx.drawImage(p.sprite, screenX, screenY, p.width, p.height); // Draw the sprite instead of a rectangle
+        } else {
+            ctx.fillStyle = p.color;
+            ctx.fillRect(screenX, screenY, p.width, p.height);
+        }
 
+        // Improved text styling
         ctx.fillStyle = 'white';
         ctx.textAlign = 'center';
-        ctx.font = '14px Arial';
+        ctx.font = 'bold 14px Arial';
         ctx.fillText(p.name, screenX + p.width / 2, screenY - 10);
 
         if (playerMessages[p.id]) {
@@ -96,6 +104,10 @@ document.addEventListener('keyup', (e) => {
 
 socket.on('currentPlayers', (playersData) => {
     players = playersData;
+    Object.values(players).forEach(p => {
+        p.sprite = new Image();
+        p.sprite.src = 'Images/player_sprite.png'; // Assign sprites to each player
+    });
     if (socket.id in players) {
         player.id = socket.id;
     }
@@ -103,6 +115,8 @@ socket.on('currentPlayers', (playersData) => {
 
 socket.on('newPlayer', (playerData) => {
     players[playerData.id] = playerData;
+    players[playerData.id].sprite = new Image();
+    players[playerData.id].sprite.src = 'Images/player_sprite.png'; // Assign a sprite to the new player
 });
 
 socket.on('playerMoved', (playerData) => {
