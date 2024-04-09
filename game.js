@@ -19,9 +19,10 @@ const TILE_DOOR = 2;
 // Game world array
 let gameWorld = [];
 
-// Player object definition
+// Adjust the player's initial position here
+// Set initial position to the bottom right, but keep it centered in the viewport initially
 let player = {
-  id: null, x: 400, y: 300, width: 64, height: 64,
+  id: null, x: 100, y: 100, width: 64, height: 64, // Adjust initial x, y to move player down and right from the center
   direction: DIRECTIONS.DOWN, moving: false, sprite: new Image(),
   frameIndex: 0, frameCount: 8
 };
