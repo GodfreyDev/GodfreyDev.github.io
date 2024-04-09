@@ -192,43 +192,52 @@ function handleAnimation(deltaTime) {
   player.frameIndex = Math.max(0, Math.min(player.frameIndex, player.frameCount - 1)); // Ensure frameIndex is within valid range
 }
 
-// Variables for smooth camera movement
-let cameraX = 0;
-let cameraY = 0;
-const cameraSmoothness = 0.1; // Adjust for smoother or more immediate camera movement
+// Improved camera movement for smooth background scrolling
+let cameraX = player.x - canvas.width / 2;
+let cameraY = player.y - canvas.height / 2;
+const cameraEase = 0.05; // Control the smoothing; lower values for smoother movement
 
-// Modified drawBackground function for smooth camera movement
-function drawBackground() {
-  const targetCameraX = player.x - canvas.width / 2;
-  const targetCameraY = player.y - canvas.height / 2;
+function updateCameraPosition() {
+    // Calculate the desired position to keep the player centered
+    const desiredX = player.x - canvas.width / 2;
+    const desiredY = player.y - canvas.height / 2;
 
-  // Smoothly interpolate camera position
-  cameraX += (targetCameraX - cameraX) * cameraSmoothness;
-  cameraY += (targetCameraY - cameraY) * cameraSmoothness;
-
-  const viewWidth = canvas.width / TILE_SIZE;
-  const viewHeight = canvas.height / TILE_SIZE;
-
-  for (let y = 0; y < viewHeight; y++) {
-    for (let x = 0; x < viewWidth; x++) {
-      const worldX = Math.floor(cameraX / TILE_SIZE) + x;
-      const worldY = Math.floor(cameraY / TILE_SIZE) + y;
-
-      if (worldX >= 0 && worldX < WORLD_WIDTH && worldY >= 0 && worldY < WORLD_HEIGHT) {
-        const tile = gameWorld[worldY][worldX];
-        if (tileImages[tile]) {
-          ctx.drawImage(tileImages[tile], x * TILE_SIZE, y * TILE_SIZE, TILE_SIZE, TILE_SIZE);
-        } else {
-          ctx.fillStyle = '#000';
-          ctx.fillRect(x * TILE_SIZE, y * TILE_SIZE, TILE_SIZE, TILE_SIZE);
-        }
-      } else {
-        ctx.fillStyle = '#000';
-        ctx.fillRect(x * TILE_SIZE, y * TILE_SIZE, TILE_SIZE, TILE_SIZE);
-      }
-    }
-  }
+    // Apply easing to the camera movement for smoother transition
+    cameraX += (desiredX - cameraX) * cameraEase;
+    cameraY += (desiredY - cameraY) * cameraEase;
 }
+
+// Modify the drawBackground function to use the smoothly updated camera position
+function drawBackground() {
+    updateCameraPosition(); // Ensure camera position is updated smoothly
+
+    const viewWidth = Math.ceil(canvas.width / TILE_SIZE);
+    const viewHeight = Math.ceil(canvas.height / TILE_SIZE);
+    const startCol = Math.floor(cameraX / TILE_SIZE);
+    const endCol = startCol + viewWidth;
+    const startRow = Math.floor(cameraY / TILE_SIZE);
+    const endRow = startRow + viewHeight;
+    const offsetX = -cameraX % TILE_SIZE;
+    const offsetY = -cameraY % TILE_SIZE;
+
+    for (let y = startRow; y <= endRow; y++) {
+        for (let x = startCol; x <= endCol; x++) {
+            if (x >= 0 && x < WORLD_WIDTH && y >= 0 && y < WORLD_HEIGHT) {
+                const tile = gameWorld[y][x];
+                if (tileImages[tile]) {
+                    ctx.drawImage(tileImages[tile], (x - startCol) * TILE_SIZE + offsetX, (y - startRow) * TILE_SIZE + offsetY, TILE_SIZE, TILE_SIZE);
+                }
+            } else {
+                // Draw a default tile if outside the world bounds
+                ctx.fillStyle = '#000';
+                ctx.fillRect((x - startCol) * TILE_SIZE + offsetX, (y - startRow) * TILE_SIZE + offsetY, TILE_SIZE, TILE_SIZE);
+            }
+        }
+    }
+}
+
+// The rest of your game's logic remains unchanged.
+
 
 
 // Render players on canvas
