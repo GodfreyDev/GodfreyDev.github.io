@@ -80,16 +80,17 @@ function updatePlayerPosition(deltaTime) {
 
 // Handle animation based on player movement
 function handleAnimation(deltaTime) {
-  if (player.moving) {
-    animationTimer += deltaTime;
-    if (animationTimer >= animationSpeed) {
-      player.frameIndex = (player.frameIndex + 1) % player.frameCount;
-      animationTimer = 0;
+    if (player.moving) {
+      animationTimer += deltaTime;
+      if (animationTimer >= animationSpeed) {
+        player.frameIndex = (player.frameIndex + 1) % player.frameCount;
+        animationTimer = 0;
+      }
+    } else {
+      player.frameIndex = 0; // Reset animation frame if not moving
     }
-  } else {
-    player.frameIndex = 0; // Reset animation frame if not moving
+    player.frameIndex = Math.max(0, Math.min(player.frameIndex, player.frameCount - 1)); // Ensure frameIndex is within valid range
   }
-}
 
 // Render players on canvas
 function drawPlayers() {
@@ -103,20 +104,20 @@ function drawPlayers() {
 
 // Draw a single player on the canvas
 function drawPlayer(p) {
-  if (!p.sprite.complete) return; // Skip drawing if sprite not loaded
-  const srcX = p.frameIndex * p.width;
-  const srcY = p.direction * p.height;
-  const screenX = p.x - player.x + canvas.width / 2 / zoomLevel;
-  const screenY = p.y - player.y + canvas.height / 2 / zoomLevel;
-
-  ctx.drawImage(p.sprite, srcX, srcY, p.width, p.height, screenX, screenY, p.width, p.height);
-  ctx.fillStyle = 'white'; ctx.textAlign = 'center'; ctx.font = '14px Arial';
-  ctx.fillText(p.name, screenX + p.width / 2, screenY - 10);
-  if (playerMessages[p.id]) {
-    ctx.fillStyle = 'yellow';
-    ctx.fillText(playerMessages[p.id], screenX + p.width / 2, screenY - 25);
+    if (!p.sprite.complete || p.frameIndex === undefined) return; // Skip drawing if sprite not loaded or frameIndex is undefined
+    const srcX = p.frameIndex * p.width;
+    const srcY = p.direction * p.height;
+    const screenX = p.x - player.x + canvas.width / 2 / zoomLevel;
+    const screenY = p.y - player.y + canvas.height / 2 / zoomLevel;
+  
+    ctx.drawImage(p.sprite, srcX, srcY, p.width, p.height, screenX, screenY, p.width, p.height);
+    ctx.fillStyle = 'white'; ctx.textAlign = 'center'; ctx.font = '14px Arial';
+    ctx.fillText(p.name, screenX + p.width / 2, screenY - 10);
+    if (playerMessages[p.id]) {
+      ctx.fillStyle = 'yellow';
+      ctx.fillText(playerMessages[p.id], screenX + p.width / 2, screenY - 25);
+    }
   }
-}
 
 // Keyboard event listeners for movement
 document.addEventListener('keydown', e => keysPressed[e.key] = true);
@@ -137,10 +138,11 @@ socket.on('newPlayer', playerData => {
 });
 
 socket.on('playerMoved', data => {
-  if (data.playerId in players) {
-    Object.assign(players[data.playerId], data);
-  }
-});
+    if (data.playerId in players) {
+      Object.assign(players[data.playerId], data);
+      players[data.playerId].frameIndex = data.frameIndex; // Update frameIndex separately
+    }
+  });
 
 socket.on('playerDisconnected', id => delete players[id]);
 socket.on('chatMessage', data => {
