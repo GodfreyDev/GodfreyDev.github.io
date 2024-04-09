@@ -122,11 +122,7 @@ function drawPlayers() {
     ctx.scale(zoomLevel, zoomLevel);
 
     // Draw other players
-    Object.values(players).forEach((p) => {
-        if (p.id !== player.id) {
-            drawPlayer(p);
-        }
-    });
+    Object.values(players).forEach(drawPlayer);
 
     // Draw the current player
     drawPlayer(player);
@@ -182,7 +178,7 @@ socket.on('newPlayer', (playerData) => {
 });
 
 socket.on('playerMoved', (playerData) => {
-    if (players[playerData.playerId] && playerData.playerId !== player.id) {
+    if (players[playerData.playerId]) {
         players[playerData.playerId].x = playerData.x;
         players[playerData.playerId].y = playerData.y;
         players[playerData.playerId].direction = playerData.direction;
