@@ -164,10 +164,10 @@ socket.on('currentPlayers', (playersData) => {
     Object.values(playersData).forEach(initializePlayerSprite);
     if (socket.id in playersData) {
         player.id = socket.id;
-        player.name = playersData[socket.id].name; // Assuming player names are managed server-side
+        player.name = playersData[socket.id].name;
         player.x = playersData[socket.id].x;
         player.y = playersData[socket.id].y;
-        player.direction = playersData[socket.id].direction;
+        player.direction = playersData[socket.id].direction || DIRECTIONS.DOWN; // Initialize with server-side direction or default
     }
     players = playersData;
 });
@@ -181,7 +181,7 @@ socket.on('playerMoved', (playerData) => {
     if (players[playerData.playerId]) {
         players[playerData.playerId].x = playerData.x;
         players[playerData.playerId].y = playerData.y;
-        players[playerData.playerId].direction = playerData.direction;
+        players[playerData.playerId].direction = playerData.direction; // Ensure direction is updated here
     }
 });
 

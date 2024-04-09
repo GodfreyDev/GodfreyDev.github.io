@@ -45,12 +45,12 @@ io.on('connection', (socket) => {
 
     socket.on('playerMovement', (data) => {
         if (players[socket.id]) {
-            players[socket.id].x = data.x;
-            players[socket.id].y = data.y;
-            players[socket.id].direction = data.direction; // Include direction in the server-side player object
-            io.emit('playerMoved', {playerId: socket.id, x: data.x, y: data.y, direction: data.direction}); // Emit direction along with position
+          players[socket.id].x = data.x;
+          players[socket.id].y = data.y;
+          players[socket.id].direction = data.direction;
+          io.emit('playerMoved', { playerId: socket.id, x: data.x, y: data.y, direction: data.direction });
         }
-    });
+      });
 
     // Server-side adjustment when emitting a chatMessage
     socket.on('chatMessage', (data) => {
