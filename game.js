@@ -120,7 +120,7 @@ socket.on('playerDisconnected', (playerId) => {
 socket.on('chatMessage', (data) => {
     // Now data should include player name alongside the message
     const playerName = players[data.playerId].name; // Assuming player's name is sent from the server
-    playerMessages[data.playerId] = playerName + ": " + data.message; // Display name with the message
+    playerMessages[data.playerId] = data.message; // Display name with the message
     setTimeout(() => {
         delete playerMessages[data.playerId];
     }, 5000); // Messages disappear after 5 seconds
