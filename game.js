@@ -140,7 +140,7 @@ function sendMessage() {
   }
 }
 
-// Update player position with refined collision detection and door passage handling
+// Update player position based on input with adjusted collision detection
 function updatePlayerPosition(deltaTime) {
     let dx = 0, dy = 0;
     player.moving = false;
@@ -150,60 +150,36 @@ function updatePlayerPosition(deltaTime) {
     if (keysPressed['w'] || keysPressed['ArrowUp']) { dy -= movementSpeed; player.moving = true; }
     if (keysPressed['s'] || keysPressed['ArrowDown']) { dy += movementSpeed; player.moving = true; }
   
-    // Determine intended direction
-    determineDirection(dx, dy);
+    if (dy < 0 && dx < 0) player.direction = DIRECTIONS.UP_LEFT;
+    else if (dy < 0 && dx > 0) player.direction = DIRECTIONS.UP_RIGHT;
+    else if (dy > 0 && dx < 0) player.direction = DIRECTIONS.DOWN_LEFT;
+    else if (dy > 0 && dx > 0) player.direction = DIRECTIONS.DOWN_RIGHT;
+    else if (dy < 0) player.direction = DIRECTIONS.UP;
+    else if (dy > 0) player.direction = DIRECTIONS.DOWN;
+    else if (dx < 0) player.direction = DIRECTIONS.LEFT;
+    else if (dx > 0) player.direction = DIRECTIONS.RIGHT;
   
     const newX = player.x + dx * deltaTime;
     const newY = player.y + dy * deltaTime;
   
-    // Check for collision and adjust for doors
-    if (canMoveTo(newX, newY)) {
-      // Align with the door center if moving through a door
-      if (isMovingThroughDoor(newX, newY)) {
-        alignWithDoorCenter(dx, dy);
-      } else {
-        player.x = newX;
-        player.y = newY;
-      }
-    }
-    
+    // Check collision for each corner of the player sprite
+    const topLeftTile = gameWorld[Math.floor((newY - player.height / 2) / TILE_SIZE)][Math.floor((newX - player.width / 2) / TILE_SIZE)];
+    const topRightTile = gameWorld[Math.floor((newY - player.height / 2) / TILE_SIZE)][Math.floor((newX + player.width / 2) / TILE_SIZE)];
+    const bottomLeftTile = gameWorld[Math.floor((newY + player.height / 2) / TILE_SIZE)][Math.floor((newX - player.width / 2) / TILE_SIZE)];
+    const bottomRightTile = gameWorld[Math.floor((newY + player.height / 2) / TILE_SIZE)][Math.floor((newX + player.width / 2) / TILE_SIZE)];
   
-    function canMoveTo(x, y) {
-        // This checks the intended destination for collision with walls or allows movement through doors
-        const tileX = Math.floor(x / TILE_SIZE);
-        const tileY = Math.floor(y / TILE_SIZE);
-        const tile = gameWorld[tileY][tileX];
-        return tile !== TILE_WALL; // Allow movement if not moving into a wall
-      }
-      
-      // Check if the movement is through a door tile
-      function isMovingThroughDoor(x, y) {
-        const tileX = Math.floor(x / TILE_SIZE);
-        const tileY = Math.floor(y / TILE_SIZE);
-        return gameWorld[tileY][tileX] === TILE_DOOR;
-      }
-      
-      // Adjust the player's position to align with the center of the door
-      function alignWithDoorCenter(dx, dy) {
-        if (dx !== 0) { // Horizontal movement through a door
-          const tileY = Math.floor(player.y / TILE_SIZE);
-          const doorX = Math.floor(player.x / TILE_SIZE) * TILE_SIZE + TILE_SIZE / 2;
-          player.x = doorX;
-        }
-        if (dy !== 0) { // Vertical movement through a door
-          const tileX = Math.floor(player.x / TILE_SIZE);
-          const doorY = Math.floor(player.y / TILE_SIZE) * TILE_SIZE + TILE_SIZE / 2;
-          player.y = doorY;
-        }
-      }
+    // Allow movement only if none of the corners collide with a wall
+    if (topLeftTile !== TILE_WALL && topRightTile !== TILE_WALL && bottomLeftTile !== TILE_WALL && bottomRightTile !== TILE_WALL) {
+      player.x = newX;
+      player.y = newY;
+    }
   
     // Emit movement if position or frameIndex changed
     if (newX !== player.x || newY !== player.y || player.frameIndex !== player.lastFrameIndex) {
       player.lastFrameIndex = player.frameIndex;
       socket.emit('playerMovement', { x: player.x, y: player.y, direction: player.direction, frameIndex: player.frameIndex });
     }
-  }
-    
+  }  
 
 // Handle animation based on player movement
 function handleAnimation(deltaTime) {
