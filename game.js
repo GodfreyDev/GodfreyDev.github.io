@@ -203,17 +203,9 @@ socket.on('chatMessage', (data) => {
 // Helper function to initialize player sprite
 function initializePlayerSprite(p) {
     p.sprite = new Image();
-    if (p.id === player.id) {
-        // Local player sprite initialization
-        p.sprite.src = player.sprite.src;
-        p.frameIndex = player.frameIndex;
-        p.direction = player.direction;
-    } else {
-        // Other players sprite initialization
-        p.sprite.src = player.sprite.src; // Assuming all players use the same sprite sheet
-        p.frameIndex = 0;
-        p.direction = DIRECTIONS.DOWN;
-    }
+    p.sprite.src = player.sprite.src; // Assuming all players use the same sprite sheet
+    p.frameIndex = 0;
+    p.direction = DIRECTIONS.DOWN;
 }
 
 requestAnimationFrame(gameLoop);
