@@ -17,12 +17,10 @@ player.sprite.onload = () => requestAnimationFrame(gameLoop);
 player.sprite.onerror = e => console.error("Failed to load player sprite:", e);
 
 let background = {
-image: new Image(),
-x: 0,
-y: 0,
-width: 800,
-height: 600
-};
+    image: new Image(),
+    width: 800,
+    height: 600
+  };
 background.image.src = 'Images/background.png';
 background.image.onload = () => requestAnimationFrame(gameLoop);
 background.image.onerror = e => console.error("Failed to load background image:", e);
@@ -112,8 +110,10 @@ function drawPlayers() {
     ctx.save();
     ctx.scale(zoomLevel, zoomLevel);
   
-    // Draw background
-    ctx.drawImage(background.image, background.x, background.y, background.width, background.height);
+    // Draw background at a fixed position
+    const backgroundX = (canvas.width - background.width * zoomLevel) / 2;
+    const backgroundY = (canvas.height - background.height * zoomLevel) / 2;
+    ctx.drawImage(background.image, backgroundX, backgroundY, background.width * zoomLevel, background.height * zoomLevel);
   
     Object.values(players).forEach(drawPlayer);
     drawPlayer(player); // Draw current player last to be on top
