@@ -107,16 +107,19 @@ function handleAnimation(deltaTime) {
 // Render players on canvas
 function drawPlayers() {
     ctx.clearRect(0, 0, canvas.width, canvas.height);
-    ctx.save();
-    ctx.scale(zoomLevel, zoomLevel);
   
     // Draw background at a fixed position
-    const backgroundX = (canvas.width - background.width * zoomLevel) / 2;
-    const backgroundY = (canvas.height - background.height * zoomLevel) / 2;
-    ctx.drawImage(background.image, backgroundX, backgroundY, background.width * zoomLevel, background.height * zoomLevel);
+    const backgroundX = (canvas.width - background.width) / 2;
+    const backgroundY = (canvas.height - background.height) / 2;
+    ctx.drawImage(background.image, backgroundX, backgroundY, background.width, background.height);
+  
+    ctx.save();
+    ctx.translate(canvas.width / 2, canvas.height / 2);
+    ctx.scale(zoomLevel, zoomLevel);
   
     Object.values(players).forEach(drawPlayer);
     drawPlayer(player); // Draw current player last to be on top
+  
     ctx.restore();
   }
 
