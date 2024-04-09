@@ -200,7 +200,7 @@ function drawBackground() {
         const worldY = Math.floor(cameraY / TILE_SIZE) + y;
   
         if (worldX >= 0 && worldX < WORLD_WIDTH && worldY >= 0 && worldY < WORLD_HEIGHT) {
-          const tile = gameWorld[worldY][worldX];
+          const tile = gameWorld[worldY][worldX]; // <-- Error occurs here
           if (tileImages[tile]) {
             ctx.drawImage(tileImages[tile], x * TILE_SIZE, y * TILE_SIZE, TILE_SIZE, TILE_SIZE);
           } else {
@@ -214,22 +214,6 @@ function drawBackground() {
       }
     }
   }
-
-// Initial resize to ensure canvas fills the screen from the start
-resizeCanvas();
-
-// Implement zoom functionality
-let zoomLevel = 1; // Default zoom level
-function zoom(inOrOut) {
-  const zoomIncrement = 0.1;
-  if (inOrOut === 'in' && zoomLevel < 2) { // Maximum zoom level of 2
-    zoomLevel += zoomIncrement;
-  } else if (inOrOut === 'out' && zoomLevel > 0.5) { // Minimum zoom level of 0.5
-    zoomLevel -= zoomIncrement;
-  }
-  drawBackground(); // Redraw the background with the new zoom level
-}
-  
 
 // Render players on canvas
 function drawPlayers() {
