@@ -119,21 +119,33 @@ function handleAnimation(deltaTime) {
 }
 
 function drawPlayers() {
-  ctx.clearRect(0, 0, canvas.width, canvas.height);
-  ctx.save();
-  ctx.scale(zoomLevel, zoomLevel);
-  Object.values(players).forEach(drawPlayer);
-  ctx.restore();
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    ctx.save();
+    ctx.scale(zoomLevel, zoomLevel);
+    Object.values(players).forEach(p => {
+        // Ensure every player has a loaded sprite before attempting to draw
+        if (!p.sprite) {
+            p.sprite = new Image();
+            p.sprite.src = player.sprite.src; // Assuming all players use the same sprite sheet
+            p.sprite.onload = () => drawPlayer(p); // Draw the player once the sprite is loaded
+        } else if (p.sprite.complete) {
+            drawPlayer(p);
+        }
+    });
+    ctx.restore();
 }
 
 function drawPlayer(p) {
-  if (!p.sprite.complete) return;
-  const srcX = p.frameIndex * p.width;
-  const srcY = p.direction * p.height;
-  const screenX = p.x - player.x + canvas.width / 2 / zoomLevel;
-  const screenY = p.y - player.y + canvas.height / 2 / zoomLevel;
-  ctx.drawImage(p.sprite, srcX, srcY, p.width, p.height, screenX, screenY, p.width, p.height);
-  drawNameAndMessages(p, screenX, screenY);
+    const frameWidth = p.width;
+    const frameHeight = p.height;
+    const srcX = p.frameIndex * frameWidth;
+    const srcY = p.direction * frameHeight;
+    // Adjust position drawing logic if necessary
+    const screenX = p.x - player.x + canvas.width / 2 / zoomLevel;
+    const screenY = p.y - player.y + canvas.height / 2 / zoomLevel;
+
+    ctx.drawImage(p.sprite, srcX, srcY, frameWidth, frameHeight, screenX, screenY, frameWidth, frameHeight);
+    drawNameAndMessages(p, screenX, screenY);
 }
 
 function drawNameAndMessages(p, screenX, screenY) {
@@ -151,11 +163,20 @@ document.addEventListener('keydown', (e) => keysPressed[e.key] = true);
 document.addEventListener('keyup', (e) => keysPressed[e.key] = false);
 
 socket.on('currentPlayers', (playersData) => {
-  players = {}; // Reset local players object
-  Object.values(playersData).forEach(initializePlayerSprite);
-  if (socket.id in playersData) {
-    Object.assign(player, playersData[socket.id]); // Update local player with server data
-  }
+    players = {}; // Clear existing players object
+    Object.entries(playersData).forEach(([id, p]) => {
+        players[id] = {
+            ...p,
+            sprite: new Image(), // Initialize a new Image for each player
+            moving: false // Add any additional necessary properties
+        };
+        players[id].sprite.src = player.sprite.src; // Use the same sprite source for all players
+        if (id === socket.id) {
+            // Update local player specifics if needed
+            player = {...players[id], sprite: player.sprite};
+        }
+    });
+    requestAnimationFrame(gameLoop); // Ensure the game loop is running
 });
 
 socket.on('newPlayer', (playerData) => {
