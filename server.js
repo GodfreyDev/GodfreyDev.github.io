@@ -5,14 +5,19 @@ const app = express();
 const server = http.createServer(app);
 const io = socketIo(server, {
   cors: {
-    origin: ['https://godfreydev.github.io', 'http://localhost:3000'],
+    origin: '*',
     methods: ['GET', 'POST'],
     credentials: true
   }
 });
 
-// Serve static files from the current directory
-app.use(express.static(__dirname));
+// Enable CORS for all routes
+app.use((req, res, next) => {
+  res.setHeader('Access-Control-Allow-Origin', '*');
+  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+  next();
+});
 
 // Structure to hold player data
 let players = {};

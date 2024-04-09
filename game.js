@@ -122,17 +122,18 @@ function createCorridor(x1, y1, x2, y2) {
 
 // Game loop for rendering and updating
 function gameLoop(timeStamp) {
-  const deltaTime = (timeStamp - lastRenderTime) / 1000;
-  requestAnimationFrame(gameLoop);
-  if (player.id) {
-    updatePlayerPosition(deltaTime);
-    handleAnimation(deltaTime);
+    const deltaTime = (timeStamp - lastRenderTime) / 1000;
+    requestAnimationFrame(gameLoop);
+    if (player.id) {
+      updatePlayerPosition(deltaTime);
+      handleAnimation(deltaTime);
+      updateCameraPosition(); // Add this line to update the camera position
+    }
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    drawBackground();
+    drawPlayers();
+    lastRenderTime = timeStamp;
   }
-  ctx.clearRect(0, 0, canvas.width, canvas.height);
-  drawBackground();
-  drawPlayers();
-  lastRenderTime = timeStamp;
-}
 
 // Send chat message to the server
 function sendMessage() {
@@ -198,56 +199,46 @@ function handleAnimation(deltaTime) {
   player.frameIndex = Math.max(0, Math.min(player.frameIndex, player.frameCount - 1)); // Ensure frameIndex is within valid range
 }
 
-let cameraX = player.x - canvas.width / 2;
-let cameraY = player.y - canvas.height / 2;
-const cameraEase = 0.1; // Control the smoothing; lower values for smoother movement
+let cameraX = 0;
+let cameraY = 0;
+const cameraEasing = 0.1;
 
 function updateCameraPosition() {
   const targetX = player.x - canvas.width / 2;
   const targetY = player.y - canvas.height / 2;
-  cameraX += (targetX - cameraX) * cameraEase;
-  cameraY += (targetY - cameraY) * cameraEase;
+  cameraX += (targetX - cameraX) * cameraEasing;
+  cameraY += (targetY - cameraY) * cameraEasing;
 }
 
 function drawBackground() {
-    updateCameraPosition();
-  
     const startCol = Math.max(0, Math.floor(cameraX / TILE_SIZE));
     const endCol = Math.min(WORLD_WIDTH - 1, Math.ceil((cameraX + canvas.width) / TILE_SIZE));
     const startRow = Math.max(0, Math.floor(cameraY / TILE_SIZE));
     const endRow = Math.min(WORLD_HEIGHT - 1, Math.ceil((cameraY + canvas.height) / TILE_SIZE));
-    const offsetX = -cameraX % TILE_SIZE;
-    const offsetY = -cameraY % TILE_SIZE;
+  
+    ctx.save();
+    ctx.translate(-cameraX, -cameraY);
   
     for (let y = startRow; y <= endRow; y++) {
       for (let x = startCol; x <= endCol; x++) {
-        let tileX = (x - startCol) * TILE_SIZE + offsetX;
-        let tileY = (y - startRow) * TILE_SIZE + offsetY;
+        const tileX = x * TILE_SIZE;
+        const tileY = y * TILE_SIZE;
   
-        const tile = gameWorld[y][x];
-        if (tileImages[tile]) {
-          ctx.drawImage(tileImages[tile], tileX, tileY, TILE_SIZE, TILE_SIZE);
+        // Check if the tile exists in the gameWorld array
+        if (gameWorld[y] && gameWorld[y][x]) {
+          const tile = gameWorld[y][x];
+          if (tileImages[tile]) {
+            ctx.drawImage(tileImages[tile], tileX, tileY, TILE_SIZE, TILE_SIZE);
+          }
+        } else {
+          // Draw a default tile for out-of-bounds areas
+          ctx.fillStyle = '#000';
+          ctx.fillRect(tileX, tileY, TILE_SIZE, TILE_SIZE);
         }
       }
     }
   
-    // Draw black background for out-of-bounds areas
-    if (startCol > 0) {
-      ctx.fillStyle = '#000';
-      ctx.fillRect(0, 0, offsetX, canvas.height);
-    }
-    if (endCol < WORLD_WIDTH - 1) {
-      ctx.fillStyle = '#000';
-      ctx.fillRect((endCol - startCol + 1) * TILE_SIZE + offsetX, 0, canvas.width, canvas.height);
-    }
-    if (startRow > 0) {
-      ctx.fillStyle = '#000';
-      ctx.fillRect(0, 0, canvas.width, offsetY);
-    }
-    if (endRow < WORLD_HEIGHT - 1) {
-      ctx.fillStyle = '#000';
-      ctx.fillRect(0, (endRow - startRow + 1) * TILE_SIZE + offsetY, canvas.width, canvas.height);
-    }
+    ctx.restore();
   }
 
 // Render players on canvas
@@ -261,15 +252,15 @@ function drawPlayer(p) {
     if (!p.sprite.complete || p.frameIndex === undefined) return;
     const srcX = p.frameIndex * p.width;
     const srcY = p.direction * p.height;
-    const screenX = p.x - cameraX - p.width / 2;
-    const screenY = p.y - cameraY - p.height / 2;
+    const screenX = p.x - p.width / 2;
+    const screenY = p.y - p.height / 2;
   
-    ctx.drawImage(p.sprite, srcX, srcY, p.width, p.height, screenX, screenY, p.width, p.height);
+    ctx.drawImage(p.sprite, srcX, srcY, p.width, p.height, screenX - cameraX, screenY - cameraY, p.width, p.height);
     ctx.fillStyle = 'white'; ctx.textAlign = 'center'; ctx.font = '16px Arial';
-    ctx.fillText(p.name, screenX + p.width / 2, screenY - 20);
+    ctx.fillText(p.name, screenX - cameraX + p.width / 2, screenY - cameraY - 20);
     if (playerMessages[p.id]) {
       ctx.fillStyle = 'yellow';
-      ctx.fillText(playerMessages[p.id], screenX + p.width / 2, screenY - 40);
+      ctx.fillText(playerMessages[p.id], screenX - cameraX + p.width / 2, screenY - cameraY - 40);
     }
   }
 
