@@ -189,11 +189,13 @@ function handleAnimation(deltaTime) {
 
 // Draw the game world
 function drawBackground() {
+    const viewWidth = canvas.width / TILE_SIZE;
+    const viewHeight = canvas.height / TILE_SIZE;
     const cameraX = player.x - canvas.width / 2;
     const cameraY = player.y - canvas.height / 2;
   
-    for (let y = 0; y < CAMERA_HEIGHT; y++) {
-      for (let x = 0; x < CAMERA_WIDTH; x++) {
+    for (let y = 0; y < viewHeight; y++) {
+      for (let x = 0; x < viewWidth; x++) {
         const worldX = Math.floor(cameraX / TILE_SIZE) + x;
         const worldY = Math.floor(cameraY / TILE_SIZE) + y;
   
@@ -212,6 +214,22 @@ function drawBackground() {
       }
     }
   }
+
+// Initial resize to ensure canvas fills the screen from the start
+resizeCanvas();
+
+// Implement zoom functionality
+let zoomLevel = 1; // Default zoom level
+function zoom(inOrOut) {
+  const zoomIncrement = 0.1;
+  if (inOrOut === 'in' && zoomLevel < 2) { // Maximum zoom level of 2
+    zoomLevel += zoomIncrement;
+  } else if (inOrOut === 'out' && zoomLevel > 0.5) { // Minimum zoom level of 0.5
+    zoomLevel -= zoomIncrement;
+  }
+  drawBackground(); // Redraw the background with the new zoom level
+}
+  
 
 // Render players on canvas
 function drawPlayers() {
