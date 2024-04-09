@@ -21,15 +21,17 @@ const TILE_DOOR = 2;
 // Game world array
 let gameWorld = [];
 
+const ANIMATION_SPEED = 200;
+
 // Player object definition
 let player = {
-  id: null, x: 400, y: 300, width: 64, height: 64,
-  direction: DIRECTIONS.DOWN, moving: false, sprite: new Image(),
-  frameIndex: 0, frameCount: 8
-};
-player.sprite.src = 'Images/player_sprite_frames.png';
-player.sprite.onload = () => requestAnimationFrame(gameLoop);
-player.sprite.onerror = e => console.error("Failed to load player sprite:", e);
+    id: null, x: 400, y: 300, width: 64, height: 64,
+    direction: DIRECTIONS.DOWN, moving: false, sprite: new Image(),
+    frameIndex: 0, frameCount: 3, animationTimer: 0
+  };
+  player.sprite.src = 'Images/player_sprite_frames.png';
+  player.sprite.onload = () => requestAnimationFrame(gameLoop);
+  player.sprite.onerror = e => console.error("Failed to load player sprite:", e);
 
 let players = {}, playerMessages = {}, keysPressed = {};
 const movementSpeed = 200, animationSpeed = 0.1, canvas = document.getElementById('gameCanvas'), ctx = canvas.getContext('2d');
@@ -175,17 +177,17 @@ function updatePlayerPosition(deltaTime) {
 
 // Handle animation based on player movement
 function handleAnimation(deltaTime) {
-  if (player.moving) {
-    animationTimer += deltaTime;
-    if (animationTimer >= animationSpeed) {
-      player.frameIndex = (player.frameIndex + 1) % player.frameCount;
-      animationTimer = 0;
+    if (player.moving) {
+      player.animationTimer += deltaTime;
+      if (player.animationTimer >= ANIMATION_SPEED) {
+        player.frameIndex = (player.frameIndex + 1) % player.frameCount;
+        player.animationTimer = 0;
+      }
+    } else {
+      player.frameIndex = 0; // Reset animation frame if not moving
+      player.animationTimer = 0;
     }
-  } else {
-    player.frameIndex = 0; // Reset animation frame if not moving
   }
-  player.frameIndex = Math.max(0, Math.min(player.frameIndex, player.frameCount - 1)); // Ensure frameIndex is within valid range
-}
 
 // Draw the game world
 function drawBackground() {
@@ -226,20 +228,20 @@ function drawPlayers() {
 
 // Draw a single player on the canvas
 function drawPlayer(p) {
-  if (!p.sprite.complete || p.frameIndex === undefined) return;
-  const srcX = p.frameIndex * p.width;
-  const srcY = p.direction * p.height;
-  const screenX = p.x - player.x + canvas.width / 2 - p.width / 2;
-  const screenY = p.y - player.y + canvas.height / 2 - p.height / 2;
-
-  ctx.drawImage(p.sprite, srcX, srcY, p.width, p.height, screenX, screenY, p.width, p.height);
-  ctx.fillStyle = 'white'; ctx.textAlign = 'center'; ctx.font = '16px Arial';
-  ctx.fillText(p.name, screenX + p.width / 2, screenY - 20);
-  if (playerMessages[p.id]) {
-    ctx.fillStyle = 'yellow';
-    ctx.fillText(playerMessages[p.id], screenX + p.width / 2, screenY - 40);
+    if (!p.sprite.complete || p.frameIndex === undefined) return;
+    const srcX = p.frameIndex * p.width;
+    const srcY = p.direction * p.height;
+    const screenX = p.x - player.x + canvas.width / 2 - p.width / 2;
+    const screenY = p.y - player.y + canvas.height / 2 - p.height / 2;
+  
+    ctx.drawImage(p.sprite, srcX, srcY, p.width, p.height, screenX, screenY, p.width, p.height);
+    ctx.fillStyle = 'white'; ctx.textAlign = 'center'; ctx.font = '16px Arial';
+    ctx.fillText(p.name, screenX + p.width / 2, screenY - 20);
+    if (playerMessages[p.id]) {
+      ctx.fillStyle = 'yellow';
+      ctx.fillText(playerMessages[p.id], screenX + p.width / 2, screenY - 40);
+    }
   }
-}
 
 // Keyboard event listeners for movement
 document.addEventListener('keydown', e => keysPressed[e.key] = true);
