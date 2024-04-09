@@ -63,9 +63,11 @@ function gameLoop(timeStamp) {
 
 function sendMessage() {
   const messageInput = document.getElementById('chatInput');
-  const message = messageInput.value;
-  socket.emit('chatMessage', { message: message });
-  messageInput.value = '';
+  const message = messageInput.value.trim();
+  if (message !== '') {
+    socket.emit('chatMessage', { message: message });
+    messageInput.value = '';
+  }
 }
 
 function updatePlayerPosition(deltaTime) {
@@ -97,7 +99,7 @@ function updatePlayerPosition(deltaTime) {
   if (newX !== player.x || newY !== player.y) {
     player.x = newX;
     player.y = newY;
-    socket.emit('playerMovement', { x: player.x, y: player.y });
+    socket.emit('playerMovement', { x: player.x, y: player.y, direction: player.direction });
   }
 }
 
@@ -113,7 +115,6 @@ function handleAnimation(deltaTime) {
     player.frameIndex = 0; // Reset to the standing position when not moving
   }
 }
-
 
 function drawPlayers() {
     ctx.clearRect(0, 0, canvas.width, canvas.height);
@@ -150,7 +151,6 @@ function drawPlayer(p) {
     }
 }
 
-
 document.addEventListener('keydown', (e) => {
     keysPressed[e.key] = true;
 });
@@ -162,12 +162,7 @@ document.addEventListener('keyup', (e) => {
 // Socket event listeners
 socket.on('currentPlayers', (playersData) => {
     players = playersData;
-    Object.values(players).forEach(p => {
-        p.sprite = new Image();
-        p.sprite.src = player.sprite.src; // Assuming all players use the same sprite sheet
-        p.frameIndex = 0;
-        p.direction = DIRECTIONS.DOWN;
-    });
+    Object.values(players).forEach(initializePlayerSprite);
     if (socket.id in players) {
         player.id = socket.id;
         player.name = players[socket.id].name; // Assuming player names are managed server-side
@@ -176,10 +171,7 @@ socket.on('currentPlayers', (playersData) => {
 
 socket.on('newPlayer', (playerData) => {
     players[playerData.id] = playerData;
-    players[playerData.id].sprite = new Image();
-    players[playerData.id].sprite.src = player.sprite.src;
-    players[playerData.id].frameIndex = 0;
-    players[playerData.id].direction = DIRECTIONS.DOWN;
+    initializePlayerSprite(players[playerData.id]);
 });
 
 socket.on('playerMoved', (playerData) => {
@@ -200,5 +192,13 @@ socket.on('chatMessage', (data) => {
         delete playerMessages[data.playerId];
     }, 5000); // Messages disappear after 5 seconds
 });
+
+// Helper function to initialize player sprite
+function initializePlayerSprite(p) {
+    p.sprite = new Image();
+    p.sprite.src = player.sprite.src; // Assuming all players use the same sprite sheet
+    p.frameIndex = 0;
+    p.direction = DIRECTIONS.DOWN;
+}
 
 requestAnimationFrame(gameLoop);
