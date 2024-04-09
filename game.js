@@ -195,52 +195,40 @@ function handleAnimation(deltaTime) {
   player.frameIndex = Math.max(0, Math.min(player.frameIndex, player.frameCount - 1)); // Ensure frameIndex is within valid range
 }
 
-// Improved camera movement for smooth background scrolling
 let cameraX = player.x - canvas.width / 2;
 let cameraY = player.y - canvas.height / 2;
-const cameraEase = 0.05; // Control the smoothing; lower values for smoother movement
+const cameraEase = 0.1; // Control the smoothing; lower values for smoother movement
 
 function updateCameraPosition() {
-    // Calculate the desired position to keep the player centered
-    const desiredX = player.x - canvas.width / 2;
-    const desiredY = player.y - canvas.height / 2;
-
-    // Apply easing to the camera movement for smoother transition
-    cameraX += (desiredX - cameraX) * cameraEase;
-    cameraY += (desiredY - cameraY) * cameraEase;
+  const targetX = player.x - canvas.width / 2;
+  const targetY = player.y - canvas.height / 2;
+  cameraX += (targetX - cameraX) * cameraEase;
+  cameraY += (targetY - cameraY) * cameraEase;
 }
 
-// Adjusting the drawBackground function to prevent sub-pixel rendering issues
 function drawBackground() {
-    updateCameraPosition(); // Ensure camera position is updated smoothly
+  updateCameraPosition();
+  
+  const startCol = Math.floor(cameraX / TILE_SIZE);
+  const endCol = Math.ceil((cameraX + canvas.width) / TILE_SIZE);
+  const startRow = Math.floor(cameraY / TILE_SIZE);
+  const endRow = Math.ceil((cameraY + canvas.height) / TILE_SIZE);
+  const offsetX = -cameraX % TILE_SIZE;
+  const offsetY = -cameraY % TILE_SIZE;
 
-    ctx.imageSmoothingEnabled = false; // Disable image smoothing
-
-    const viewWidth = Math.ceil(canvas.width / TILE_SIZE);
-    const viewHeight = Math.ceil(canvas.height / TILE_SIZE);
-    const startCol = Math.floor(cameraX / TILE_SIZE);
-    const endCol = startCol + viewWidth;
-    const startRow = Math.floor(cameraY / TILE_SIZE);
-    const endRow = startRow + viewHeight;
-    // Use Math.round for offsetX and offsetY to avoid sub-pixel rendering
-    const offsetX = -Math.round(cameraX % TILE_SIZE);
-    const offsetY = -Math.round(cameraY % TILE_SIZE);
-
-    for (let y = startRow; y <= endRow; y++) {
-        for (let x = startCol; x <= endCol; x++) {
-            if (x >= 0 && x < WORLD_WIDTH && y >= 0 && y < WORLD_HEIGHT) {
-                const tile = gameWorld[y][x];
-                if (tileImages[tile]) {
-                    // Ensure x and y positions are rounded to the nearest whole number
-                    ctx.drawImage(tileImages[tile], Math.round((x - startCol) * TILE_SIZE + offsetX), Math.round((y - startRow) * TILE_SIZE + offsetY), TILE_SIZE, TILE_SIZE);
-                }
-            } else {
-                // Draw a default tile if outside the world bounds, ensuring x and y are rounded
-                ctx.fillStyle = '#000';
-                ctx.fillRect(Math.round((x - startCol) * TILE_SIZE + offsetX), Math.round((y - startRow) * TILE_SIZE + offsetY), TILE_SIZE, TILE_SIZE);
-            }
+  for (let y = startRow; y <= endRow; y++) {
+    for (let x = startCol; x <= endCol; x++) {
+      if (x >= 0 && x < WORLD_WIDTH && y >= 0 && y < WORLD_HEIGHT) {
+        const tile = gameWorld[y][x];
+        if (tileImages[tile]) {
+          ctx.drawImage(tileImages[tile], (x - startCol) * TILE_SIZE + offsetX, (y - startRow) * TILE_SIZE + offsetY, TILE_SIZE, TILE_SIZE);
         }
+      } else {
+        ctx.fillStyle = '#000';
+        ctx.fillRect((x - startCol) * TILE_SIZE + offsetX, (y - startRow) * TILE_SIZE + offsetY, TILE_SIZE, TILE_SIZE);
+      }
     }
+  }
 }
 
 // Render players on canvas
@@ -251,20 +239,20 @@ function drawPlayers() {
 
 // Draw a single player on the canvas
 function drawPlayer(p) {
-  if (!p.sprite.complete || p.frameIndex === undefined) return;
-  const srcX = p.frameIndex * p.width;
-  const srcY = p.direction * p.height;
-  const screenX = p.x - player.x + canvas.width / 2 - p.width / 2;
-  const screenY = p.y - player.y + canvas.height / 2 - p.height / 2;
-
-  ctx.drawImage(p.sprite, srcX, srcY, p.width, p.height, screenX, screenY, p.width, p.height);
-  ctx.fillStyle = 'white'; ctx.textAlign = 'center'; ctx.font = '16px Arial';
-  ctx.fillText(p.name, screenX + p.width / 2, screenY - 20);
-  if (playerMessages[p.id]) {
-    ctx.fillStyle = 'yellow';
-    ctx.fillText(playerMessages[p.id], screenX + p.width / 2, screenY - 40);
+    if (!p.sprite.complete || p.frameIndex === undefined) return;
+    const srcX = p.frameIndex * p.width;
+    const srcY = p.direction * p.height;
+    const screenX = p.x - cameraX - p.width / 2;
+    const screenY = p.y - cameraY - p.height / 2;
+  
+    ctx.drawImage(p.sprite, srcX, srcY, p.width, p.height, screenX, screenY, p.width, p.height);
+    ctx.fillStyle = 'white'; ctx.textAlign = 'center'; ctx.font = '16px Arial';
+    ctx.fillText(p.name, screenX + p.width / 2, screenY - 20);
+    if (playerMessages[p.id]) {
+      ctx.fillStyle = 'yellow';
+      ctx.fillText(playerMessages[p.id], screenX + p.width / 2, screenY - 40);
+    }
   }
-}
 
 // Keyboard event listeners for movement
 document.addEventListener('keydown', e => keysPressed[e.key] = true);
