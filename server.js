@@ -59,9 +59,11 @@ io.on('connection', (socket) => {
             players[socket.id].x = data.x;
             players[socket.id].y = data.y;
             players[socket.id].direction = data.direction;
+            players[socket.id].frameIndex = data.frameIndex; // Update to include frameIndex
             io.emit('playerMoved', { playerId: socket.id, ...data });
         }
     });
+    
 
     // Handle chat messages
     socket.on('chatMessage', (data) => {

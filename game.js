@@ -70,10 +70,12 @@ function updatePlayerPosition(deltaTime) {
   const newX = player.x + dx * deltaTime, newY = player.y + dy * deltaTime;
 
   // Emit movement if position changed
-  if (newX !== player.x || newY !== player.y) {
-    Object.assign(player, { x: newX, y: newY });
-    socket.emit('playerMovement', { x: player.x, y: player.y, direction: player.direction });
-  }
+  if (newX !== player.x || newY !== player.y || player.frameIndex !== lastFrameIndex) {
+        player.x = newX;
+        player.y = newY;
+        // Include frameIndex when emitting player movement
+        socket.emit('playerMovement', { x: player.x, y: player.y, direction: player.direction, frameIndex: player.frameIndex });
+    }
 }
 
 // Handle animation based on player movement
@@ -102,17 +104,18 @@ function drawPlayers() {
 // Draw a single player on the canvas
 function drawPlayer(p) {
   if (!p.sprite.complete) return; // Skip drawing if sprite not loaded
-  const srcX = p.frameIndex * p.width, srcY = p.direction * p.height,
-        screenX = p.x - player.x + canvas.width / 2 / zoomLevel,
-        screenY = p.y - player.y + canvas.height / 2 / zoomLevel;
+    const srcX = p.frameIndex * p.width;
+    const srcY = p.direction * p.height;
+    const screenX = p.x - player.x + canvas.width / 2 / zoomLevel;
+    const screenY = p.y - player.y + canvas.height / 2 / zoomLevel;
 
-  ctx.drawImage(p.sprite, srcX, srcY, p.width, p.height, screenX, screenY, p.width, p.height);
-  ctx.fillStyle = 'white'; ctx.textAlign = 'center'; ctx.font = '14px Arial';
-  ctx.fillText(p.name, screenX + p.width / 2, screenY - 10);
-  if (playerMessages[p.id]) {
-    ctx.fillStyle = 'yellow';
-    ctx.fillText(playerMessages[p.id], screenX + p.width / 2, screenY - 25);
-  }
+    ctx.drawImage(p.sprite, srcX, srcY, p.width, p.height, screenX, screenY, p.width, p.height);
+    ctx.fillStyle = 'white'; ctx.textAlign = 'center'; ctx.font = '14px Arial';
+    ctx.fillText(p.name, screenX + p.width / 2, screenY - 10);
+    if (playerMessages[p.id]) {
+        ctx.fillStyle = 'yellow';
+        ctx.fillText(playerMessages[p.id], screenX + p.width / 2, screenY - 25);
+    }
 }
 
 // Keyboard event listeners for movement
