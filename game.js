@@ -78,21 +78,15 @@ function updatePlayerPosition(deltaTime) {
   
     // Apply zoom adjustment and update position
     dx /= zoomLevel; dy /= zoomLevel;
-    const newX = background.x - dx * deltaTime;
-    const newY = background.y - dy * deltaTime;
+    const newX = player.x + dx * deltaTime;
+    const newY = player.y + dy * deltaTime;
   
-    // Check if background is within the bounds of the canvas
-    if (newX >= canvas.width - background.width && newX <= 0 &&
-        newY >= canvas.height - background.height && newY <= 0) {
-      background.x = newX;
-      background.y = newY;
-      socket.emit('playerMovement', { x: player.x, y: player.y, direction: player.direction, frameIndex: player.frameIndex });
-    }
+    // Update player position
+    player.x = newX;
+    player.y = newY;
   
     // Emit movement if position or frameIndex changed
-    if (newX !== background.x || newY !== background.y || player.frameIndex !== player.lastFrameIndex) {
-      background.x = newX;
-      background.y = newY;
+    if (newX !== player.x || newY !== player.y || player.frameIndex !== player.lastFrameIndex) {
       player.lastFrameIndex = player.frameIndex;
       socket.emit('playerMovement', { x: player.x, y: player.y, direction: player.direction, frameIndex: player.frameIndex });
     }

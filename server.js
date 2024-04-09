@@ -1,7 +1,6 @@
 const express = require('express');
 const http = require('http');
 const socketIo = require('socket.io');
-
 const app = express();
 const server = http.createServer(app);
 const io = socketIo(server, {
@@ -36,6 +35,7 @@ function generatePlayerName() {
 io.on('connection', (socket) => {
   console.log(`A user connected: ${socket.id}`);
   const playerName = generatePlayerName();
+
   // Initialize player data
   players[socket.id] = {
     id: socket.id,
@@ -50,6 +50,7 @@ io.on('connection', (socket) => {
 
   // Emit current players to the newly connected player
   socket.emit('currentPlayers', players);
+
   // Broadcast new player's arrival to other players
   socket.broadcast.emit('newPlayer', players[socket.id]);
 
@@ -59,8 +60,16 @@ io.on('connection', (socket) => {
       players[socket.id].x = data.x;
       players[socket.id].y = data.y;
       players[socket.id].direction = data.direction;
-      players[socket.id].frameIndex = data.frameIndex; // Update to include frameIndex
-      socket.broadcast.emit('playerMoved', { playerId: socket.id, ...data });
+      players[socket.id].frameIndex = data.frameIndex;
+
+      // Broadcast the updated player position and frameIndex to other players
+      socket.broadcast.emit('playerMoved', {
+        playerId: socket.id,
+        x: data.x,
+        y: data.y,
+        direction: data.direction,
+        frameIndex: data.frameIndex
+      });
     }
   });
 
