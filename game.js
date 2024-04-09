@@ -34,7 +34,7 @@ let player = {
   player.sprite.onerror = e => console.error("Failed to load player sprite:", e);
 
 let players = {}, playerMessages = {}, keysPressed = {};
-const movementSpeed = 200, animationSpeed = 0.1, canvas = document.getElementById('gameCanvas'), ctx = canvas.getContext('2d');
+const movementSpeed = 1, animationSpeed = 0.1, canvas = document.getElementById('gameCanvas'), ctx = canvas.getContext('2d');
 let lastRenderTime = 0, animationTimer = 0;
 
 canvas.width = CAMERA_WIDTH * TILE_SIZE;
