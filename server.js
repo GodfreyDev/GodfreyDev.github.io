@@ -53,8 +53,7 @@ io.on('connection', (socket) => {
 
     // Server-side adjustment when emitting a chatMessage
     socket.on('chatMessage', (data) => {
-        const playerName = players[socket.id].name; // Retrieve player's name
-        io.emit('chatMessage', {playerId: socket.id, name: playerName, message: data.message}); // Send name with message
+        io.emit('chatMessage', {playerId: socket.id, message: data.message}); // Send name with message
     });
 
 

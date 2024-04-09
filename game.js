@@ -1,3 +1,5 @@
+// Adjusted client-side JavaScript for game.js
+
 const socket = io.connect('https://cool-accessible-pint.glitch.me');
 
 let player = {
@@ -9,10 +11,10 @@ let player = {
     color: 'red'
 };
 let players = {};
-const movementSpeed = 150; // pixels per second
-let zoomLevel = 1; // 1 is default, <1 is zoomed out, >1 is zoomed in
+const movementSpeed = 150;
+let zoomLevel = 1;
 const keysPressed = {};
-let playerMessages = {}; // Store recent messages from players
+let playerMessages = {};
 
 const canvas = document.getElementById('gameCanvas');
 const ctx = canvas.getContext('2d');
@@ -35,7 +37,7 @@ function sendMessage() {
     const messageInput = document.getElementById('chatInput');
     const message = messageInput.value;
     socket.emit('chatMessage', { message: message });
-    messageInput.value = ''; // Clear the input field after sending
+    messageInput.value = '';
 }
 
 function updatePlayerPosition(deltaTime) {
@@ -68,20 +70,17 @@ function drawPlayers() {
         const screenX = p.x - player.x + canvas.width / 2 / zoomLevel;
         const screenY = p.y - player.y + canvas.height / 2 / zoomLevel;
 
-        // Draw player
         ctx.fillStyle = p.color;
         ctx.fillRect(screenX, screenY, p.width, p.height);
 
-        // Draw player's name
         ctx.fillStyle = 'white';
         ctx.textAlign = 'center';
         ctx.font = '14px Arial';
         ctx.fillText(p.name, screenX + p.width / 2, screenY - 10);
 
-        // Display chat message above the player
         if (playerMessages[p.id]) {
-            ctx.fillStyle = 'yellow'; // Color for chat messages
-            ctx.fillText(playerMessages[p.id], screenX + p.width / 2, screenY - 25); // Adjust for message position
+            ctx.fillStyle = 'yellow';
+            ctx.fillText(playerMessages[p.id], screenX + p.width / 2, screenY - 25);
         }
     });
     ctx.restore();
@@ -118,9 +117,8 @@ socket.on('playerDisconnected', (playerId) => {
 });
 
 socket.on('chatMessage', (data) => {
-    // Now data should include player name alongside the message
-    const playerName = players[data.playerId].name; // Assuming player's name is sent from the server
-    playerMessages[data.playerId] = data.message; // Display name with the message
+    // Simply use the message without prefixing it with the player's name
+    playerMessages[data.playerId] = data.message;
     setTimeout(() => {
         delete playerMessages[data.playerId];
     }, 5000); // Messages disappear after 5 seconds
