@@ -136,42 +136,42 @@ function sendMessage() {
 
 // Update player position based on input
 function updatePlayerPosition(deltaTime) {
-  let dx = 0, dy = 0;
-  player.moving = false;
-
-  // Determine direction and set moving flag
-  if (keysPressed['a'] || keysPressed['ArrowLeft']) { dx -= movementSpeed; player.moving = true; }
-  if (keysPressed['d'] || keysPressed['ArrowRight']) { dx += movementSpeed; player.moving = true; }
-  if (keysPressed['w'] || keysPressed['ArrowUp']) { dy -= movementSpeed; player.moving = true; }
-  if (keysPressed['s'] || keysPressed['ArrowDown']) { dy += movementSpeed; player.moving = true; }
-
-  // Adjust direction based on movement
-  if (dy < 0 && dx < 0) player.direction = DIRECTIONS.UP_LEFT;
-  else if (dy < 0 && dx > 0) player.direction = DIRECTIONS.UP_RIGHT;
-  else if (dy > 0 && dx < 0) player.direction = DIRECTIONS.DOWN_LEFT;
-  else if (dy > 0 && dx > 0) player.direction = DIRECTIONS.DOWN_RIGHT;
-  else if (dy < 0) player.direction = DIRECTIONS.UP;
-  else if (dy > 0) player.direction = DIRECTIONS.DOWN;
-  else if (dx < 0) player.direction = DIRECTIONS.LEFT;
-  else if (dx > 0) player.direction = DIRECTIONS.RIGHT;
-
-  const newX = player.x + dx * deltaTime;
-  const newY = player.y + dy * deltaTime;
-
-  // Check collision with walls
-  const tileX = Math.floor(newX / TILE_SIZE);
-  const tileY = Math.floor(newY / TILE_SIZE);
-  if (gameWorld[tileY][tileX] !== TILE_WALL) {
-    player.x = newX;
-    player.y = newY;
-  }
-
-  // Emit movement if position or frameIndex changed
-  if (newX !== player.x || newY !== player.y || player.frameIndex !== player.lastFrameIndex) {
-    player.lastFrameIndex = player.frameIndex;
-    socket.emit('playerMovement', { x: player.x, y: player.y, direction: player.direction, frameIndex: player.frameIndex });
-  }
-}
+    let dx = 0, dy = 0;
+    player.moving = false;
+  
+    // Determine direction and set moving flag
+    if (keysPressed['a'] || keysPressed['ArrowLeft']) { dx -= 1; player.moving = true; }
+    if (keysPressed['d'] || keysPressed['ArrowRight']) { dx += 1; player.moving = true; }
+    if (keysPressed['w'] || keysPressed['ArrowUp']) { dy -= 1; player.moving = true; }
+    if (keysPressed['s'] || keysPressed['ArrowDown']) { dy += 1; player.moving = true; }
+  
+    // Adjust direction based on movement
+    if (dy < 0 && dx < 0) player.direction = DIRECTIONS.UP_LEFT;
+    else if (dy < 0 && dx > 0) player.direction = DIRECTIONS.UP_RIGHT;
+    else if (dy > 0 && dx < 0) player.direction = DIRECTIONS.DOWN_LEFT;
+    else if (dy > 0 && dx > 0) player.direction = DIRECTIONS.DOWN_RIGHT;
+    else if (dy < 0) player.direction = DIRECTIONS.UP;
+    else if (dy > 0) player.direction = DIRECTIONS.DOWN;
+    else if (dx < 0) player.direction = DIRECTIONS.LEFT;
+    else if (dx > 0) player.direction = DIRECTIONS.RIGHT;
+  
+    const newX = player.x + dx * TILE_SIZE;
+    const newY = player.y + dy * TILE_SIZE;
+  
+    // Check collision with walls
+    const tileX = Math.floor(newX / TILE_SIZE);
+    const tileY = Math.floor(newY / TILE_SIZE);
+    if (gameWorld[tileY][tileX] !== TILE_WALL) {
+      player.x = newX;
+      player.y = newY;
+    }
+  
+    // Emit movement if position or frameIndex changed
+    if (newX !== player.x || newY !== player.y || player.frameIndex !== player.lastFrameIndex) {
+      player.lastFrameIndex = player.frameIndex;
+      socket.emit('playerMovement', { x: player.x, y: player.y, direction: player.direction, frameIndex: player.frameIndex });
+    }
+  }  
 
 // Handle animation based on player movement
 function handleAnimation(deltaTime) {
