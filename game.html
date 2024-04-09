@@ -41,7 +41,9 @@
     <div id="gameContainer">
         <canvas id="gameCanvas"></canvas>
         <div id="dialogueBox"></div>
-    </div>
+        <input type="text" id="chatInput" placeholder="Type your message here..." />
+        <button onclick="sendMessage()">Send</button>
+    </div>    
     <script src="https://cdn.socket.io/4.3.2/socket.io.min.js"></script>
     <script src="game.js"></script>
 </body>
