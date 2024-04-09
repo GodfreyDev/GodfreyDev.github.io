@@ -207,29 +207,33 @@ function updateCameraPosition() {
 }
 
 function drawBackground() {
-  updateCameraPosition();
+    updateCameraPosition();
   
-  const startCol = Math.floor(cameraX / TILE_SIZE);
-  const endCol = Math.ceil((cameraX + canvas.width) / TILE_SIZE);
-  const startRow = Math.floor(cameraY / TILE_SIZE);
-  const endRow = Math.ceil((cameraY + canvas.height) / TILE_SIZE);
-  const offsetX = -cameraX % TILE_SIZE;
-  const offsetY = -cameraY % TILE_SIZE;
-
-  for (let y = startRow; y <= endRow; y++) {
-    for (let x = startCol; x <= endCol; x++) {
-      if (x >= 0 && x < WORLD_WIDTH && y >= 0 && y < WORLD_HEIGHT) {
-        const tile = gameWorld[y][x];
-        if (tileImages[tile]) {
-          ctx.drawImage(tileImages[tile], (x - startCol) * TILE_SIZE + offsetX, (y - startRow) * TILE_SIZE + offsetY, TILE_SIZE, TILE_SIZE);
+    const startCol = Math.floor(cameraX / TILE_SIZE);
+    const endCol = Math.ceil((cameraX + canvas.width) / TILE_SIZE);
+    const startRow = Math.floor(cameraY / TILE_SIZE);
+    const endRow = Math.ceil((cameraY + canvas.height) / TILE_SIZE);
+    const offsetX = -cameraX % TILE_SIZE;
+    const offsetY = -cameraY % TILE_SIZE;
+  
+    for (let y = startRow; y <= endRow; y++) {
+      for (let x = startCol; x <= endCol; x++) {
+        let tileX = (x - startCol) * TILE_SIZE + offsetX;
+        let tileY = (y - startRow) * TILE_SIZE + offsetY;
+  
+        if (x >= 0 && x < WORLD_WIDTH && y >= 0 && y < WORLD_HEIGHT) {
+          const tile = gameWorld[y][x];
+          if (tileImages[tile]) {
+            ctx.drawImage(tileImages[tile], tileX, tileY, TILE_SIZE, TILE_SIZE);
+          }
+        } else {
+          // Draw a solid color for out-of-bounds tiles
+          ctx.fillStyle = '#000';
+          ctx.fillRect(tileX, tileY, TILE_SIZE, TILE_SIZE);
         }
-      } else {
-        ctx.fillStyle = '#000';
-        ctx.fillRect((x - startCol) * TILE_SIZE + offsetX, (y - startRow) * TILE_SIZE + offsetY, TILE_SIZE, TILE_SIZE);
       }
     }
   }
-}
 
 // Render players on canvas
 function drawPlayers() {
