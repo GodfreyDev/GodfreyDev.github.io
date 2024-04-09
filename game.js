@@ -26,7 +26,7 @@ let player = {
   frameCount: 8, // Total frames per direction
 };
 
-player.sprite.src = 'Images/player_sprite.png'; // Make sure this path is correct
+player.sprite.src = 'Images/player_sprite_frames.png'; // Make sure this path is correct
 player.sprite.onload = () => {
     console.log("Player sprite loaded successfully.");
     requestAnimationFrame(gameLoop); // Start the game loop after the sprite has loaded
@@ -161,12 +161,15 @@ document.addEventListener('keyup', (e) => {
 
 // Socket event listeners
 socket.on('currentPlayers', (playersData) => {
-    players = playersData;
-    Object.values(players).forEach(initializePlayerSprite);
-    if (socket.id in players) {
+    Object.values(playersData).forEach(initializePlayerSprite);
+    if (socket.id in playersData) {
         player.id = socket.id;
-        player.name = players[socket.id].name; // Assuming player names are managed server-side
+        player.name = playersData[socket.id].name; // Assuming player names are managed server-side
+        player.x = playersData[socket.id].x;
+        player.y = playersData[socket.id].y;
+        player.direction = playersData[socket.id].direction;
     }
+    players = playersData;
 });
 
 socket.on('newPlayer', (playerData) => {
