@@ -207,9 +207,11 @@ function updateCameraPosition() {
     cameraY += (desiredY - cameraY) * cameraEase;
 }
 
-// Modify the drawBackground function to use the smoothly updated camera position
+// Adjusting the drawBackground function to prevent sub-pixel rendering issues
 function drawBackground() {
     updateCameraPosition(); // Ensure camera position is updated smoothly
+
+    ctx.imageSmoothingEnabled = false; // Disable image smoothing
 
     const viewWidth = Math.ceil(canvas.width / TILE_SIZE);
     const viewHeight = Math.ceil(canvas.height / TILE_SIZE);
@@ -217,24 +219,27 @@ function drawBackground() {
     const endCol = startCol + viewWidth;
     const startRow = Math.floor(cameraY / TILE_SIZE);
     const endRow = startRow + viewHeight;
-    const offsetX = -cameraX % TILE_SIZE;
-    const offsetY = -cameraY % TILE_SIZE;
+    // Use Math.round for offsetX and offsetY to avoid sub-pixel rendering
+    const offsetX = -Math.round(cameraX % TILE_SIZE);
+    const offsetY = -Math.round(cameraY % TILE_SIZE);
 
     for (let y = startRow; y <= endRow; y++) {
         for (let x = startCol; x <= endCol; x++) {
             if (x >= 0 && x < WORLD_WIDTH && y >= 0 && y < WORLD_HEIGHT) {
                 const tile = gameWorld[y][x];
                 if (tileImages[tile]) {
-                    ctx.drawImage(tileImages[tile], (x - startCol) * TILE_SIZE + offsetX, (y - startRow) * TILE_SIZE + offsetY, TILE_SIZE, TILE_SIZE);
+                    // Ensure x and y positions are rounded to the nearest whole number
+                    ctx.drawImage(tileImages[tile], Math.round((x - startCol) * TILE_SIZE + offsetX), Math.round((y - startRow) * TILE_SIZE + offsetY), TILE_SIZE, TILE_SIZE);
                 }
             } else {
-                // Draw a default tile if outside the world bounds
+                // Draw a default tile if outside the world bounds, ensuring x and y are rounded
                 ctx.fillStyle = '#000';
-                ctx.fillRect((x - startCol) * TILE_SIZE + offsetX, (y - startRow) * TILE_SIZE + offsetY, TILE_SIZE, TILE_SIZE);
+                ctx.fillRect(Math.round((x - startCol) * TILE_SIZE + offsetX), Math.round((y - startRow) * TILE_SIZE + offsetY), TILE_SIZE, TILE_SIZE);
             }
         }
     }
 }
+
 
 // The rest of your game's logic remains unchanged.
 
