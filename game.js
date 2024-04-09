@@ -16,6 +16,17 @@ player.sprite.src = 'Images/player_sprite_frames.png';
 player.sprite.onload = () => requestAnimationFrame(gameLoop);
 player.sprite.onerror = e => console.error("Failed to load player sprite:", e);
 
+let background = {
+image: new Image(),
+x: 0,
+y: 0,
+width: 800,
+height: 600
+};
+background.image.src = 'Images/background.png';
+background.image.onload = () => requestAnimationFrame(gameLoop);
+background.image.onerror = e => console.error("Failed to load background image:", e);
+
 let players = {}, playerMessages = {}, keysPressed = {};
 const movementSpeed = 150, animationSpeed = 0.1, canvas = document.getElementById('gameCanvas'), ctx = canvas.getContext('2d');
 let lastRenderTime = 0, animationTimer = 0, zoomLevel = 1;
@@ -67,8 +78,17 @@ function updatePlayerPosition(deltaTime) {
   
     // Apply zoom adjustment and update position
     dx /= zoomLevel; dy /= zoomLevel;
-    const newX = player.x + dx * deltaTime, newY = player.y + dy * deltaTime;
-  
+    const newX = player.x + dx * deltaTime;
+    const newY = player.y + dy * deltaTime;
+
+    // Check if player is within the bounds of the background
+    if (newX >= 0 && newX <= background.width - player.width &&
+        newY >= 0 && newY <= background.height - player.height) {
+        player.x = newX;
+        player.y = newY;
+        socket.emit('playerMovement', { x: player.x, y: player.y, direction: player.direction, frameIndex: player.frameIndex });
+    }
+    
     // Emit movement if position or frameIndex changed
     if (newX !== player.x || newY !== player.y || player.frameIndex !== player.lastFrameIndex) {
       player.x = newX;
@@ -94,13 +114,17 @@ function handleAnimation(deltaTime) {
 
 // Render players on canvas
 function drawPlayers() {
-  ctx.clearRect(0, 0, canvas.width, canvas.height);
-  ctx.save();
-  ctx.scale(zoomLevel, zoomLevel);
-  Object.values(players).forEach(drawPlayer);
-  drawPlayer(player); // Draw current player last to be on top
-  ctx.restore();
-}
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    ctx.save();
+    ctx.scale(zoomLevel, zoomLevel);
+  
+    // Draw background
+    ctx.drawImage(background.image, background.x, background.y, background.width, background.height);
+  
+    Object.values(players).forEach(drawPlayer);
+    drawPlayer(player); // Draw current player last to be on top
+    ctx.restore();
+  }
 
 // Draw a single player on the canvas
 function drawPlayer(p) {
