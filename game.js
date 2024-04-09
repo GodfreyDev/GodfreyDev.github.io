@@ -46,37 +46,37 @@ function sendMessage() {
 
 // Update player position based on input
 function updatePlayerPosition(deltaTime) {
-  let dx = 0, dy = 0;
-  player.moving = false;
-
-  // Determine direction and set moving flag
-  if (keysPressed['a'] || keysPressed['ArrowLeft']) { dx -= movementSpeed; player.moving = true; }
-  if (keysPressed['d'] || keysPressed['ArrowRight']) { dx += movementSpeed; player.moving = true; }
-  if (keysPressed['w'] || keysPressed['ArrowUp']) { dy -= movementSpeed; player.moving = true; }
-  if (keysPressed['s'] || keysPressed['ArrowDown']) { dy += movementSpeed; player.moving = true; }
-
-  // Adjust direction based on movement
-  if (dy < 0 && dx < 0) player.direction = DIRECTIONS.UP_LEFT;
-  else if (dy < 0 && dx > 0) player.direction = DIRECTIONS.UP_RIGHT;
-  else if (dy > 0 && dx < 0) player.direction = DIRECTIONS.DOWN_LEFT;
-  else if (dy > 0 && dx > 0) player.direction = DIRECTIONS.DOWN_RIGHT;
-  else if (dy < 0) player.direction = DIRECTIONS.UP;
-  else if (dy > 0) player.direction = DIRECTIONS.DOWN;
-  else if (dx < 0) player.direction = DIRECTIONS.LEFT;
-  else if (dx > 0) player.direction = DIRECTIONS.RIGHT;
-
-  // Apply zoom adjustment and update position
-  dx /= zoomLevel; dy /= zoomLevel;
-  const newX = player.x + dx * deltaTime, newY = player.y + dy * deltaTime;
-
-  // Emit movement if position changed
-  if (newX !== player.x || newY !== player.y || player.frameIndex !== lastFrameIndex) {
-        player.x = newX;
-        player.y = newY;
-        // Include frameIndex when emitting player movement
-        socket.emit('playerMovement', { x: player.x, y: player.y, direction: player.direction, frameIndex: player.frameIndex });
+    let dx = 0, dy = 0;
+    player.moving = false;
+  
+    // Determine direction and set moving flag
+    if (keysPressed['a'] || keysPressed['ArrowLeft']) { dx -= movementSpeed; player.moving = true; }
+    if (keysPressed['d'] || keysPressed['ArrowRight']) { dx += movementSpeed; player.moving = true; }
+    if (keysPressed['w'] || keysPressed['ArrowUp']) { dy -= movementSpeed; player.moving = true; }
+    if (keysPressed['s'] || keysPressed['ArrowDown']) { dy += movementSpeed; player.moving = true; }
+  
+    // Adjust direction based on movement
+    if (dy < 0 && dx < 0) player.direction = DIRECTIONS.UP_LEFT;
+    else if (dy < 0 && dx > 0) player.direction = DIRECTIONS.UP_RIGHT;
+    else if (dy > 0 && dx < 0) player.direction = DIRECTIONS.DOWN_LEFT;
+    else if (dy > 0 && dx > 0) player.direction = DIRECTIONS.DOWN_RIGHT;
+    else if (dy < 0) player.direction = DIRECTIONS.UP;
+    else if (dy > 0) player.direction = DIRECTIONS.DOWN;
+    else if (dx < 0) player.direction = DIRECTIONS.LEFT;
+    else if (dx > 0) player.direction = DIRECTIONS.RIGHT;
+  
+    // Apply zoom adjustment and update position
+    dx /= zoomLevel; dy /= zoomLevel;
+    const newX = player.x + dx * deltaTime, newY = player.y + dy * deltaTime;
+  
+    // Emit movement if position or frameIndex changed
+    if (newX !== player.x || newY !== player.y || player.frameIndex !== player.lastFrameIndex) {
+      player.x = newX;
+      player.y = newY;
+      player.lastFrameIndex = player.frameIndex;
+      socket.emit('playerMovement', { x: player.x, y: player.y, direction: player.direction, frameIndex: player.frameIndex });
     }
-}
+  }
 
 // Handle animation based on player movement
 function handleAnimation(deltaTime) {
@@ -104,18 +104,18 @@ function drawPlayers() {
 // Draw a single player on the canvas
 function drawPlayer(p) {
   if (!p.sprite.complete) return; // Skip drawing if sprite not loaded
-    const srcX = p.frameIndex * p.width;
-    const srcY = p.direction * p.height;
-    const screenX = p.x - player.x + canvas.width / 2 / zoomLevel;
-    const screenY = p.y - player.y + canvas.height / 2 / zoomLevel;
+  const srcX = p.frameIndex * p.width;
+  const srcY = p.direction * p.height;
+  const screenX = p.x - player.x + canvas.width / 2 / zoomLevel;
+  const screenY = p.y - player.y + canvas.height / 2 / zoomLevel;
 
-    ctx.drawImage(p.sprite, srcX, srcY, p.width, p.height, screenX, screenY, p.width, p.height);
-    ctx.fillStyle = 'white'; ctx.textAlign = 'center'; ctx.font = '14px Arial';
-    ctx.fillText(p.name, screenX + p.width / 2, screenY - 10);
-    if (playerMessages[p.id]) {
-        ctx.fillStyle = 'yellow';
-        ctx.fillText(playerMessages[p.id], screenX + p.width / 2, screenY - 25);
-    }
+  ctx.drawImage(p.sprite, srcX, srcY, p.width, p.height, screenX, screenY, p.width, p.height);
+  ctx.fillStyle = 'white'; ctx.textAlign = 'center'; ctx.font = '14px Arial';
+  ctx.fillText(p.name, screenX + p.width / 2, screenY - 10);
+  if (playerMessages[p.id]) {
+    ctx.fillStyle = 'yellow';
+    ctx.fillText(playerMessages[p.id], screenX + p.width / 2, screenY - 25);
+  }
 }
 
 // Keyboard event listeners for movement
