@@ -10,8 +10,6 @@ const DIRECTIONS = {
 const TILE_SIZE = 64;
 const WORLD_WIDTH = 200;
 const WORLD_HEIGHT = 200;
-const CAMERA_WIDTH = 30;
-const CAMERA_HEIGHT = 20;
 
 // Tile types
 const TILE_FLOOR = 0;
@@ -32,11 +30,18 @@ player.sprite.onload = () => requestAnimationFrame(gameLoop);
 player.sprite.onerror = e => console.error("Failed to load player sprite:", e);
 
 let players = {}, playerMessages = {}, keysPressed = {};
-const movementSpeed = 200, animationSpeed = 0.1, canvas = document.getElementById('gameCanvas'), ctx = canvas.getContext('2d');
+const movementSpeed = 200, animationSpeed = 0.1;
 let lastRenderTime = 0, animationTimer = 0;
 
-canvas.width = CAMERA_WIDTH * TILE_SIZE;
-canvas.height = CAMERA_HEIGHT * TILE_SIZE;
+const canvas = document.getElementById('gameCanvas'), ctx = canvas.getContext('2d');
+
+// Function to adjust the canvas size dynamically
+function adjustCanvasSize() {
+  canvas.width = window.innerWidth;
+  canvas.height = window.innerHeight;
+}
+adjustCanvasSize(); // Adjust canvas size on initial load
+window.addEventListener('resize', adjustCanvasSize); // Adjust canvas size on window resize
 
 // Load tile images
 const tileImages = {};
@@ -273,5 +278,4 @@ socket.on('chatMessage', data => {
 
 // Initialize the game world
 initializeGameWorld();
-
 requestAnimationFrame(gameLoop);
