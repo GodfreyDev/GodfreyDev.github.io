@@ -53,18 +53,19 @@ const tileTypes = [TILE_FLOOR, TILE_WALL, TILE_DOOR];
 let loadedImages = 0;
 
 function loadTileImage(type) {
-  tileImages[type] = new Image();
-  tileImages[type].src = `Images/tile_${type}.png`;
-  tileImages[type].onload = () => {
-    loadedImages++;
-    if (loadedImages === tileTypes.length) {
-      requestAnimationFrame(gameLoop);
-    }
-  };
-  tileImages[type].onerror = () => {
-    console.error(`Failed to load tile image: Images/tile_${type}.png`);
-  };
-}
+    tileImages[type] = new Image();
+    tileImages[type].src = `Images/tile_${type}.png`;
+    tileImages[type].onload = () => {
+      loadedImages++;
+      if (loadedImages === tileTypes.length) {
+        requestAnimationFrame(gameLoop);
+      }
+    };
+    tileImages[type].onerror = () => {
+      console.error(`Failed to load tile image: Images/tile_${type}.png`);
+    };
+  }
+  
 
 tileTypes.forEach(loadTileImage);
 
@@ -172,11 +173,45 @@ function updatePlayerPosition(deltaTime) {
     const bottomLeftTile = gameWorld[Math.floor((newY + player.height / 2) / TILE_SIZE)][Math.floor((newX - player.width / 2) / TILE_SIZE)];
     const bottomRightTile = gameWorld[Math.floor((newY + player.height / 2) / TILE_SIZE)][Math.floor((newX + player.width / 2) / TILE_SIZE)];
   
-    // Allow movement only if none of the corners collide with a wall
-    if (topLeftTile !== TILE_WALL && topRightTile !== TILE_WALL && bottomLeftTile !== TILE_WALL && bottomRightTile !== TILE_WALL) {
+    // Check if any of the corners collide with a wall
+    const collidesWithWall = topLeftTile === TILE_WALL || topRightTile === TILE_WALL || bottomLeftTile === TILE_WALL || bottomRightTile === TILE_WALL;
+  
+    // Check if the player is colliding with a door
+    const collidesWithDoor = topLeftTile === TILE_DOOR || topRightTile === TILE_DOOR || bottomLeftTile === TILE_DOOR || bottomRightTile === TILE_DOOR;
+  
+    if (!collidesWithWall && !collidesWithDoor) {
       player.x = newX;
       player.y = newY;
     }
+  
+    if (collidesWithDoor) {
+        // Calculate the door's center position
+        const doorCenterX = Math.floor((newX + player.width / 2) / TILE_SIZE) * TILE_SIZE + TILE_SIZE / 2;
+        const doorCenterY = Math.floor((newY + player.height / 2) / TILE_SIZE) * TILE_SIZE + TILE_SIZE / 2;
+    
+        // Calculate the player's distance from the door's center
+        const distanceX = doorCenterX - player.x;
+        const distanceY = doorCenterY - player.y;
+    
+        // Adjust the player's position to smoothly pass through the door
+        if (Math.abs(distanceX) < TILE_SIZE / 4) {
+          player.x += distanceX * 0.2; // Adjust the player's x-position gradually
+        }
+        if (Math.abs(distanceY) < TILE_SIZE / 4) {
+          player.y += distanceY * 0.2; // Adjust the player's y-position gradually
+        }
+    
+        // Move the player through the door based on their direction
+        if (player.direction === DIRECTIONS.UP) {
+          player.y -= player.height / 4; // Adjust the player's y-position gradually
+        } else if (player.direction === DIRECTIONS.DOWN) {
+          player.y += player.height / 4; // Adjust the player's y-position gradually
+        } else if (player.direction === DIRECTIONS.LEFT) {
+          player.x -= player.width / 4; // Adjust the player's x-position gradually
+        } else if (player.direction === DIRECTIONS.RIGHT) {
+          player.x += player.width / 4; // Adjust the player's x-position gradually
+        }
+      }
   
     // Emit movement if position or frameIndex changed
     if (newX !== player.x || newY !== player.y || player.frameIndex !== player.lastFrameIndex) {
@@ -211,35 +246,31 @@ function updateCameraPosition() {
 }
 
 function drawBackground() {
-    const startCol = Math.max(0, Math.floor(cameraX / TILE_SIZE));
-    const endCol = Math.min(WORLD_WIDTH - 1, Math.ceil((cameraX + canvas.width) / TILE_SIZE));
-    const startRow = Math.max(0, Math.floor(cameraY / TILE_SIZE));
-    const endRow = Math.min(WORLD_HEIGHT - 1, Math.ceil((cameraY + canvas.height) / TILE_SIZE));
-  
-    ctx.save();
-    ctx.translate(-cameraX, -cameraY);
-  
-    for (let y = startRow; y <= endRow; y++) {
-      for (let x = startCol; x <= endCol; x++) {
-        const tileX = x * TILE_SIZE;
-        const tileY = y * TILE_SIZE;
-  
-        // Check if the tile exists in the gameWorld array
-        if (gameWorld[y] && gameWorld[y][x]) {
-          const tile = gameWorld[y][x];
-          if (tileImages[tile]) {
-            ctx.drawImage(tileImages[tile], tileX, tileY, TILE_SIZE, TILE_SIZE);
-          }
-        } else {
-          // Draw a default tile for out-of-bounds areas
-          ctx.fillStyle = '#000';
-          ctx.fillRect(tileX, tileY, TILE_SIZE, TILE_SIZE);
+  const startCol = Math.max(0, Math.floor(cameraX / TILE_SIZE));
+  const endCol = Math.min(WORLD_WIDTH - 1, Math.ceil((cameraX + canvas.width) / TILE_SIZE));
+  const startRow = Math.max(0, Math.floor(cameraY / TILE_SIZE));
+  const endRow = Math.min(WORLD_HEIGHT - 1, Math.ceil((cameraY + canvas.height) / TILE_SIZE));
+
+  ctx.save();
+  ctx.translate(-cameraX, -cameraY);
+
+  for (let y = startRow; y <= endRow; y++) {
+    for (let x = startCol; x <= endCol; x++) {
+      const tileX = x * TILE_SIZE;
+      const tileY = y * TILE_SIZE;
+
+      // Check if the tile exists in the gameWorld array
+      if (gameWorld[y] && gameWorld[y][x]) {
+        const tile = gameWorld[y][x];
+        if (tileImages[tile]) {
+          ctx.drawImage(tileImages[tile], tileX, tileY, TILE_SIZE, TILE_SIZE);
         }
-      }
+      }      
     }
-  
-    ctx.restore();
   }
+
+  ctx.restore();
+}
 
 // Render players on canvas
 function drawPlayers() {
