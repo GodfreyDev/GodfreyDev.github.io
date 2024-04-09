@@ -7,9 +7,11 @@ const DIRECTIONS = {
 };
 
 // Game world configuration
-const TILE_SIZE = 64;
-const WORLD_WIDTH = 50;
-const WORLD_HEIGHT = 50;
+const TILE_SIZE = 32;
+const WORLD_WIDTH = 100;
+const WORLD_HEIGHT = 100;
+const CAMERA_WIDTH = 20;
+const CAMERA_HEIGHT = 15;
 
 // Tile types
 const TILE_FLOOR = 0;
@@ -21,7 +23,7 @@ let gameWorld = [];
 
 // Player object definition
 let player = {
-  id: null, x: 400, y: 300, width: 64, height: 64,
+  id: null, x: 400, y: 300, width: 32, height: 32,
   direction: DIRECTIONS.DOWN, moving: false, sprite: new Image(),
   frameIndex: 0, frameCount: 8
 };
@@ -31,10 +33,10 @@ player.sprite.onerror = e => console.error("Failed to load player sprite:", e);
 
 let players = {}, playerMessages = {}, keysPressed = {};
 const movementSpeed = 150, animationSpeed = 0.1, canvas = document.getElementById('gameCanvas'), ctx = canvas.getContext('2d');
-let lastRenderTime = 0, animationTimer = 0, zoomLevel = 1;
+let lastRenderTime = 0, animationTimer = 0;
 
-canvas.width = window.innerWidth;
-canvas.height = window.innerHeight;
+canvas.width = CAMERA_WIDTH * TILE_SIZE;
+canvas.height = CAMERA_HEIGHT * TILE_SIZE;
 
 // Initialize the game world
 function initializeGameWorld() {
@@ -51,14 +53,14 @@ function initializeGameWorld() {
   
   // Create rooms by adding walls and doors
   // Example: Creating a room in the center
-  for (let y = 10; y < 20; y++) {
-    for (let x = 10; x < 20; x++) {
-      if (y === 10 || y === 19 || x === 10 || x === 19) {
+  for (let y = 40; y < 60; y++) {
+    for (let x = 40; x < 60; x++) {
+      if (y === 40 || y === 59 || x === 40 || x === 59) {
         gameWorld[y][x] = TILE_WALL;
       }
     }
   }
-  gameWorld[15][10] = TILE_DOOR;
+  gameWorld[50][40] = TILE_DOOR;
 }
 
 // Game loop for rendering and updating
@@ -69,25 +71,10 @@ function gameLoop(timeStamp) {
     updatePlayerPosition(deltaTime);
     handleAnimation(deltaTime);
   }
-  updateCamera();
   ctx.clearRect(0, 0, canvas.width, canvas.height);
   drawBackground();
   drawPlayers();
   lastRenderTime = timeStamp;
-}
-
-// Update camera position and scaling based on window size
-function updateCamera() {
-  const aspectRatio = canvas.width / canvas.height;
-  const targetAspectRatio = WORLD_WIDTH / WORLD_HEIGHT;
-
-  if (aspectRatio > targetAspectRatio) {
-    // Window is wider than the game world
-    zoomLevel = canvas.height / (WORLD_HEIGHT * TILE_SIZE);
-  } else {
-    // Window is taller than the game world
-    zoomLevel = canvas.width / (WORLD_WIDTH * TILE_SIZE);
-  }
 }
 
 // Send chat message to the server
@@ -120,8 +107,6 @@ function updatePlayerPosition(deltaTime) {
   else if (dx < 0) player.direction = DIRECTIONS.LEFT;
   else if (dx > 0) player.direction = DIRECTIONS.RIGHT;
 
-  // Apply zoom adjustment and update position
-  dx /= zoomLevel; dy /= zoomLevel;
   const newX = player.x + dx * deltaTime;
   const newY = player.y + dy * deltaTime;
 
@@ -156,43 +141,40 @@ function handleAnimation(deltaTime) {
 
 // Draw the game world
 function drawBackground() {
-  ctx.save();
-  ctx.translate(canvas.width / 2, canvas.height / 2);
-  ctx.scale(zoomLevel, zoomLevel);
-  ctx.translate(-player.x, -player.y);
+  const cameraX = player.x - canvas.width / 2;
+  const cameraY = player.y - canvas.height / 2;
 
-  for (let y = 0; y < WORLD_HEIGHT; y++) {
-    for (let x = 0; x < WORLD_WIDTH; x++) {
-      const tile = gameWorld[y][x];
-      switch (tile) {
-        case TILE_FLOOR:
-          ctx.fillStyle = '#ccc';
-          break;
-        case TILE_WALL:
-          ctx.fillStyle = '#666';
-          break;
-        case TILE_DOOR:
-          ctx.fillStyle = '#a52a2a';
-          break;
+  for (let y = 0; y < CAMERA_HEIGHT; y++) {
+    for (let x = 0; x < CAMERA_WIDTH; x++) {
+      const worldX = Math.floor(cameraX / TILE_SIZE) + x;
+      const worldY = Math.floor(cameraY / TILE_SIZE) + y;
+
+      if (worldX >= 0 && worldX < WORLD_WIDTH && worldY >= 0 && worldY < WORLD_HEIGHT) {
+        const tile = gameWorld[worldY][worldX];
+        switch (tile) {
+          case TILE_FLOOR:
+            ctx.fillStyle = '#ccc';
+            break;
+          case TILE_WALL:
+            ctx.fillStyle = '#666';
+            break;
+          case TILE_DOOR:
+            ctx.fillStyle = '#a52a2a';
+            break;
+        }
+        ctx.fillRect(x * TILE_SIZE, y * TILE_SIZE, TILE_SIZE, TILE_SIZE);
+      } else {
+        ctx.fillStyle = '#000';
+        ctx.fillRect(x * TILE_SIZE, y * TILE_SIZE, TILE_SIZE, TILE_SIZE);
       }
-      ctx.fillRect(x * TILE_SIZE, y * TILE_SIZE, TILE_SIZE, TILE_SIZE);
     }
   }
-
-  ctx.restore();
 }
 
 // Render players on canvas
 function drawPlayers() {
-  ctx.save();
-  ctx.translate(canvas.width / 2, canvas.height / 2);
-  ctx.scale(zoomLevel, zoomLevel);
-  ctx.translate(-player.x, -player.y);
-
   Object.values(players).forEach(drawPlayer);
   drawPlayer(player); // Draw current player last to be on top
-
-  ctx.restore();
 }
 
 // Draw a single player on the canvas
@@ -200,8 +182,8 @@ function drawPlayer(p) {
   if (!p.sprite.complete || p.frameIndex === undefined) return;
   const srcX = p.frameIndex * p.width;
   const srcY = p.direction * p.height;
-  const screenX = p.x;
-  const screenY = p.y;
+  const screenX = p.x - player.x + canvas.width / 2 - p.width / 2;
+  const screenY = p.y - player.y + canvas.height / 2 - p.height / 2;
 
   ctx.drawImage(p.sprite, srcX, srcY, p.width, p.height, screenX, screenY, p.width, p.height);
   ctx.fillStyle = 'white'; ctx.textAlign = 'center'; ctx.font = '14px Arial';
