@@ -15,9 +15,9 @@ const WORLD_WIDTH = 200;
 const WORLD_HEIGHT = 200;
 
 // Tile types
-const TILE_FLOOR = 0;
 const TILE_WALL = 1;
 const TILE_DOOR = 2;
+const TILE_FLOOR = 3;
 
 // Game world array
 let gameWorld = [];
@@ -56,11 +56,12 @@ function loadTileImage(type) {
     tileImages[type] = new Image();
     tileImages[type].src = `Images/tile_${type}.png`;
     tileImages[type].onload = () => {
-      loadedImages++;
-      if (loadedImages === tileTypes.length) {
-        requestAnimationFrame(gameLoop);
-      }
-    };
+        console.log(`Tile image loaded: ${type}`); // Add this line
+        loadedImages++;
+        if (loadedImages === tileTypes.length) {
+          requestAnimationFrame(gameLoop);
+        }
+      };      
     tileImages[type].onerror = () => {
       console.error(`Failed to load tile image: Images/tile_${type}.png`);
     };
@@ -80,6 +81,7 @@ function initializeGameWorld() {
         gameWorld[y][x] = TILE_FLOOR;
       }
     }
+    console.log(gameWorld);
   }
   
   // Create rooms and corridors
@@ -131,6 +133,9 @@ function gameLoop(timeStamp) {
       updateCameraPosition(); // Add this line to update the camera position
     }
     ctx.clearRect(0, 0, canvas.width, canvas.height);
+    updatePlayerPosition(deltaTime);
+    handleAnimation(deltaTime);
+    updateCameraPosition();
     drawBackground();
     drawPlayers();
     lastRenderTime = timeStamp;
@@ -246,31 +251,35 @@ function updateCameraPosition() {
 }
 
 function drawBackground() {
-  const startCol = Math.max(0, Math.floor(cameraX / TILE_SIZE));
-  const endCol = Math.min(WORLD_WIDTH - 1, Math.ceil((cameraX + canvas.width) / TILE_SIZE));
-  const startRow = Math.max(0, Math.floor(cameraY / TILE_SIZE));
-  const endRow = Math.min(WORLD_HEIGHT - 1, Math.ceil((cameraY + canvas.height) / TILE_SIZE));
-
-  ctx.save();
-  ctx.translate(-cameraX, -cameraY);
-
-  for (let y = startRow; y <= endRow; y++) {
-    for (let x = startCol; x <= endCol; x++) {
-      const tileX = x * TILE_SIZE;
-      const tileY = y * TILE_SIZE;
-
-      // Check if the tile exists in the gameWorld array
-      if (gameWorld[y] && gameWorld[y][x]) {
-        const tile = gameWorld[y][x];
-        if (tileImages[tile]) {
-          ctx.drawImage(tileImages[tile], tileX, tileY, TILE_SIZE, TILE_SIZE);
+    const startCol = Math.max(0, Math.floor(cameraX / TILE_SIZE));
+    const endCol = Math.min(WORLD_WIDTH - 1, Math.ceil((cameraX + canvas.width) / TILE_SIZE));
+    const startRow = Math.max(0, Math.floor(cameraY / TILE_SIZE));
+    const endRow = Math.min(WORLD_HEIGHT - 1, Math.ceil((cameraY + canvas.height) / TILE_SIZE));
+  
+    ctx.save();
+    ctx.translate(-cameraX, -cameraY);
+  
+    // Fill the canvas with black
+    ctx.fillStyle = 'black';
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+  
+    for (let y = startRow; y <= endRow; y++) {
+      for (let x = startCol; x <= endCol; x++) {
+        const tileX = x * TILE_SIZE;
+        const tileY = y * TILE_SIZE;
+  
+        // Check if the tile exists in the gameWorld array
+        if (gameWorld[y] && gameWorld[y][x]) {
+            const tile = gameWorld[y][x];
+            if (tileImages[tile]) {
+              ctx.drawImage(tileImages[tile], tileX, tileY, TILE_SIZE, TILE_SIZE);
+            }            
         }
-      }      
+      }
     }
-  }
-
-  ctx.restore();
-}
+  
+    ctx.restore();
+  }  
 
 // Render players on canvas
 function drawPlayers() {
