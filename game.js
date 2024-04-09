@@ -192,33 +192,44 @@ function handleAnimation(deltaTime) {
   player.frameIndex = Math.max(0, Math.min(player.frameIndex, player.frameCount - 1)); // Ensure frameIndex is within valid range
 }
 
-// Draw the game world
+// Variables for smooth camera movement
+let cameraX = 0;
+let cameraY = 0;
+const cameraSmoothness = 0.1; // Adjust for smoother or more immediate camera movement
+
+// Modified drawBackground function for smooth camera movement
 function drawBackground() {
-    const viewWidth = canvas.width / TILE_SIZE;
-    const viewHeight = canvas.height / TILE_SIZE;
-    const cameraX = player.x - canvas.width / 2;
-    const cameraY = player.y - canvas.height / 2;
-  
-    for (let y = 0; y < viewHeight; y++) {
-      for (let x = 0; x < viewWidth; x++) {
-        const worldX = Math.floor(cameraX / TILE_SIZE) + x;
-        const worldY = Math.floor(cameraY / TILE_SIZE) + y;
-  
-        if (worldX >= 0 && worldX < WORLD_WIDTH && worldY >= 0 && worldY < WORLD_HEIGHT) {
-          const tile = gameWorld[worldY][worldX]; // <-- Error occurs here
-          if (tileImages[tile]) {
-            ctx.drawImage(tileImages[tile], x * TILE_SIZE, y * TILE_SIZE, TILE_SIZE, TILE_SIZE);
-          } else {
-            ctx.fillStyle = '#000';
-            ctx.fillRect(x * TILE_SIZE, y * TILE_SIZE, TILE_SIZE, TILE_SIZE);
-          }
+  const targetCameraX = player.x - canvas.width / 2;
+  const targetCameraY = player.y - canvas.height / 2;
+
+  // Smoothly interpolate camera position
+  cameraX += (targetCameraX - cameraX) * cameraSmoothness;
+  cameraY += (targetCameraY - cameraY) * cameraSmoothness;
+
+  const viewWidth = canvas.width / TILE_SIZE;
+  const viewHeight = canvas.height / TILE_SIZE;
+
+  for (let y = 0; y < viewHeight; y++) {
+    for (let x = 0; x < viewWidth; x++) {
+      const worldX = Math.floor(cameraX / TILE_SIZE) + x;
+      const worldY = Math.floor(cameraY / TILE_SIZE) + y;
+
+      if (worldX >= 0 && worldX < WORLD_WIDTH && worldY >= 0 && worldY < WORLD_HEIGHT) {
+        const tile = gameWorld[worldY][worldX];
+        if (tileImages[tile]) {
+          ctx.drawImage(tileImages[tile], x * TILE_SIZE, y * TILE_SIZE, TILE_SIZE, TILE_SIZE);
         } else {
           ctx.fillStyle = '#000';
           ctx.fillRect(x * TILE_SIZE, y * TILE_SIZE, TILE_SIZE, TILE_SIZE);
         }
+      } else {
+        ctx.fillStyle = '#000';
+        ctx.fillRect(x * TILE_SIZE, y * TILE_SIZE, TILE_SIZE, TILE_SIZE);
       }
     }
   }
+}
+
 
 // Render players on canvas
 function drawPlayers() {
