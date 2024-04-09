@@ -128,11 +128,11 @@ function drawPlayers() {
 
 // Draw a single player on the canvas
 function drawPlayer(p) {
-    if (!p.sprite.complete || p.frameIndex === undefined) return; // Skip drawing if sprite not loaded or frameIndex is undefined
+    if (!p.sprite.complete || p.frameIndex === undefined) return;
     const srcX = p.frameIndex * p.width;
     const srcY = p.direction * p.height;
-    const screenX = p.x - player.x + canvas.width / 2 / zoomLevel;
-    const screenY = p.y - player.y + canvas.height / 2 / zoomLevel;
+    const screenX = p.x;
+    const screenY = p.y;
   
     ctx.drawImage(p.sprite, srcX, srcY, p.width, p.height, screenX, screenY, p.width, p.height);
     ctx.fillStyle = 'white'; ctx.textAlign = 'center'; ctx.font = '14px Arial';
@@ -163,8 +163,10 @@ socket.on('newPlayer', playerData => {
 
 socket.on('playerMoved', data => {
     if (data.playerId in players) {
-      Object.assign(players[data.playerId], data);
-      players[data.playerId].frameIndex = data.frameIndex; // Update frameIndex separately
+      players[data.playerId].x = data.x;
+      players[data.playerId].y = data.y;
+      players[data.playerId].direction = data.direction;
+      players[data.playerId].frameIndex = data.frameIndex;
     }
   });
 
