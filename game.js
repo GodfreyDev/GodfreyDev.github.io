@@ -21,20 +21,18 @@ const TILE_DOOR = 2;
 // Game world array
 let gameWorld = [];
 
-const ANIMATION_SPEED = 1;
-
 // Player object definition
 let player = {
-    id: null, x: 400, y: 300, width: 64, height: 64,
-    direction: DIRECTIONS.DOWN, moving: false, sprite: new Image(),
-    frameIndex: 0, frameCount: 3, animationTimer: 0
-  };
-  player.sprite.src = 'Images/player_sprite_frames.png';
-  player.sprite.onload = () => requestAnimationFrame(gameLoop);
-  player.sprite.onerror = e => console.error("Failed to load player sprite:", e);
+  id: null, x: 400, y: 300, width: 64, height: 64,
+  direction: DIRECTIONS.DOWN, moving: false, sprite: new Image(),
+  frameIndex: 0, frameCount: 8
+};
+player.sprite.src = 'Images/player_sprite_frames.png';
+player.sprite.onload = () => requestAnimationFrame(gameLoop);
+player.sprite.onerror = e => console.error("Failed to load player sprite:", e);
 
 let players = {}, playerMessages = {}, keysPressed = {};
-const movementSpeed = 1, animationSpeed = 0.1, canvas = document.getElementById('gameCanvas'), ctx = canvas.getContext('2d');
+const movementSpeed = 200, animationSpeed = 0.1, canvas = document.getElementById('gameCanvas'), ctx = canvas.getContext('2d');
 let lastRenderTime = 0, animationTimer = 0;
 
 canvas.width = CAMERA_WIDTH * TILE_SIZE;
@@ -138,64 +136,61 @@ function sendMessage() {
 
 // Update player position based on input
 function updatePlayerPosition(deltaTime) {
-    let dx = 0, dy = 0;
-    player.moving = false;
-  
-    // Determine direction and set moving flag
-    if (keysPressed['a'] || keysPressed['ArrowLeft']) { dx -= 1; player.moving = true; }
-    if (keysPressed['d'] || keysPressed['ArrowRight']) { dx += 1; player.moving = true; }
-    if (keysPressed['w'] || keysPressed['ArrowUp']) { dy -= 1; player.moving = true; }
-    if (keysPressed['s'] || keysPressed['ArrowDown']) { dy += 1; player.moving = true; }
-  
-    // Adjust direction based on movement
-    if (dy < 0 && dx < 0) player.direction = DIRECTIONS.UP_LEFT;
-    else if (dy < 0 && dx > 0) player.direction = DIRECTIONS.UP_RIGHT;
-    else if (dy > 0 && dx < 0) player.direction = DIRECTIONS.DOWN_LEFT;
-    else if (dy > 0 && dx > 0) player.direction = DIRECTIONS.DOWN_RIGHT;
-    else if (dy < 0) player.direction = DIRECTIONS.UP;
-    else if (dy > 0) player.direction = DIRECTIONS.DOWN;
-    else if (dx < 0) player.direction = DIRECTIONS.LEFT;
-    else if (dx > 0) player.direction = DIRECTIONS.RIGHT;
-  
-    const newX = player.x + dx * TILE_SIZE;
-    const newY = player.y + dy * TILE_SIZE;
-  
-    // Check collision with walls
-    const tileX = Math.floor(newX / TILE_SIZE);
-    const tileY = Math.floor(newY / TILE_SIZE);
-    if (gameWorld[tileY][tileX] !== TILE_WALL) {
-      player.x = newX;
-      player.y = newY;
-    }
-  
-    // Emit movement if position or frameIndex changed
-    if (newX !== player.x || newY !== player.y || player.frameIndex !== player.lastFrameIndex) {
-      player.lastFrameIndex = player.frameIndex;
-      socket.emit('playerMovement', { x: player.x, y: player.y, direction: player.direction, frameIndex: player.frameIndex });
-    }
-  }  
+  let dx = 0, dy = 0;
+  player.moving = false;
+
+  // Determine direction and set moving flag
+  if (keysPressed['a'] || keysPressed['ArrowLeft']) { dx -= movementSpeed; player.moving = true; }
+  if (keysPressed['d'] || keysPressed['ArrowRight']) { dx += movementSpeed; player.moving = true; }
+  if (keysPressed['w'] || keysPressed['ArrowUp']) { dy -= movementSpeed; player.moving = true; }
+  if (keysPressed['s'] || keysPressed['ArrowDown']) { dy += movementSpeed; player.moving = true; }
+
+  // Adjust direction based on movement
+  if (dy < 0 && dx < 0) player.direction = DIRECTIONS.UP_LEFT;
+  else if (dy < 0 && dx > 0) player.direction = DIRECTIONS.UP_RIGHT;
+  else if (dy > 0 && dx < 0) player.direction = DIRECTIONS.DOWN_LEFT;
+  else if (dy > 0 && dx > 0) player.direction = DIRECTIONS.DOWN_RIGHT;
+  else if (dy < 0) player.direction = DIRECTIONS.UP;
+  else if (dy > 0) player.direction = DIRECTIONS.DOWN;
+  else if (dx < 0) player.direction = DIRECTIONS.LEFT;
+  else if (dx > 0) player.direction = DIRECTIONS.RIGHT;
+
+  const newX = player.x + dx * deltaTime;
+  const newY = player.y + dy * deltaTime;
+
+  // Check collision with walls
+  const tileX = Math.floor(newX / TILE_SIZE);
+  const tileY = Math.floor(newY / TILE_SIZE);
+  if (gameWorld[tileY][tileX] !== TILE_WALL) {
+    player.x = newX;
+    player.y = newY;
+  }
+
+  // Emit movement if position or frameIndex changed
+  if (newX !== player.x || newY !== player.y || player.frameIndex !== player.lastFrameIndex) {
+    player.lastFrameIndex = player.frameIndex;
+    socket.emit('playerMovement', { x: player.x, y: player.y, direction: player.direction, frameIndex: player.frameIndex });
+  }
+}
 
 // Handle animation based on player movement
 function handleAnimation(deltaTime) {
-    if (player.moving) {
-      player.animationTimer += deltaTime;
-      if (player.animationTimer >= ANIMATION_SPEED) {
-        player.frameIndex = (player.frameIndex + 1) % player.frameCount;
-        player.animationTimer = 0;
-      }
-    } else {
-      player.frameIndex = 0; // Reset animation frame if not moving
-      player.animationTimer = 0;
+  if (player.moving) {
+    animationTimer += deltaTime;
+    if (animationTimer >= animationSpeed) {
+      player.frameIndex = (player.frameIndex + 1) % player.frameCount;
+      animationTimer = 0;
     }
+  } else {
+    player.frameIndex = 0; // Reset animation frame if not moving
   }
+  player.frameIndex = Math.max(0, Math.min(player.frameIndex, player.frameCount - 1)); // Ensure frameIndex is within valid range
+}
 
 // Draw the game world
 function drawBackground() {
     const cameraX = player.x - canvas.width / 2;
     const cameraY = player.y - canvas.height / 2;
-  
-    // Additional safeguard: Only draw if all images are loaded
-    if (loadedImages !== tileTypes.length) return;
   
     for (let y = 0; y < CAMERA_HEIGHT; y++) {
       for (let x = 0; x < CAMERA_WIDTH; x++) {
@@ -204,10 +199,9 @@ function drawBackground() {
   
         if (worldX >= 0 && worldX < WORLD_WIDTH && worldY >= 0 && worldY < WORLD_HEIGHT) {
           const tile = gameWorld[worldY][worldX];
-          if (tileImages[tile] && tileImages[tile].complete && tileImages[tile].naturalHeight !== 0) {
+          if (tileImages[tile]) {
             ctx.drawImage(tileImages[tile], x * TILE_SIZE, y * TILE_SIZE, TILE_SIZE, TILE_SIZE);
           } else {
-            // Fallback fill if image isn't ready, could log or handle differently here
             ctx.fillStyle = '#000';
             ctx.fillRect(x * TILE_SIZE, y * TILE_SIZE, TILE_SIZE, TILE_SIZE);
           }
@@ -218,7 +212,6 @@ function drawBackground() {
       }
     }
   }
-  
 
 // Render players on canvas
 function drawPlayers() {
@@ -228,20 +221,20 @@ function drawPlayers() {
 
 // Draw a single player on the canvas
 function drawPlayer(p) {
-    if (!p.sprite.complete || p.frameIndex === undefined) return;
-    const srcX = p.frameIndex * p.width;
-    const srcY = p.direction * p.height;
-    const screenX = p.x - player.x + canvas.width / 2 - p.width / 2;
-    const screenY = p.y - player.y + canvas.height / 2 - p.height / 2;
-  
-    ctx.drawImage(p.sprite, srcX, srcY, p.width, p.height, screenX, screenY, p.width, p.height);
-    ctx.fillStyle = 'white'; ctx.textAlign = 'center'; ctx.font = '16px Arial';
-    ctx.fillText(p.name, screenX + p.width / 2, screenY - 20);
-    if (playerMessages[p.id]) {
-      ctx.fillStyle = 'yellow';
-      ctx.fillText(playerMessages[p.id], screenX + p.width / 2, screenY - 40);
-    }
+  if (!p.sprite.complete || p.frameIndex === undefined) return;
+  const srcX = p.frameIndex * p.width;
+  const srcY = p.direction * p.height;
+  const screenX = p.x - player.x + canvas.width / 2 - p.width / 2;
+  const screenY = p.y - player.y + canvas.height / 2 - p.height / 2;
+
+  ctx.drawImage(p.sprite, srcX, srcY, p.width, p.height, screenX, screenY, p.width, p.height);
+  ctx.fillStyle = 'white'; ctx.textAlign = 'center'; ctx.font = '16px Arial';
+  ctx.fillText(p.name, screenX + p.width / 2, screenY - 20);
+  if (playerMessages[p.id]) {
+    ctx.fillStyle = 'yellow';
+    ctx.fillText(playerMessages[p.id], screenX + p.width / 2, screenY - 40);
   }
+}
 
 // Keyboard event listeners for movement
 document.addEventListener('keydown', e => keysPressed[e.key] = true);
