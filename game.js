@@ -125,8 +125,8 @@ function drawPlayer(p) {
     if (!p.sprite.complete || p.frameIndex === undefined) return;
     const srcX = p.frameIndex * p.width;
     const srcY = p.direction * p.height;
-    const screenX = p.x;
-    const screenY = p.y;
+    const screenX = p.x - player.x + canvas.width / 2 - p.width / 2;
+    const screenY = p.y - player.y + canvas.height / 2 - p.height / 2;
   
     ctx.drawImage(p.sprite, srcX, srcY, p.width, p.height, screenX, screenY, p.width, p.height);
     ctx.fillStyle = 'white'; ctx.textAlign = 'center'; ctx.font = '14px Arial';
