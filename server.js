@@ -5,8 +5,8 @@ const app = express();
 const server = http.createServer(app);
 const io = socketIo(server, {
   cors: {
-    origin: "https://godfreydev.github.io",
-    methods: ["GET", "POST"],
+    origin: ['https://godfreydev.github.io', 'http://localhost:3000'],
+    methods: ['GET', 'POST'],
     credentials: true
   }
 });
@@ -86,6 +86,11 @@ io.on('connection', (socket) => {
   });
 });
 
+// Determine the server URL based on the environment
+const serverUrl = process.env.NODE_ENV === 'production'
+  ? 'https://cool-accessible-pint.glitch.me'
+  : 'http://localhost:3000';
+
 // Listen on the specified port
 const PORT = process.env.PORT || 3000;
-server.listen(PORT, () => console.log(`Server running on port ${PORT}`));
+server.listen(PORT, () => console.log(`Server running on ${serverUrl}:${PORT}`));

@@ -1,5 +1,8 @@
-// Client-side JavaScript for handling game logic and communication with the server
-const socket = io.connect('https://cool-accessible-pint.glitch.me');
+const serverUrl = window.location.hostname === 'godfreydev.github.io'
+  ? 'https://cool-accessible-pint.glitch.me'
+  : 'http://localhost:3000';
+
+const socket = io.connect(serverUrl);
 
 // Directions based on sprite sheet layout
 const DIRECTIONS = {
@@ -209,10 +212,10 @@ function updateCameraPosition() {
 function drawBackground() {
     updateCameraPosition();
   
-    const startCol = Math.floor(cameraX / TILE_SIZE);
-    const endCol = Math.ceil((cameraX + canvas.width) / TILE_SIZE);
-    const startRow = Math.floor(cameraY / TILE_SIZE);
-    const endRow = Math.ceil((cameraY + canvas.height) / TILE_SIZE);
+    const startCol = Math.max(0, Math.floor(cameraX / TILE_SIZE));
+    const endCol = Math.min(WORLD_WIDTH - 1, Math.ceil((cameraX + canvas.width) / TILE_SIZE));
+    const startRow = Math.max(0, Math.floor(cameraY / TILE_SIZE));
+    const endRow = Math.min(WORLD_HEIGHT - 1, Math.ceil((cameraY + canvas.height) / TILE_SIZE));
     const offsetX = -cameraX % TILE_SIZE;
     const offsetY = -cameraY % TILE_SIZE;
   
@@ -221,17 +224,29 @@ function drawBackground() {
         let tileX = (x - startCol) * TILE_SIZE + offsetX;
         let tileY = (y - startRow) * TILE_SIZE + offsetY;
   
-        if (x >= 0 && x < WORLD_WIDTH && y >= 0 && y < WORLD_HEIGHT) {
-          const tile = gameWorld[y][x];
-          if (tileImages[tile]) {
-            ctx.drawImage(tileImages[tile], tileX, tileY, TILE_SIZE, TILE_SIZE);
-          }
-        } else {
-          // Draw a solid color for out-of-bounds tiles
-          ctx.fillStyle = '#000';
-          ctx.fillRect(tileX, tileY, TILE_SIZE, TILE_SIZE);
+        const tile = gameWorld[y][x];
+        if (tileImages[tile]) {
+          ctx.drawImage(tileImages[tile], tileX, tileY, TILE_SIZE, TILE_SIZE);
         }
       }
+    }
+  
+    // Draw black background for out-of-bounds areas
+    if (startCol > 0) {
+      ctx.fillStyle = '#000';
+      ctx.fillRect(0, 0, offsetX, canvas.height);
+    }
+    if (endCol < WORLD_WIDTH - 1) {
+      ctx.fillStyle = '#000';
+      ctx.fillRect((endCol - startCol + 1) * TILE_SIZE + offsetX, 0, canvas.width, canvas.height);
+    }
+    if (startRow > 0) {
+      ctx.fillStyle = '#000';
+      ctx.fillRect(0, 0, canvas.width, offsetY);
+    }
+    if (endRow < WORLD_HEIGHT - 1) {
+      ctx.fillStyle = '#000';
+      ctx.fillRect(0, (endRow - startRow + 1) * TILE_SIZE + offsetY, canvas.width, canvas.height);
     }
   }
 
