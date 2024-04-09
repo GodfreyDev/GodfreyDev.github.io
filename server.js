@@ -12,15 +12,27 @@ const io = socketIo(server, {
     }
 });
 
-app.use(express.static(__dirname)); // Serve static files from the directory where this script is located.
+app.use(express.static(__dirname));
 
 let players = {};
 
+const adjectives = ['Quick', 'Lazy', 'Jolly', 'Brave', 'Clever', 'Wise', 'Fierce', 'Gentle', 'Loyal'];
+const nouns = ['Fox', 'Bear', 'Dragon', 'Wolf', 'Tiger', 'Rabbit', 'Eagle', 'Owl', 'Lion'];
+
+function getRandomElement(arr) {
+    return arr[Math.floor(Math.random() * arr.length)];
+}
+
+function generatePlayerName() {
+    return `${getRandomElement(adjectives)}${getRandomElement(nouns)}${Math.floor(Math.random() * 100)}`;
+}
+
 io.on('connection', (socket) => {
     console.log(`A user connected: ${socket.id}`);
-    // Initialize player object without projectile-related properties
+    const playerName = generatePlayerName();
     players[socket.id] = {
         id: socket.id,
+        name: playerName,
         x: 400,
         y: 300,
         width: 32,
@@ -28,31 +40,19 @@ io.on('connection', (socket) => {
         color: 'red',
     };
 
-    // Send current state of the game to the new player
     socket.emit('currentPlayers', players);
     socket.broadcast.emit('newPlayer', players[socket.id]);
 
     socket.on('playerMovement', (data) => {
-        let movingPlayer = players[socket.id];
-        if (movingPlayer) {
-            movingPlayer.x = data.x;
-            movingPlayer.y = data.y;
-            // Notify all clients about the movement
-            io.emit('playerMoved', {
-                playerId: socket.id,
-                x: movingPlayer.x,
-                y: movingPlayer.y
-            });
+        if (players[socket.id]) {
+            players[socket.id].x = data.x;
+            players[socket.id].y = data.y;
+            io.emit('playerMoved', {playerId: socket.id, x: data.x, y: data.y});
         }
     });
 
-    // New event listener for receiving chat messages
     socket.on('chatMessage', (data) => {
-        // Broadcast the chat message to all players
-        io.emit('chatMessage', {
-            playerId: socket.id,
-            message: data.message
-        });
+        io.emit('chatMessage', {playerId: socket.id, message: data.message});
     });
 
     socket.on('disconnect', () => {

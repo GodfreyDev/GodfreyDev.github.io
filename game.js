@@ -12,6 +12,7 @@ let players = {};
 const movementSpeed = 150; // pixels per second
 let zoomLevel = 1; // 1 is default, <1 is zoomed out, >1 is zoomed in
 const keysPressed = {};
+let playerMessages = {}; // Store recent messages from players
 
 const canvas = document.getElementById('gameCanvas');
 const ctx = canvas.getContext('2d');
@@ -46,7 +47,6 @@ function updatePlayerPosition(deltaTime) {
     if (keysPressed['ArrowUp']) dy -= movementSpeed * deltaTime;
     if (keysPressed['ArrowDown']) dy += movementSpeed * deltaTime;
 
-    // Adjust for zoom level
     dx /= zoomLevel;
     dy /= zoomLevel;
 
@@ -69,6 +69,13 @@ function drawPlayers() {
         const x = p.x - player.x + canvas.width / 2 / zoomLevel;
         const y = p.y - player.y + canvas.height / 2 / zoomLevel;
         ctx.fillRect(x, y, p.width, p.height);
+
+        // Display chat message above the player
+        if (playerMessages[p.id]) {
+            ctx.fillStyle = 'white';
+            ctx.font = '14px Arial';
+            ctx.fillText(playerMessages[p.id], x, y - 20);
+        }
     });
     ctx.restore();
 }
@@ -81,7 +88,6 @@ document.addEventListener('keyup', (e) => {
     keysPressed[e.key] = false;
 });
 
-// Listening to server events
 socket.on('currentPlayers', (playersData) => {
     players = playersData;
     if (socket.id in players) {
@@ -104,12 +110,12 @@ socket.on('playerDisconnected', (playerId) => {
     delete players[playerId];
 });
 
-// Handling chat messages
 socket.on('chatMessage', (data) => {
-    const dialogueBox = document.getElementById('dialogueBox');
-    dialogueBox.style.display = 'block';
-    dialogueBox.textContent = `${data.playerId.substring(0, 5)}: ${data.message}`;
-    setTimeout(() => dialogueBox.style.display = 'none', 5000); // Hide after 5 seconds
+    // Show message above player for a limited time
+    playerMessages[data.playerId] = data.message;
+    setTimeout(() => {
+        delete playerMessages[data.playerId];
+    }, 5000); // Messages disappear after 5 seconds
 });
 
 requestAnimationFrame(gameLoop);
