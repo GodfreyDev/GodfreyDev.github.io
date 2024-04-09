@@ -1,17 +1,33 @@
 // Adjusted client-side JavaScript for game.js
-
 const socket = io.connect('https://cool-accessible-pint.glitch.me');
 
-let player = {
-    id: null,
-    x: 400,
-    y: 300,
-    width: 32,
-    height: 32,
-    color: 'red',
-    sprite: new Image() // Use sprite images for players
+// Define constants for direction indexes based on your sprite sheet layout
+const DIRECTIONS = {
+  DOWN: 0,
+  LEFT: 1,
+  RIGHT: 2,
+  UP: 3,
+  DOWN_LEFT: 4,
+  DOWN_RIGHT: 5,
+  UP_LEFT: 6,
+  UP_RIGHT: 7
 };
-player.sprite.src = 'Images/player_sprite.png'; // Set the source of the player sprite
+
+let player = {
+  id: null,
+  x: 400,
+  y: 300,
+  width: 64, // Match the sprite's frame size
+  height: 64,
+  direction: DIRECTIONS.DOWN, // Default direction
+  moving: false, // Track if the player is moving
+  sprite: new Image(),
+  frameIndex: 0, // Current frame index in the animation
+  frameCount: 8, // Total frames per direction
+};
+
+player.sprite.src = 'Images/colored_sprite_sheet_with_numbers'; // Update with the correct path
+
 let players = {};
 const movementSpeed = 150;
 let zoomLevel = 1;
@@ -20,72 +36,98 @@ let playerMessages = {};
 
 const canvas = document.getElementById('gameCanvas');
 const ctx = canvas.getContext('2d');
-// Make canvas responsive and high resolution
 canvas.width = window.innerWidth;
 canvas.height = window.innerHeight;
 
 let lastRenderTime = 0;
+const animationSpeed = 0.1; // Time in seconds each frame is shown
+let animationTimer = 0; // Timer to control animation speed
 
 function gameLoop(timeStamp) {
-    requestAnimationFrame(gameLoop);
-    const deltaTime = (timeStamp - lastRenderTime) / 1000;
-    if (player.id) {
-        updatePlayerPosition(deltaTime);
-    }
-    drawPlayers();
-    lastRenderTime = timeStamp;
+  requestAnimationFrame(gameLoop);
+  const deltaTime = (timeStamp - lastRenderTime) / 1000;
+  if (player.id) {
+    updatePlayerPosition(deltaTime);
+    handleAnimation(deltaTime); // Handle player animation based on movement
+  }
+  drawPlayers();
+  lastRenderTime = timeStamp;
 }
 
 function sendMessage() {
-    const messageInput = document.getElementById('chatInput'); // Style this input for better appearance
-    const message = messageInput.value;
-    socket.emit('chatMessage', { message: message });
-    messageInput.value = '';
+  const messageInput = document.getElementById('chatInput');
+  const message = messageInput.value;
+  socket.emit('chatMessage', { message: message });
+  messageInput.value = '';
 }
 
 function updatePlayerPosition(deltaTime) {
-    let dx = 0;
-    let dy = 0;
+  let dx = 0;
+  let dy = 0;
+  player.moving = false; // Reset moving status
 
-    if (keysPressed['ArrowLeft']) dx -= movementSpeed * deltaTime;
-    if (keysPressed['ArrowRight']) dx += movementSpeed * deltaTime;
-    if (keysPressed['ArrowUp']) dy -= movementSpeed * deltaTime;
-    if (keysPressed['ArrowDown']) dy += movementSpeed * deltaTime;
+  if (keysPressed['a'] || keysPressed['ArrowLeft']) {dx -= movementSpeed * deltaTime; player.moving = true;}
+  if (keysPressed['d'] || keysPressed['ArrowRight']) {dx += movementSpeed * deltaTime; player.moving = true;}
+  if (keysPressed['w'] || keysPressed['ArrowUp']) {dy -= movementSpeed * deltaTime; player.moving = true;}
+  if (keysPressed['s'] || keysPressed['ArrowDown']) {dy += movementSpeed * deltaTime; player.moving = true;}
 
-    dx /= zoomLevel;
-    dy /= zoomLevel;
+  // Update direction based on movement
+  if (dy < 0 && dx < 0) player.direction = DIRECTIONS.UP_LEFT;
+  else if (dy < 0 && dx > 0) player.direction = DIRECTIONS.UP_RIGHT;
+  else if (dy > 0 && dx < 0) player.direction = DIRECTIONS.DOWN_LEFT;
+  else if (dy > 0 && dx > 0) player.direction = DIRECTIONS.DOWN_RIGHT;
+  else if (dy < 0) player.direction = DIRECTIONS.UP;
+  else if (dy > 0) player.direction = DIRECTIONS.DOWN;
+  else if (dx < 0) player.direction = DIRECTIONS.LEFT;
+  else if (dx > 0) player.direction = DIRECTIONS.RIGHT;
 
-    const newX = player.x + dx;
-    const newY = player.y + dy;
+  dx /= zoomLevel;
+  dy /= zoomLevel;
 
-    if (newX !== player.x || newY !== player.y) {
-        player.x = newX;
-        player.y = newY;
-        socket.emit('playerMovement', { x: player.x, y: player.y });
-    }
+  const newX = player.x + dx;
+  const newY = player.y + dy;
+
+  if (newX !== player.x || newY !== player.y) {
+    player.x = newX;
+    player.y = newY;
+    socket.emit('playerMovement', { x: player.x, y: player.y });
+  }
 }
+
+// Handle animation based on movement
+function handleAnimation(deltaTime) {
+  if (player.moving) {
+    animationTimer += deltaTime;
+    if (animationTimer >= animationSpeed) {
+      player.frameIndex = (player.frameIndex + 1) % player.frameCount;
+      animationTimer = 0;
+    }
+  } else {
+    player.frameIndex = 0; // Reset to the standing position when not moving
+  }
+}
+
 
 function drawPlayers() {
     ctx.clearRect(0, 0, canvas.width, canvas.height);
     ctx.save();
     ctx.scale(zoomLevel, zoomLevel);
     Object.values(players).forEach(p => {
+        // Calculate the source rectangle based on the current frame index and direction
+        const srcX = p.frameIndex * p.width;
+        const srcY = p.direction * p.height;
+
+        // Adjust screen position based on the player's position
         const screenX = p.x - player.x + canvas.width / 2 / zoomLevel;
         const screenY = p.y - player.y + canvas.height / 2 / zoomLevel;
 
-        if (p.sprite) { // If the player has a sprite
-            ctx.drawImage(p.sprite, screenX, screenY, p.width, p.height); // Draw the sprite instead of a rectangle
-        } else {
-            ctx.fillStyle = p.color;
-            ctx.fillRect(screenX, screenY, p.width, p.height);
-        }
+        ctx.drawImage(p.sprite, srcX, srcY, p.width, p.height, screenX, screenY, p.width, p.height);
 
-        // Improved text styling
+        // Drawing player names and messages
         ctx.fillStyle = 'white';
         ctx.textAlign = 'center';
-        ctx.font = 'bold 14px Arial';
+        ctx.font = '14px Arial';
         ctx.fillText(p.name, screenX + p.width / 2, screenY - 10);
-
         if (playerMessages[p.id]) {
             ctx.fillStyle = 'yellow';
             ctx.fillText(playerMessages[p.id], screenX + p.width / 2, screenY - 25);
@@ -102,27 +144,34 @@ document.addEventListener('keyup', (e) => {
     keysPressed[e.key] = false;
 });
 
+// Socket event listeners
 socket.on('currentPlayers', (playersData) => {
     players = playersData;
     Object.values(players).forEach(p => {
         p.sprite = new Image();
-        p.sprite.src = 'Images/player_sprite.png'; // Assign sprites to each player
+        p.sprite.src = player.sprite.src; // Assuming all players use the same sprite sheet
+        p.frameIndex = 0;
+        p.direction = DIRECTIONS.DOWN;
     });
     if (socket.id in players) {
         player.id = socket.id;
+        player.name = players[socket.id].name; // Assuming player names are managed server-side
     }
 });
 
 socket.on('newPlayer', (playerData) => {
     players[playerData.id] = playerData;
     players[playerData.id].sprite = new Image();
-    players[playerData.id].sprite.src = 'Images/player_sprite.png'; // Assign a sprite to the new player
+    players[playerData.id].sprite.src = player.sprite.src;
+    players[playerData.id].frameIndex = 0;
+    players[playerData.id].direction = DIRECTIONS.DOWN;
 });
 
 socket.on('playerMoved', (playerData) => {
     if (players[playerData.playerId]) {
         players[playerData.playerId].x = playerData.x;
         players[playerData.playerId].y = playerData.y;
+        players[playerData.playerId].direction = playerData.direction;
     }
 });
 
@@ -131,7 +180,6 @@ socket.on('playerDisconnected', (playerId) => {
 });
 
 socket.on('chatMessage', (data) => {
-    // Simply use the message without prefixing it with the player's name
     playerMessages[data.playerId] = data.message;
     setTimeout(() => {
         delete playerMessages[data.playerId];
