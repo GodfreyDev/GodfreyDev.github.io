@@ -240,11 +240,6 @@ function drawBackground() {
     }
 }
 
-
-// The rest of your game's logic remains unchanged.
-
-
-
 // Render players on canvas
 function drawPlayers() {
   Object.values(players).forEach(drawPlayer);
