@@ -21,7 +21,7 @@ const TILE_DOOR = 2;
 // Game world array
 let gameWorld = [];
 
-const ANIMATION_SPEED = 200;
+const ANIMATION_SPEED = 1;
 
 // Player object definition
 let player = {
