@@ -7,11 +7,11 @@ const DIRECTIONS = {
 };
 
 // Game world configuration
-const TILE_SIZE = 32;
-const WORLD_WIDTH = 100;
-const WORLD_HEIGHT = 100;
-const CAMERA_WIDTH = 20;
-const CAMERA_HEIGHT = 15;
+const TILE_SIZE = 64;
+const WORLD_WIDTH = 200;
+const WORLD_HEIGHT = 200;
+const CAMERA_WIDTH = 30;
+const CAMERA_HEIGHT = 20;
 
 // Tile types
 const TILE_FLOOR = 0;
@@ -23,7 +23,7 @@ let gameWorld = [];
 
 // Player object definition
 let player = {
-  id: null, x: 400, y: 300, width: 32, height: 32,
+  id: null, x: 400, y: 300, width: 64, height: 64,
   direction: DIRECTIONS.DOWN, moving: false, sprite: new Image(),
   frameIndex: 0, frameCount: 8
 };
@@ -32,11 +32,19 @@ player.sprite.onload = () => requestAnimationFrame(gameLoop);
 player.sprite.onerror = e => console.error("Failed to load player sprite:", e);
 
 let players = {}, playerMessages = {}, keysPressed = {};
-const movementSpeed = 150, animationSpeed = 0.1, canvas = document.getElementById('gameCanvas'), ctx = canvas.getContext('2d');
+const movementSpeed = 200, animationSpeed = 0.1, canvas = document.getElementById('gameCanvas'), ctx = canvas.getContext('2d');
 let lastRenderTime = 0, animationTimer = 0;
 
 canvas.width = CAMERA_WIDTH * TILE_SIZE;
 canvas.height = CAMERA_HEIGHT * TILE_SIZE;
+
+// Load tile images
+const tileImages = {};
+const tileTypes = [TILE_FLOOR, TILE_WALL, TILE_DOOR];
+tileTypes.forEach(type => {
+  tileImages[type] = new Image();
+  tileImages[type].src = `Images/tile_${type}.png`;
+});
 
 // Initialize the game world
 function initializeGameWorld() {
@@ -51,16 +59,43 @@ function initializeGameWorld() {
     }
   }
   
-  // Create rooms by adding walls and doors
-  // Example: Creating a room in the center
-  for (let y = 40; y < 60; y++) {
-    for (let x = 40; x < 60; x++) {
-      if (y === 40 || y === 59 || x === 40 || x === 59) {
-        gameWorld[y][x] = TILE_WALL;
+  // Create rooms and corridors
+  createRoom(20, 20, 40, 40);
+  createRoom(80, 80, 60, 60);
+  createRoom(20, 120, 50, 50);
+  createRoom(120, 20, 60, 40);
+  
+  createCorridor(50, 30, 80, 30);
+  createCorridor(30, 50, 30, 120);
+  createCorridor(130, 50, 130, 80);
+  createCorridor(70, 110, 120, 110);
+}
+
+// Create a room with walls and a door
+function createRoom(x, y, width, height) {
+  for (let i = y; i < y + height; i++) {
+    for (let j = x; j < x + width; j++) {
+      if (i === y || i === y + height - 1 || j === x || j === x + width - 1) {
+        gameWorld[i][j] = TILE_WALL;
+      } else {
+        gameWorld[i][j] = TILE_FLOOR;
       }
     }
   }
-  gameWorld[50][40] = TILE_DOOR;
+  gameWorld[y + Math.floor(height / 2)][x] = TILE_DOOR;
+}
+
+// Create a corridor between two points
+function createCorridor(x1, y1, x2, y2) {
+  const dx = x2 - x1;
+  const dy = y2 - y1;
+  const length = Math.max(Math.abs(dx), Math.abs(dy));
+  
+  for (let i = 0; i <= length; i++) {
+    const x = x1 + Math.round(i * dx / length);
+    const y = y1 + Math.round(i * dy / length);
+    gameWorld[y][x] = TILE_FLOOR;
+  }
 }
 
 // Game loop for rendering and updating
@@ -151,18 +186,7 @@ function drawBackground() {
 
       if (worldX >= 0 && worldX < WORLD_WIDTH && worldY >= 0 && worldY < WORLD_HEIGHT) {
         const tile = gameWorld[worldY][worldX];
-        switch (tile) {
-          case TILE_FLOOR:
-            ctx.fillStyle = '#ccc';
-            break;
-          case TILE_WALL:
-            ctx.fillStyle = '#666';
-            break;
-          case TILE_DOOR:
-            ctx.fillStyle = '#a52a2a';
-            break;
-        }
-        ctx.fillRect(x * TILE_SIZE, y * TILE_SIZE, TILE_SIZE, TILE_SIZE);
+        ctx.drawImage(tileImages[tile], x * TILE_SIZE, y * TILE_SIZE, TILE_SIZE, TILE_SIZE);
       } else {
         ctx.fillStyle = '#000';
         ctx.fillRect(x * TILE_SIZE, y * TILE_SIZE, TILE_SIZE, TILE_SIZE);
@@ -186,11 +210,11 @@ function drawPlayer(p) {
   const screenY = p.y - player.y + canvas.height / 2 - p.height / 2;
 
   ctx.drawImage(p.sprite, srcX, srcY, p.width, p.height, screenX, screenY, p.width, p.height);
-  ctx.fillStyle = 'white'; ctx.textAlign = 'center'; ctx.font = '14px Arial';
-  ctx.fillText(p.name, screenX + p.width / 2, screenY - 10);
+  ctx.fillStyle = 'white'; ctx.textAlign = 'center'; ctx.font = '16px Arial';
+  ctx.fillText(p.name, screenX + p.width / 2, screenY - 20);
   if (playerMessages[p.id]) {
     ctx.fillStyle = 'yellow';
-    ctx.fillText(playerMessages[p.id], screenX + p.width / 2, screenY - 25);
+    ctx.fillText(playerMessages[p.id], screenX + p.width / 2, screenY - 40);
   }
 }
 
