@@ -1,3 +1,4 @@
+// Server-side JavaScript (Node.js with Express and Socket.io)
 const express = require('express');
 const http = require('http');
 const socketIo = require('socket.io');
@@ -16,50 +17,37 @@ app.use(express.static(__dirname));
 
 let players = {};
 
-const adjectives = ['Quick', 'Lazy', 'Jolly', 'Brave', 'Clever', 'Wise', 'Fierce', 'Gentle', 'Loyal'];
-const nouns = ['Fox', 'Bear', 'Dragon', 'Wolf', 'Tiger', 'Rabbit', 'Eagle', 'Owl', 'Lion'];
-
-function getRandomElement(arr) {
-    return arr[Math.floor(Math.random() * arr.length)];
-}
-
 function generatePlayerName() {
-    return `${getRandomElement(adjectives)}${getRandomElement(nouns)}${Math.floor(Math.random() * 100)}`;
+    const adjectives = ['Quick', 'Lazy', 'Jolly', 'Brave', 'Clever', 'Wise', 'Fierce', 'Gentle', 'Loyal'];
+    const nouns = ['Fox', 'Bear', 'Dragon', 'Wolf', 'Tiger', 'Rabbit', 'Eagle', 'Owl', 'Lion'];
+    return `${adjectives[Math.floor(Math.random() * adjectives.length)]}${nouns[Math.floor(Math.random() * nouns.length)]}${Math.floor(Math.random() * 100)}`;
 }
 
 io.on('connection', (socket) => {
     console.log(`A user connected: ${socket.id}`);
-    const playerName = generatePlayerName();
     players[socket.id] = {
         id: socket.id,
-        name: playerName,
+        name: generatePlayerName(),
         x: 400,
         y: 300,
-        width: 32,
-        height: 32,
-        color: 'red',
+        direction: 0, // Initial direction
+        moving: false,
     };
 
     socket.emit('currentPlayers', players);
     socket.broadcast.emit('newPlayer', players[socket.id]);
 
     socket.on('playerMovement', (data) => {
-        if (players[socket.id]) {
-            players[socket.id].x = data.x;
-            players[socket.id].y = data.y;
-            players[socket.id].direction = data.direction; // Include direction in the server-side player object
-            io.emit('playerMoved', {playerId: socket.id, x: data.x, y: data.y, direction: data.direction}); // Emit direction along with position
+        const player = players[socket.id];
+        if (player) {
+            player.x = data.x;
+            player.y = data.y;
+            player.direction = data.direction;
+            io.emit('playerMoved', { playerId: socket.id, x: data.x, y: data.y, direction: data.direction });
         }
     });
 
-    // Server-side adjustment when emitting a chatMessage
-    socket.on('chatMessage', (data) => {
-        io.emit('chatMessage', {playerId: socket.id, message: data.message}); // Send name with message
-    });
-
-
     socket.on('disconnect', () => {
-        console.log(`User disconnected: ${socket.id}`);
         delete players[socket.id];
         io.emit('playerDisconnected', socket.id);
     });
