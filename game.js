@@ -56,7 +56,6 @@ function loadTileImage(type) {
     tileImages[type] = new Image();
     tileImages[type].src = `Images/tile_${type}.png`;
     tileImages[type].onload = () => {
-        console.log(`Tile image loaded: ${type}`); // Add this line
         loadedImages++;
         if (loadedImages === tileTypes.length) {
           requestAnimationFrame(gameLoop);
@@ -81,7 +80,6 @@ function initializeGameWorld() {
         gameWorld[y][x] = TILE_FLOOR;
       }
     }
-    console.log(gameWorld);
   }
   
   // Create rooms and corridors
@@ -308,14 +306,31 @@ function drawPlayer(p) {
 document.addEventListener('keydown', e => keysPressed[e.key] = true);
 document.addEventListener('keyup', e => delete keysPressed[e.key]);
 
-// Socket event listeners for game state updates
+// After receiving the current players from the server and setting up the local player
 socket.on('currentPlayers', playersData => {
-  Object.values(playersData).forEach(p => { p.sprite = new Image(); p.sprite.src = player.sprite.src; });
-  players = playersData;
-  if (socket.id in players) {
-    Object.assign(player, players[socket.id], { sprite: player.sprite });
-  }
-});
+    Object.values(playersData).forEach(p => {
+      p.sprite = new Image();
+      p.sprite.src = player.sprite.src;
+      if (p.id === socket.id) {
+        // This part assumes you somehow receive your own player data back from the server
+        player = { ...player, ...p };
+        player.sprite = new Image();
+        player.sprite.src = 'Images/player_sprite_frames.png'; // Ensure the sprite is correctly assigned
+        
+        // Emit the player's initial state right after receiving it
+        socket.emit('playerMovement', {
+          x: player.x,
+          y: player.y,
+          direction: player.direction,
+          moving: player.moving,
+          frameIndex: player.frameIndex
+        });
+      } else {
+        players[p.id] = p;
+      }
+    });
+  });
+  
 
 socket.on('newPlayer', playerData => {
   players[playerData.id] = Object.assign(playerData, { sprite: new Image(), frameIndex: 0, direction: DIRECTIONS.DOWN });
