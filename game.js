@@ -65,16 +65,23 @@ function drawPlayers() {
     ctx.save();
     ctx.scale(zoomLevel, zoomLevel);
     Object.values(players).forEach(p => {
+        const screenX = p.x - player.x + canvas.width / 2 / zoomLevel;
+        const screenY = p.y - player.y + canvas.height / 2 / zoomLevel;
+
+        // Draw player
         ctx.fillStyle = p.color;
-        const x = p.x - player.x + canvas.width / 2 / zoomLevel;
-        const y = p.y - player.y + canvas.height / 2 / zoomLevel;
-        ctx.fillRect(x, y, p.width, p.height);
+        ctx.fillRect(screenX, screenY, p.width, p.height);
+
+        // Draw player's name
+        ctx.fillStyle = 'white';
+        ctx.textAlign = 'center';
+        ctx.font = '14px Arial';
+        ctx.fillText(p.name, screenX + p.width / 2, screenY - 10);
 
         // Display chat message above the player
         if (playerMessages[p.id]) {
-            ctx.fillStyle = 'white';
-            ctx.font = '14px Arial';
-            ctx.fillText(playerMessages[p.id], x, y - 20);
+            ctx.fillStyle = 'yellow'; // Color for chat messages
+            ctx.fillText(playerMessages[p.id], screenX + p.width / 2, screenY - 25); // Adjust for message position
         }
     });
     ctx.restore();
@@ -111,8 +118,9 @@ socket.on('playerDisconnected', (playerId) => {
 });
 
 socket.on('chatMessage', (data) => {
-    // Show message above player for a limited time
-    playerMessages[data.playerId] = data.message;
+    // Now data should include player name alongside the message
+    const playerName = players[data.playerId].name; // Assuming player's name is sent from the server
+    playerMessages[data.playerId] = playerName + ": " + data.message; // Display name with the message
     setTimeout(() => {
         delete playerMessages[data.playerId];
     }, 5000); // Messages disappear after 5 seconds
