@@ -34,16 +34,32 @@ canvas.height = window.innerHeight;
 
 // Game loop for rendering and updating
 function gameLoop(timeStamp) {
-  const deltaTime = (timeStamp - lastRenderTime) / 1000;
-  requestAnimationFrame(gameLoop);
-  if (player.id) {
-    updatePlayerPosition(deltaTime);
-    handleAnimation(deltaTime);
+    const deltaTime = (timeStamp - lastRenderTime) / 1000;
+    requestAnimationFrame(gameLoop);
+    if (player.id) {
+      updatePlayerPosition(deltaTime);
+      handleAnimation(deltaTime);
+    }
+    updateCamera();
+    drawBackground();
+    drawPlayers();
+    lastRenderTime = timeStamp;
   }
-  drawBackground();
-  drawPlayers();
-  lastRenderTime = timeStamp;
-}
+  
+  // Update camera position and scaling based on window size
+  function updateCamera() {
+    const aspectRatio = canvas.width / canvas.height;
+    const targetAspectRatio = background.width / background.height;
+  
+    if (aspectRatio > targetAspectRatio) {
+      // Window is wider than the background
+      zoomLevel = canvas.height / background.height;
+    } else {
+      // Window is taller than the background
+      zoomLevel = canvas.width / background.width;
+    }
+  }
+  
 
 // Send chat message to the server
 function sendMessage() {
@@ -108,8 +124,9 @@ function handleAnimation(deltaTime) {
 // Draw the background
 function drawBackground() {
     ctx.save();
-    ctx.translate(-player.x * zoomLevel + canvas.width / 2, -player.y * zoomLevel + canvas.height / 2);
+    ctx.translate(canvas.width / 2, canvas.height / 2);
     ctx.scale(zoomLevel, zoomLevel);
+    ctx.translate(-player.x, -player.y);
     ctx.drawImage(background.image, 0, 0, background.width, background.height);
     ctx.restore();
   }
@@ -119,6 +136,7 @@ function drawBackground() {
     ctx.save();
     ctx.translate(canvas.width / 2, canvas.height / 2);
     ctx.scale(zoomLevel, zoomLevel);
+    ctx.translate(-player.x, -player.y);
   
     Object.values(players).forEach(drawPlayer);
     drawPlayer(player); // Draw current player last to be on top
