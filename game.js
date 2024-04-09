@@ -107,40 +107,41 @@ function handleAnimation(deltaTime) {
 
 // Draw the background
 function drawBackground() {
-  ctx.save();
-  ctx.translate(-player.x + canvas.width / 2, -player.y + canvas.height / 2);
-  ctx.drawImage(background.image, 0, 0, background.width, background.height);
-  ctx.restore();
-}
-
-// Render players on canvas
-function drawPlayers() {
-  ctx.save();
-  ctx.translate(canvas.width / 2 - player.x, canvas.height / 2 - player.y);
-  ctx.scale(zoomLevel, zoomLevel);
-
-  Object.values(players).forEach(drawPlayer);
-  drawPlayer(player); // Draw current player last to be on top
-
-  ctx.restore();
-}
-
-// Draw a single player on the canvas
-function drawPlayer(p) {
-  if (!p.sprite.complete || p.frameIndex === undefined) return;
-  const srcX = p.frameIndex * p.width;
-  const srcY = p.direction * p.height;
-  const screenX = p.x;
-  const screenY = p.y;
-
-  ctx.drawImage(p.sprite, srcX, srcY, p.width, p.height, screenX, screenY, p.width, p.height);
-  ctx.fillStyle = 'white'; ctx.textAlign = 'center'; ctx.font = '14px Arial';
-  ctx.fillText(p.name, screenX + p.width / 2, screenY - 10);
-  if (playerMessages[p.id]) {
-    ctx.fillStyle = 'yellow';
-    ctx.fillText(playerMessages[p.id], screenX + p.width / 2, screenY - 25);
+    ctx.save();
+    ctx.translate(-player.x * zoomLevel + canvas.width / 2, -player.y * zoomLevel + canvas.height / 2);
+    ctx.scale(zoomLevel, zoomLevel);
+    ctx.drawImage(background.image, 0, 0, background.width, background.height);
+    ctx.restore();
   }
-}
+  
+  // Render players on canvas
+  function drawPlayers() {
+    ctx.save();
+    ctx.translate(canvas.width / 2, canvas.height / 2);
+    ctx.scale(zoomLevel, zoomLevel);
+  
+    Object.values(players).forEach(drawPlayer);
+    drawPlayer(player); // Draw current player last to be on top
+  
+    ctx.restore();
+  }
+  
+  // Draw a single player on the canvas
+  function drawPlayer(p) {
+    if (!p.sprite.complete || p.frameIndex === undefined) return;
+    const srcX = p.frameIndex * p.width;
+    const srcY = p.direction * p.height;
+    const screenX = (p.x - player.x) * zoomLevel;
+    const screenY = (p.y - player.y) * zoomLevel;
+  
+    ctx.drawImage(p.sprite, srcX, srcY, p.width, p.height, screenX, screenY, p.width * zoomLevel, p.height * zoomLevel);
+    ctx.fillStyle = 'white'; ctx.textAlign = 'center'; ctx.font = `${14 * zoomLevel}px Arial`;
+    ctx.fillText(p.name, screenX + (p.width * zoomLevel) / 2, screenY - 10 * zoomLevel);
+    if (playerMessages[p.id]) {
+      ctx.fillStyle = 'yellow';
+      ctx.fillText(playerMessages[p.id], screenX + (p.width * zoomLevel) / 2, screenY - 25 * zoomLevel);
+    }
+  }
 
 // Keyboard event listeners for movement
 document.addEventListener('keydown', e => keysPressed[e.key] = true);
