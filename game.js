@@ -55,7 +55,7 @@ function gameLoop(timeStamp) {
   const deltaTime = (timeStamp - lastRenderTime) / 1000;
   if (player.id) {
     updatePlayerPosition(deltaTime);
-    handleAnimation(deltaTime);
+    handleAnimation(deltaTime); // Handle player animation based on movement
   }
   drawPlayers();
   lastRenderTime = timeStamp;
@@ -73,14 +73,22 @@ function sendMessage() {
 function updatePlayerPosition(deltaTime) {
   let dx = 0;
   let dy = 0;
-  player.moving = false;
+  player.moving = false; // Reset moving status
 
   if (keysPressed['a'] || keysPressed['ArrowLeft']) {dx -= movementSpeed * deltaTime; player.moving = true;}
   if (keysPressed['d'] || keysPressed['ArrowRight']) {dx += movementSpeed * deltaTime; player.moving = true;}
   if (keysPressed['w'] || keysPressed['ArrowUp']) {dy -= movementSpeed * deltaTime; player.moving = true;}
   if (keysPressed['s'] || keysPressed['ArrowDown']) {dy += movementSpeed * deltaTime; player.moving = true;}
 
-  updateDirection(dx, dy);
+  // Update direction based on movement
+  if (dy < 0 && dx < 0) player.direction = DIRECTIONS.UP_LEFT;
+  else if (dy < 0 && dx > 0) player.direction = DIRECTIONS.UP_RIGHT;
+  else if (dy > 0 && dx < 0) player.direction = DIRECTIONS.DOWN_LEFT;
+  else if (dy > 0 && dx > 0) player.direction = DIRECTIONS.DOWN_RIGHT;
+  else if (dy < 0) player.direction = DIRECTIONS.UP;
+  else if (dy > 0) player.direction = DIRECTIONS.DOWN;
+  else if (dx < 0) player.direction = DIRECTIONS.LEFT;
+  else if (dx > 0) player.direction = DIRECTIONS.RIGHT;
 
   dx /= zoomLevel;
   dy /= zoomLevel;
@@ -95,17 +103,7 @@ function updatePlayerPosition(deltaTime) {
   }
 }
 
-function updateDirection(dx, dy) {
-  if (dy < 0 && dx < 0) player.direction = DIRECTIONS.UP_LEFT;
-  else if (dy < 0 && dx > 0) player.direction = DIRECTIONS.UP_RIGHT;
-  else if (dy > 0 && dx < 0) player.direction = DIRECTIONS.DOWN_LEFT;
-  else if (dy > 0 && dx > 0) player.direction = DIRECTIONS.DOWN_RIGHT;
-  else if (dy < 0) player.direction = DIRECTIONS.UP;
-  else if (dy > 0) player.direction = DIRECTIONS.DOWN;
-  else if (dx < 0) player.direction = DIRECTIONS.LEFT;
-  else if (dx > 0) player.direction = DIRECTIONS.RIGHT;
-}
-
+// Handle animation based on movement
 function handleAnimation(deltaTime) {
   if (player.moving) {
     animationTimer += deltaTime;
@@ -114,7 +112,7 @@ function handleAnimation(deltaTime) {
       animationTimer = 0;
     }
   } else {
-    player.frameIndex = 0;
+    player.frameIndex = 0; // Reset to the standing position when not moving
   }
 }
 
@@ -122,84 +120,100 @@ function drawPlayers() {
     ctx.clearRect(0, 0, canvas.width, canvas.height);
     ctx.save();
     ctx.scale(zoomLevel, zoomLevel);
-    Object.values(players).forEach(p => {
-        // Ensure every player has a loaded sprite before attempting to draw
-        if (!p.sprite) {
-            p.sprite = new Image();
-            p.sprite.src = player.sprite.src; // Assuming all players use the same sprite sheet
-            p.sprite.onload = () => drawPlayer(p); // Draw the player once the sprite is loaded
-        } else if (p.sprite.complete) {
+
+    // Draw other players
+    Object.values(players).forEach((p) => {
+        if (p.id !== player.id) {
             drawPlayer(p);
         }
     });
+
+    // Draw the current player
+    drawPlayer(player);
+
     ctx.restore();
 }
 
 function drawPlayer(p) {
-    const frameWidth = p.width;
-    const frameHeight = p.height;
-    const srcX = p.frameIndex * frameWidth;
-    const srcY = p.direction * frameHeight;
-    // Adjust position drawing logic if necessary
+    if (!p.sprite.complete) return; // Ensure the sprite image is loaded
+
+    const srcX = p.frameIndex * p.width;
+    const srcY = p.direction * p.height;
     const screenX = p.x - player.x + canvas.width / 2 / zoomLevel;
     const screenY = p.y - player.y + canvas.height / 2 / zoomLevel;
 
-    ctx.drawImage(p.sprite, srcX, srcY, frameWidth, frameHeight, screenX, screenY, frameWidth, frameHeight);
-    drawNameAndMessages(p, screenX, screenY);
+    ctx.drawImage(p.sprite, srcX, srcY, p.width, p.height, screenX, screenY, p.width, p.height);
+
+    // Draw name and messages
+    ctx.fillStyle = 'white';
+    ctx.textAlign = 'center';
+    ctx.font = '14px Arial';
+    ctx.fillText(p.name, screenX + p.width / 2, screenY - 10);
+    if (playerMessages[p.id]) {
+        ctx.fillStyle = 'yellow';
+        ctx.fillText(playerMessages[p.id], screenX + p.width / 2, screenY - 25);
+    }
 }
 
-function drawNameAndMessages(p, screenX, screenY) {
-  ctx.fillStyle = 'white';
-  ctx.textAlign = 'center';
-  ctx.font = '14px Arial';
-  ctx.fillText(p.name, screenX + p.width / 2, screenY - 10);
-  if (playerMessages[p.id]) {
-      ctx.fillStyle = 'yellow';
-      ctx.fillText(playerMessages[p.id], screenX + p.width / 2, screenY - 25);
-  }
-}
+document.addEventListener('keydown', (e) => {
+    keysPressed[e.key] = true;
+});
 
-document.addEventListener('keydown', (e) => keysPressed[e.key] = true);
-document.addEventListener('keyup', (e) => keysPressed[e.key] = false);
+document.addEventListener('keyup', (e) => {
+    keysPressed[e.key] = false;
+});
 
+// Socket event listeners
 socket.on('currentPlayers', (playersData) => {
-    players = {}; // Clear existing players object
-    Object.entries(playersData).forEach(([id, p]) => {
-        players[id] = {
-            ...p,
-            sprite: new Image(), // Initialize a new Image for each player
-            moving: false // Add any additional necessary properties
-        };
-        players[id].sprite.src = player.sprite.src; // Use the same sprite source for all players
-        if (id === socket.id) {
-            // Update local player specifics if needed
-            player = {...players[id], sprite: player.sprite};
-        }
-    });
-    requestAnimationFrame(gameLoop); // Ensure the game loop is running
+    Object.values(playersData).forEach(initializePlayerSprite);
+    if (socket.id in playersData) {
+        player.id = socket.id;
+        player.name = playersData[socket.id].name; // Assuming player names are managed server-side
+        player.x = playersData[socket.id].x;
+        player.y = playersData[socket.id].y;
+        player.direction = playersData[socket.id].direction;
+    }
+    players = playersData;
 });
 
 socket.on('newPlayer', (playerData) => {
-  initializePlayerSprite(playerData);
-  players[playerData.id] = playerData;
+    players[playerData.id] = playerData;
+    initializePlayerSprite(players[playerData.id]);
 });
 
 socket.on('playerMoved', (playerData) => {
-  if (players[playerData.playerId]) {
-    Object.assign(players[playerData.playerId], playerData);
-  }
+    if (players[playerData.playerId] && playerData.playerId !== player.id) {
+        players[playerData.playerId].x = playerData.x;
+        players[playerData.playerId].y = playerData.y;
+        players[playerData.playerId].direction = playerData.direction;
+    }
 });
 
-socket.on('playerDisconnected', (playerId) => delete players[playerId]);
+socket.on('playerDisconnected', (playerId) => {
+    delete players[playerId];
+});
+
 socket.on('chatMessage', (data) => {
-  playerMessages[data.playerId] = data.message;
-  setTimeout(() => delete playerMessages[data.playerId], 5000);
+    playerMessages[data.playerId] = data.message;
+    setTimeout(() => {
+        delete playerMessages[data.playerId];
+    }, 5000); // Messages disappear after 5 seconds
 });
 
+// Helper function to initialize player sprite
 function initializePlayerSprite(p) {
-  p.sprite = new Image();
-  p.sprite.src = player.sprite.src; // Uniform sprite source for all players
-  players[p.id] = p; // Update or add player in local state
+    p.sprite = new Image();
+    if (p.id === player.id) {
+        // Local player sprite initialization
+        p.sprite.src = player.sprite.src;
+        p.frameIndex = player.frameIndex;
+        p.direction = player.direction;
+    } else {
+        // Other players sprite initialization
+        p.sprite.src = player.sprite.src; // Assuming all players use the same sprite sheet
+        p.frameIndex = 0;
+        p.direction = DIRECTIONS.DOWN;
+    }
 }
 
 requestAnimationFrame(gameLoop);
