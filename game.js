@@ -41,10 +41,23 @@ canvas.height = CAMERA_HEIGHT * TILE_SIZE;
 // Load tile images
 const tileImages = {};
 const tileTypes = [TILE_FLOOR, TILE_WALL, TILE_DOOR];
-tileTypes.forEach(type => {
+let loadedImages = 0;
+
+function loadTileImage(type) {
   tileImages[type] = new Image();
   tileImages[type].src = `Images/tile_${type}.png`;
-});
+  tileImages[type].onload = () => {
+    loadedImages++;
+    if (loadedImages === tileTypes.length) {
+      requestAnimationFrame(gameLoop);
+    }
+  };
+  tileImages[type].onerror = () => {
+    console.error(`Failed to load tile image: Images/tile_${type}.png`);
+  };
+}
+
+tileTypes.forEach(loadTileImage);
 
 // Initialize the game world
 function initializeGameWorld() {
@@ -176,24 +189,29 @@ function handleAnimation(deltaTime) {
 
 // Draw the game world
 function drawBackground() {
-  const cameraX = player.x - canvas.width / 2;
-  const cameraY = player.y - canvas.height / 2;
-
-  for (let y = 0; y < CAMERA_HEIGHT; y++) {
-    for (let x = 0; x < CAMERA_WIDTH; x++) {
-      const worldX = Math.floor(cameraX / TILE_SIZE) + x;
-      const worldY = Math.floor(cameraY / TILE_SIZE) + y;
-
-      if (worldX >= 0 && worldX < WORLD_WIDTH && worldY >= 0 && worldY < WORLD_HEIGHT) {
-        const tile = gameWorld[worldY][worldX];
-        ctx.drawImage(tileImages[tile], x * TILE_SIZE, y * TILE_SIZE, TILE_SIZE, TILE_SIZE);
-      } else {
-        ctx.fillStyle = '#000';
-        ctx.fillRect(x * TILE_SIZE, y * TILE_SIZE, TILE_SIZE, TILE_SIZE);
+    const cameraX = player.x - canvas.width / 2;
+    const cameraY = player.y - canvas.height / 2;
+  
+    for (let y = 0; y < CAMERA_HEIGHT; y++) {
+      for (let x = 0; x < CAMERA_WIDTH; x++) {
+        const worldX = Math.floor(cameraX / TILE_SIZE) + x;
+        const worldY = Math.floor(cameraY / TILE_SIZE) + y;
+  
+        if (worldX >= 0 && worldX < WORLD_WIDTH && worldY >= 0 && worldY < WORLD_HEIGHT) {
+          const tile = gameWorld[worldY][worldX];
+          if (tileImages[tile]) {
+            ctx.drawImage(tileImages[tile], x * TILE_SIZE, y * TILE_SIZE, TILE_SIZE, TILE_SIZE);
+          } else {
+            ctx.fillStyle = '#000';
+            ctx.fillRect(x * TILE_SIZE, y * TILE_SIZE, TILE_SIZE, TILE_SIZE);
+          }
+        } else {
+          ctx.fillStyle = '#000';
+          ctx.fillRect(x * TILE_SIZE, y * TILE_SIZE, TILE_SIZE, TILE_SIZE);
+        }
       }
     }
   }
-}
 
 // Render players on canvas
 function drawPlayers() {
