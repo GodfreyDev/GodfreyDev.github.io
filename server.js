@@ -21,6 +21,7 @@ app.use((req, res, next) => {
 
 // Structure to hold player data
 let players = {};
+let items = {}; // To store items on the server
 
 // Arrays of adjectives and nouns for player name generation
 const adjectives = ['Quick', 'Lazy', 'Jolly', 'Brave', 'Clever', 'Wise', 'Fierce', 'Gentle', 'Loyal'];
@@ -34,6 +35,19 @@ function getRandomElement(arr) {
 // Generates a unique player name
 function generatePlayerName() {
   return `${getRandomElement(adjectives)}${getRandomElement(nouns)}${Math.floor(Math.random() * 100)}`;
+}
+
+// Generate random items in the world
+function generateItems() {
+  for (let i = 0; i < 50; i++) {
+    const id = `item${i}`;
+    items[id] = {
+      id,
+      x: Math.floor(Math.random() * 200 * 64),
+      y: Math.floor(Math.random() * 200 * 64),
+      type: getRandomElement(['sword', 'shield', 'potion'])
+    };
+  }
 }
 
 // Handle socket.io connections
@@ -51,10 +65,13 @@ io.on('connection', (socket) => {
     moving: false,
     width: 64, // Sprite width
     height: 64, // Sprite height
+    health: 100, // Player health
+    inventory: [] // Player inventory
   };
 
-  // Emit current players to the newly connected player
+  // Emit current players and items to the newly connected player
   socket.emit('currentPlayers', players);
+  socket.emit('currentItems', items);
 
   // Broadcast new player's arrival to other players
   socket.broadcast.emit('newPlayer', players[socket.id]);
@@ -83,6 +100,28 @@ io.on('connection', (socket) => {
     io.emit('chatMessage', { playerId: socket.id, message: data.message });
   });
 
+  // Handle item pickup
+  socket.on('pickupItem', (itemId) => {
+    if (items[itemId]) {
+      players[socket.id].inventory.push(items[itemId].type);
+      delete items[itemId];
+      io.emit('itemPickedUp', { playerId: socket.id, itemId });
+    }
+  });
+
+  // Handle combat
+  socket.on('attack', (targetId) => {
+    if (players[targetId]) {
+      players[targetId].health -= 10; // Example damage value
+      if (players[targetId].health <= 0) {
+        io.emit('playerKilled', targetId);
+        delete players[targetId];
+      } else {
+        io.emit('playerDamaged', { targetId, health: players[targetId].health });
+      }
+    }
+  });
+
   // Handle player disconnection
   socket.on('disconnect', () => {
     console.log(`User disconnected: ${socket.id}`);
@@ -90,6 +129,9 @@ io.on('connection', (socket) => {
     io.emit('playerDisconnected', socket.id);
   });
 });
+
+// Initialize items
+generateItems();
 
 // Determine the server URL based on the environment
 const serverUrl = process.env.NODE_ENV === 'production'

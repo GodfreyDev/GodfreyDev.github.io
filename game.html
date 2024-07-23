@@ -43,6 +43,22 @@
             border-radius: 5px;
             display: none;
         }
+        #inventory {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            color: white;
+        }
+        #inventory ul {
+            list-style: none;
+            padding: 0;
+        }
+        #inventory ul li {
+            background-color: rgba(255, 255, 255, 0.1);
+            margin: 5px 0;
+            padding: 5px;
+            border-radius: 3px;
+        }
     </style>
 </head>
 <body>
@@ -51,6 +67,10 @@
         <input type="text" id="chatInput" placeholder="Type your message here..." />
     </div>
     <div id="dialogueBox"></div>
+    <div id="inventory">
+        <p>Inventory:</p>
+        <ul id="inventoryList"></ul>
+    </div>
 
     <script src="https://cdn.socket.io/4.3.2/socket.io.min.js"></script>
     <script src="game.js"></script>

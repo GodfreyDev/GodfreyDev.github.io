@@ -33,7 +33,7 @@ player.sprite.src = 'Images/player_sprite_frames.png';
 player.sprite.onload = () => requestAnimationFrame(gameLoop);
 player.sprite.onerror = e => console.error("Failed to load player sprite:", e);
 
-let players = {}, playerMessages = {}, keysPressed = {};
+let players = {}, playerMessages = {}, items = {}, inventory = [], keysPressed = {};
 const movementSpeed = 200, animationSpeed = 0.1;
 let lastRenderTime = 0, animationTimer = 0;
 
@@ -109,7 +109,7 @@ function createRoom(x, y, width, height) {
 }
 
 // Create a corridor between two points
-function createCorridor(x1, y1, x2, y2) {
+function createCorridor(x1, y1, x2) {
   const dx = x2 - x1;
   const dy = y2 - y1;
   const length = Math.max(Math.abs(dx), Math.abs(dy));
@@ -128,16 +128,25 @@ function gameLoop(timeStamp) {
     if (player.id) {
       updatePlayerPosition(deltaTime);
       handleAnimation(deltaTime);
-      updateCameraPosition(); // Add this line to update the camera position
+      updateCameraPosition();
     }
     ctx.clearRect(0, 0, canvas.width, canvas.height);
     updatePlayerPosition(deltaTime);
     handleAnimation(deltaTime);
     updateCameraPosition();
     drawBackground();
+    drawItems();
     drawPlayers();
     lastRenderTime = timeStamp;
-  }
+}
+
+// Function to draw items
+function drawItems() {
+  Object.values(items).forEach(item => {
+    ctx.fillStyle = item.type === 'potion' ? 'red' : item.type === 'sword' ? 'silver' : 'blue';
+    ctx.fillRect(item.x - cameraX, item.y - cameraY, TILE_SIZE, TILE_SIZE);
+  });
+}
 
 // Send chat message to the server
 function sendMessage() {
@@ -215,6 +224,13 @@ function updatePlayerPosition(deltaTime) {
           player.x += player.width / 4; // Adjust the player's x-position gradually
         }
       }
+  
+    // Check for item pickup
+    Object.values(items).forEach(item => {
+      if (Math.abs(player.x - item.x) < TILE_SIZE && Math.abs(player.y - item.y) < TILE_SIZE) {
+        socket.emit('pickupItem', item.id);
+      }
+    });
   
     // Emit movement if position or frameIndex changed
     if (newX !== player.x || newY !== player.y || player.frameIndex !== player.lastFrameIndex) {
@@ -302,6 +318,32 @@ function drawPlayer(p) {
     }
   }
 
+// Handle receiving items from the server
+socket.on('currentItems', serverItems => {
+  items = serverItems;
+});
+
+// Handle item pickup
+socket.on('itemPickedUp', data => {
+  delete items[data.itemId];
+  if (data.playerId === player.id) {
+    inventory.push(data.itemId); // Add item to inventory if it's the local player
+    updateInventoryDisplay();
+  }
+});
+
+// Handle player damage
+socket.on('playerDamaged', data => {
+  if (players[data.targetId]) {
+    players[data.targetId].health = data.health;
+  }
+});
+
+// Handle player killed
+socket.on('playerKilled', playerId => {
+  delete players[playerId];
+});
+
 // Keyboard event listeners for movement
 document.addEventListener('keydown', e => keysPressed[e.key] = true);
 document.addEventListener('keyup', e => delete keysPressed[e.key]);
@@ -355,3 +397,14 @@ socket.on('chatMessage', data => {
 // Initialize the game world
 initializeGameWorld();
 requestAnimationFrame(gameLoop);
+
+// Update inventory display
+function updateInventoryDisplay() {
+  const inventoryList = document.getElementById('inventoryList');
+  inventoryList.innerHTML = '';
+  inventory.forEach(item => {
+    const li = document.createElement('li');
+    li.textContent = item;
+    inventoryList.appendChild(li);
+  });
+}
