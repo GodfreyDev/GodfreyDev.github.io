@@ -4,64 +4,9 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Gavin - Personal Website</title>
-    <link rel="stylesheet" href="style.css">
-    <style>
-        #countdown {
-            font-size: 24px; /* Larger font size for better visibility */
-            font-weight: bold;
-            color: #333; /* Adjust color as needed */
-            padding: 20px;
-            background-color: #f0f0f0; /* Light background for contrast */
-            margin-top: 20px;
-            border-radius: 5px;
-            text-align: center;
-        }
-    </style>
-   <script>
-    // Store the custom date globally
-    let customDate = null;
-
-    function updateCountdown() {
-        const now = new Date();
-        let targetDate;
-        
-        if (customDate) {
-            targetDate = new Date(customDate);
-        } else {
-            // Calculate next Wednesday
-            targetDate = new Date();
-            targetDate.setDate(now.getDate() + (3 - now.getDay() + 7) % 7);
-            if (now.getDay() === 3 && now.getHours() >= 0 && now.getMinutes() >= 0 && now.getSeconds() >= 0) {
-                targetDate.setDate(now.getDate() + 7);
-            }
-            targetDate.setHours(0, 0, 0, 0); // Start of the day
-        }
-
-        let diff = targetDate - now;
-        let isNegative = diff < 0;
-        diff = Math.abs(diff); // Work with absolute value for calculation
-
-        const days = Math.floor(diff / (1000 * 60 * 60 * 24));
-        const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
-        const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
-        const seconds = Math.floor((diff % (1000 * 60)) / 1000);
-
-        // Prepend a negative sign if the countdown is negative
-        const sign = isNegative ? "-" : "";
-
-        document.getElementById('countdown').innerHTML = "Finish demo by: " + sign + days + "d " + hours + "h " +
-        minutes + "m " + seconds + "s ";
-
-        setTimeout(updateCountdown, 1000);
-    }
-
-    function setCountdownDate() {
-        customDate = document.getElementById('dateInput').value;
-        updateCountdown();
-    }
-
-    document.addEventListener('DOMContentLoaded', updateCountdown);
-</script>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500&display=swap">
+    <link rel="stylesheet" href="css/style.css">
+    <script src="https://cdn.jsdelivr.net/npm/particles.js@2.0.0/particles.min.js"></script>
 </head>
 <body>
     <header>
@@ -72,27 +17,40 @@
             <a href="https://github.com/GodfreyDev">GitHub Profile</a> |
             <a href="mailto:gtrevi1@students.towson.edu">Email</a>
         </nav>
+        <button class="theme-toggle" onclick="toggleTheme()" aria-label="Toggle dark mode">
+            <span id="toggle-icon"></span>
+        </button>
     </header>
+
+    <div id="particles-js"></div> <!-- Particle background -->
+
     <section id="about">
-        <p>Hello! I'm Gavin, and I'm a Student. I'm passionate about game development and programming in general. Welcome to my personal website!</p>
-        <div id="countdown"></div>
-        <div>
-            <input type="date" id="dateInput" min="2024-01-01"> <!-- Adjust 'min' as necessary -->
-            <button onclick="setCountdownDate()">Set Date</button>
+        <div class="about-container">
+            <h2>About Me</h2>
+            <p>Hello! I'm Gavin, and I'm a Student. I'm passionate about game development and programming in general. Welcome to my personal website!</p>
+            <div class="countdown-container">
+                <input type="date" id="dateInput" min="2024-01-01">
+                <button onclick="setCountdownDate()">Set Date</button>
+            </div>
+            <div id="countdown"></div>
         </div>
-    </section>
+    </section>    
+
     <section id="skills">
         <h2>Skills & Interests</h2>
         <p>As a game developer and a general programmer, I have experience in various programming languages and game engines. I enjoy creating engaging and interactive experiences through code. Feel free to explore my GitHub projects to see what I've been working on!</p>
     </section>
+
     <section id="game">
         <h2>Explore My World!</h2>
         <p>Check out my game for a full-screen immersive experience.</p>
         <a href="game.html" target="_blank">Play Game</a>
     </section>    
+
     <footer>
         <p>Contact me at <a href="mailto:gtrevi1@students.towson.edu">gtrevi1@students.towson.edu</a></p>
     </footer>
-    <script src="game.js"></script>
+
+    <script src="js/main.js"></script>
 </body>
 </html>
