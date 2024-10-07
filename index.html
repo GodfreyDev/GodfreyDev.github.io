@@ -3,54 +3,194 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Gavin - Personal Website</title>
-    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500&display=swap">
+    <title>Gavin - Game Developer & Programmer</title>
+    <!-- Google Fonts -->
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap">
+    <!-- Font Awesome for Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Stylesheet -->
     <link rel="stylesheet" href="css/style.css">
+    <!-- Particles.js -->
     <script src="https://cdn.jsdelivr.net/npm/particles.js@2.0.0/particles.min.js"></script>
 </head>
-<body>
+<body class="light-mode">
+    <!-- Header -->
     <header>
-        <h1>About Me</h1>
-        <nav>
-            <a href="#about">About</a> |
-            <a href="resume.pdf">Resume</a> |
-            <a href="https://github.com/GodfreyDev">GitHub Profile</a> |
-            <a href="mailto:gtrevi1@students.towson.edu">Email</a>
-        </nav>
-        <button class="theme-toggle" onclick="toggleTheme()" aria-label="Toggle dark mode">
-            <span id="toggle-icon"></span>
-        </button>
+        <div class="container">
+            <h1><a href="#hero">Gavin</a></h1>
+            <nav>
+                <ul>
+                    <li><a href="#about">About</a></li>
+                    <li><a href="#skills">Skills</a></li>
+                    <li><a href="#projects">Projects</a></li>
+                    <li><a href="#contact">Contact</a></li>
+                </ul>
+            </nav>
+            <button class="theme-toggle" onclick="toggleTheme()" aria-label="Toggle dark mode">
+                <span id="toggle-icon"></span>
+            </button>
+            <div class="hamburger" aria-label="Toggle navigation" aria-expanded="false">
+                <span></span>
+                <span></span>
+                <span></span>
+            </div>
+        </div>
     </header>
 
-    <div id="particles-js"></div> <!-- Particle background -->
+    <!-- Particle Background -->
+    <div id="particles-js"></div>
 
-    <section id="about">
-        <div class="about-container">
-            <h2>About Me</h2>
-            <p>Hello! I'm Gavin, and I'm a Student. I'm passionate about game development and programming in general. Welcome to my personal website!</p>
-            <div class="countdown-container">
-                <input type="date" id="dateInput" min="2024-01-01">
-                <button onclick="setCountdownDate()">Set Date</button>
-            </div>
-            <div id="countdown"></div>
+    <!-- Hero Section -->
+    <section id="hero">
+        <div class="container">
+            <h2>Welcome to My World of Code & Creativity</h2>
+            <p>I'm Gavin, a passionate game developer and programmer dedicated to creating immersive and interactive experiences.</p>
+            <a href="#projects" class="btn">Explore My Work</a>
         </div>
-    </section>    
-
-    <section id="skills">
-        <h2>Skills & Interests</h2>
-        <p>As a game developer and a general programmer, I have experience in various programming languages and game engines. I enjoy creating engaging and interactive experiences through code. Feel free to explore my GitHub projects to see what I've been working on!</p>
     </section>
 
-    <section id="game">
-        <h2>Explore My World!</h2>
-        <p>Check out my game for a full-screen immersive experience.</p>
-        <a href="game.html" target="_blank">Play Game</a>
-    </section>    
+    <!-- About Section -->
+    <section id="about">
+        <div class="container">
+            <h2>About Me</h2>
+            <div class="about-content">
+                <img src="images/profile.jpg" alt="Gavin's Profile Picture" class="profile-pic">
+                <div class="about-text">
+                    <p>Hello! I'm Gavin, a dedicated student at Towson University, specializing in game development and programming. I thrive on turning ideas into reality through code and creativity. When I'm not coding, I enjoy playing video games, exploring new technologies, and collaborating on exciting projects.</p>
+                    <div class="countdown-container">
+                        <input type="date" id="dateInput" min="2024-01-01" aria-label="Select countdown date">
+                        <button onclick="setCountdownDate()" aria-label="Set countdown date">Set Date</button>
+                    </div>
+                    <div id="countdown" aria-live="polite"></div>
+                </div>
+            </div>
+        </div>
+    </section>
 
+    <!-- Skills Section -->
+    <section id="skills">
+        <div class="container">
+            <h2>Skills & Expertise</h2>
+            <div class="skills-grid">
+                <div class="skill">
+                    <i class="fas fa-code"></i>
+                    <h3>Programming</h3>
+                    <p>Proficient in languages like C++, Python, and JavaScript. Experienced in object-oriented programming and software development best practices.</p>
+                </div>
+                <div class="skill">
+                    <i class="fas fa-gamepad"></i>
+                    <h3>Game Development</h3>
+                    <p>Skilled in using game engines such as Unity and Unreal Engine. Passionate about creating engaging and interactive gaming experiences.</p>
+                </div>
+                <div class="skill">
+                    <i class="fas fa-database"></i>
+                    <h3>Database Management</h3>
+                    <p>Experienced with SQL and NoSQL databases, ensuring efficient data storage and retrieval for applications.</p>
+                </div>
+                <div class="skill">
+                    <i class="fas fa-mobile-alt"></i>
+                    <h3>Mobile Development</h3>
+                    <p>Developing responsive and user-friendly mobile applications for both Android and iOS platforms.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Projects Section -->
+    <section id="projects">
+        <div class="container">
+            <h2>Featured Projects</h2>
+            <div class="projects-grid">
+                <!-- Project 1 -->
+                <div class="project-card">
+                    <img src="images/project1.jpg" alt="Epic Adventure Game Screenshot" loading="lazy">
+                    <div class="project-info">
+                        <h3>Epic Adventure Game</h3>
+                        <p>A fully immersive RPG game developed using Unity, featuring rich storytelling and dynamic gameplay.</p>
+                        <a href="https://github.com/GodfreyDev/epic-adventure" target="_blank" rel="noopener noreferrer" class="btn">View on GitHub</a>
+                    </div>
+                </div>
+                <!-- Project 2 -->
+                <div class="project-card">
+                    <img src="images/project2.jpg" alt="AI Chatbot Screenshot" loading="lazy">
+                    <div class="project-info">
+                        <h3>AI Chatbot</h3>
+                        <p>An intelligent chatbot built with Python and machine learning algorithms, capable of engaging in natural conversations.</p>
+                        <a href="https://github.com/GodfreyDev/ai-chatbot" target="_blank" rel="noopener noreferrer" class="btn">View on GitHub</a>
+                    </div>
+                </div>
+                <!-- Project 3 -->
+                <div class="project-card">
+                    <img src="images/project3.jpg" alt="Mobile Fitness App Screenshot" loading="lazy">
+                    <div class="project-info">
+                        <h3>Mobile Fitness App</h3>
+                        <p>A responsive mobile application designed to help users track their fitness goals and monitor progress.</p>
+                        <a href="https://github.com/GodfreyDev/fitness-app" target="_blank" rel="noopener noreferrer" class="btn">View on GitHub</a>
+                    </div>
+                </div>
+                <!-- Example Project Placeholder -->
+                <div class="project-card">
+                    <img src="images/example-project.jpg" alt="Example Project Screenshot" loading="lazy">
+                    <div class="project-info">
+                        <h3>Example Project</h3>
+                        <p>This is an example project description. Details will be added once the project is completed.</p>
+                        <a href="#" class="btn disabled" aria-disabled="true">Coming Soon</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Contact Section -->
+    <section id="contact">
+        <div class="container">
+            <h2>Get In Touch</h2>
+            <p>Whether you have a question, want to collaborate, or just want to say hi, feel free to reach out!</p>
+            <form action="https://formspree.io/f/mwkajqvy" method="POST" aria-label="Contact form">
+                <div class="form-group">
+                    <label for="name">Name</label>
+                    <input type="text" id="name" name="name" required placeholder="Your Name">
+                </div>
+                <div class="form-group">
+                    <label for="email">Email</label>
+                    <input type="email" id="email" name="_replyto" required placeholder="Your Email">
+                </div>
+                <div class="form-group">
+                    <label for="message">Message</label>
+                    <textarea id="message" name="message" rows="5" required placeholder="Your Message"></textarea>
+                </div>
+                <button type="submit" class="btn">Send Message</button>
+            </form>
+            <div class="social-links">
+                <a href="https://github.com/GodfreyDev" target="_blank" rel="noopener noreferrer" aria-label="GitHub"><i class="fab fa-github"></i></a>
+                <a href="https://linkedin.com/in/yourprofile" target="_blank" rel="noopener noreferrer" aria-label="LinkedIn"><i class="fab fa-linkedin"></i></a>
+                <a href="https://twitter.com/yourprofile" target="_blank" rel="noopener noreferrer" aria-label="Twitter"><i class="fab fa-twitter"></i></a>
+                <!-- Add more social links as needed -->
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
     <footer>
-        <p>Contact me at <a href="mailto:gtrevi1@students.towson.edu">gtrevi1@students.towson.edu</a></p>
+        <div class="container">
+            <p>&copy; 2024 Gavin. All rights reserved.</p>
+            <nav>
+                <a href="#hero">Home</a> |
+                <a href="#about">About</a> |
+                <a href="#skills">Skills</a> |
+                <a href="#projects">Projects</a> |
+                <a href="#contact">Contact</a>
+            </nav>
+        </div>
     </footer>
 
+    <!-- Scripts -->
     <script src="js/main.js"></script>
+    <!-- Initialize Particles.js -->
+    <script>
+        particlesJS.load('particles-js', 'js/particles.json', function() {
+            console.log('Particles.js loaded - callback');
+        });
+    </script>
 </body>
 </html>
