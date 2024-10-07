@@ -155,7 +155,7 @@ body.dark-mode .hamburger span {
 
 /* Hero Section */
 #hero {
-    background: url('../images/hero-bg.jpg') no-repeat center center/cover;
+    background: url('images/hero-bg.jpg') no-repeat center center/cover; /* Updated path */
     color: #333; /* Dark text for light mode */
     text-align: center;
     padding: 150px 20px 100px; /* Adjusted padding */
@@ -164,7 +164,7 @@ body.dark-mode .hamburger span {
 }
 
 body.dark-mode #hero {
-    background: url('../images/hero-bg-dark.jpg') no-repeat center center/cover;
+    background: url('images/hero-bg-dark.jpg') no-repeat center center/cover; /* Updated path */
     color: #fff; /* Light text for dark mode */
 }
 
