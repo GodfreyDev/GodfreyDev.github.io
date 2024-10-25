@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Fluid Simulation</title>
+    <style>
+        body { margin: 0; overflow: hidden; }
+        canvas { display: block; }
+        /* Optional: Style for the FPS counter */
+        #fpsCounter {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            color: white;
+            font-family: Arial, sans-serif;
+            background: rgba(0, 0, 0, 0.5);
+            padding: 5px 10px;
+            border-radius: 5px;
+            z-index: 100;
+            user-select: none; /* Prevent text selection */
+            pointer-events: none; /* Ignore mouse events */
+        }
+    </style>
+</head>
+<body>
+    <!-- FPS Counter -->
+    <div id="fpsCounter">FPS: 0</div>
+    
+    <!-- Include Three.js library first -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    
+    <!-- Link to the lil-gui CSS -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/lil-gui@0.17/dist/lil-gui.min.css">
+    
+    <!-- Include your custom script as a module -->
+    <script type="module" src="js/fluid-simulation.js"></script>
+</body>
+</html>

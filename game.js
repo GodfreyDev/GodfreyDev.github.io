@@ -1,3 +1,5 @@
+// # game.js
+
 const serverUrl = window.location.hostname === 'godfreydev.github.io'
   ? 'https://cool-accessible-pint.glitch.me'
   : 'http://localhost:3000';

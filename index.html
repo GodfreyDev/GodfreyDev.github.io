@@ -8,6 +8,8 @@
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap">
     <!-- Font Awesome for Icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Vis Network CSS -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/vis/4.21.0/vis-network.min.css" />
     <!-- Stylesheet -->
     <link rel="stylesheet" href="css/style.css">
     <!-- Particles.js -->
@@ -23,9 +25,28 @@
                     <li><a href="#about">About</a></li>
                     <li><a href="#skills">Skills</a></li>
                     <li><a href="#projects">Projects</a></li>
+                    <li><a href="#game">Game</a></li>
+                    <li><a href="#wiki">Wiki</a></li>
+                    <li><a href="fluid-simulation.html">Fluid Simulation</a></li>
                     <li><a href="#contact">Contact</a></li>
                 </ul>
             </nav>
+            <div class="social-buttons">
+                <a href="https://github.com/GodfreyDev" target="_blank" rel="noopener noreferrer" aria-label="GitHub">
+                    <i class="fab fa-github"></i>
+                </a>
+                <a href="https://linkedin.com/in/futureProfile" target="_blank" rel="noopener noreferrer" aria-label="LinkedIn">
+                    <i class="fab fa-linkedin"></i>
+                </a>
+                <a href="https://discord.gg/HxTwUcGaPY" target="_blank" rel="noopener noreferrer" aria-label="Discord">
+                    <i class="fab fa-discord"></i>
+                </a>
+                <button class="social-button onlyfans" onclick="handleOnlyFansClick()" aria-label="OnlyFans">
+                    <i class="fab fa-onlyfans"></i>
+                </button>
+                <!-- OnlyFans Message -->
+                <span id="onlyfans-message" style="display:none; margin-left: 10px;"></span>
+            </div>
             <button class="theme-toggle" onclick="toggleTheme()" aria-label="Toggle dark mode">
                 <span id="toggle-icon"></span>
             </button>
@@ -141,6 +162,30 @@
         </div>
     </section>
 
+    <!-- Game Section -->
+    <section id="game">
+        <div class="container">
+            <h2>Explore My World!</h2>
+            <p>Check out my game for a full-screen immersive experience.</p>
+            <a href="game.html" target="_blank" class="btn">Play Game</a>
+        </div>
+    </section>
+
+    <!-- Wiki Section -->
+    <section id="wiki">
+        <div class="container">
+            <h2>Wiki</h2>
+            <nav id="wiki-navigation"></nav>
+            <input type="text" id="wiki-search" placeholder="Search the wiki..." aria-label="Search the wiki">
+            <div id="wiki-content">
+                <!-- Markdown content will be loaded here -->
+            </div>
+            <div id="graph-container">
+                <!-- Graph visualization will be rendered here -->
+            </div>
+        </div>
+    </section>
+
     <!-- Contact Section -->
     <section id="contact">
         <div class="container">
@@ -179,6 +224,8 @@
                 <a href="#about">About</a> |
                 <a href="#skills">Skills</a> |
                 <a href="#projects">Projects</a> |
+                <a href="#game">Game</a> |
+                <a href="#wiki">Wiki</a> |
                 <a href="#contact">Contact</a>
             </nav>
         </div>
@@ -192,5 +239,10 @@
             console.log('Particles.js loaded - callback');
         });
     </script>
+    <!-- Vis Network JS -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/vis/4.21.0/vis-network.min.js"></script>
+    <!-- Additional Scripts for Wiki and Graph Visualization -->
+    <script src="js/wiki.js"></script>
+    <script src="js/graph.js"></script>
 </body>
 </html>

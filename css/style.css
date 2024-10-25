@@ -1,3 +1,5 @@
+/* # css/style.css */
+
 /* General Styles */
 body {
     margin: 0;
@@ -7,6 +9,7 @@ body {
     color: #333;
     transition: background-color 0.4s ease, color 0.4s ease;
     line-height: 1.6;
+    padding-top: 80px; /* Prevent content from being hidden behind the fixed header */
 }
 
 body.light-mode {
@@ -24,7 +27,7 @@ body.dark-mode {
     width: 90%;
     max-width: 1200px;
     margin: auto;
-    padding: 80px 0 40px; /* Adjusted padding to account for fixed header */
+    padding: 40px 0;
 }
 
 /* Header */
@@ -88,6 +91,31 @@ nav ul li a:hover {
     color: #f39c12;
 }
 
+/* Social Buttons Styling */
+.social-buttons {
+    display: flex;
+    gap: 15px;
+    align-items: center;
+}
+
+.social-buttons a i,
+.social-buttons button i {
+    font-size: 1.5em;
+    color: #555;
+    transition: color 0.3s ease, transform 0.3s ease;
+}
+
+body.dark-mode .social-buttons a i,
+body.dark-mode .social-buttons button i {
+    color: #aaa;
+}
+
+.social-buttons a:hover i,
+.social-buttons button:hover i {
+    color: #f39c12;
+    transform: scale(1.1);
+}
+
 /* Theme Toggle Button */
 .theme-toggle {
     cursor: pointer;
@@ -114,9 +142,17 @@ body.dark-mode .theme-toggle {
     opacity: 0.8;
 }
 
-.theme-toggle svg {
-    width: 24px;
-    height: 24px;
+.theme-toggle #toggle-icon::before {
+    content: "\f186"; /* Font Awesome sun icon */
+    font-family: "Font Awesome 5 Free";
+    font-weight: 900;
+    font-size: 1.2em;
+    color: #f39c12;
+}
+
+body.dark-mode .theme-toggle #toggle-icon::before {
+    content: "\f186"; /* You can switch to a moon icon if preferred */
+    color: #f39c12;
 }
 
 /* Hamburger Menu */
@@ -443,6 +479,109 @@ body.dark-mode .project-info .btn:hover {
     text-decoration: none;
 }
 
+/* Game Section */
+#game {
+    background: #fff;
+    padding: 60px 20px;
+    margin: 40px 0;
+    border-radius: 10px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    text-align: center;
+    transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+body.dark-mode #game {
+    background: #2a2a2a;
+    color: #ddd;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.5);
+}
+
+#game h2 {
+    font-size: 2em;
+    margin-bottom: 20px;
+}
+
+#game p {
+    font-size: 1.2em;
+    margin-bottom: 30px;
+}
+
+#game .btn {
+    background-color: #f39c12;
+    color: #fff;
+    padding: 12px 25px;
+    text-decoration: none;
+    border-radius: 5px;
+    font-size: 1em;
+    font-weight: 500;
+    transition: background-color 0.3s ease;
+}
+
+body.dark-mode #game .btn {
+    background-color: #e67e22;
+    color: #fff;
+}
+
+#game .btn:hover {
+    background-color: #e67e22;
+}
+
+body.dark-mode #game .btn:hover {
+    background-color: #d35400;
+}
+
+/* Wiki Section */
+#wiki {
+    background: #fff;
+    padding: 60px 20px;
+    margin: 40px 0;
+    border-radius: 10px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+body.dark-mode #wiki {
+    background: #2a2a2a;
+    color: #ddd;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.5);
+}
+
+#wiki h2 {
+    margin-bottom: 20px;
+    font-size: 2em;
+}
+
+#wiki-navigation {
+    margin-bottom: 20px;
+}
+
+#wiki-search {
+    width: 100%;
+    max-width: 400px;
+    padding: 10px;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    font-size: 1em;
+    background-color: inherit; /* Match the theme */
+    color: inherit; /* Match the theme */
+    transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease;
+}
+
+#wiki-search:focus {
+    border-color: #f39c12;
+    outline: none;
+}
+
+#wiki-content {
+    margin-top: 30px;
+    /* Additional styling as needed */
+}
+
+#graph-container {
+    margin-top: 30px;
+    /* Additional styling for graph visualization */
+}
+
 /* Contact Section */
 #contact {
     background: #fff;
@@ -457,6 +596,16 @@ body.dark-mode #contact {
     background: #2a2a2a;
     color: #ddd;
     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.5);
+}
+
+#contact h2 {
+    margin-bottom: 20px;
+    font-size: 2em;
+}
+
+#contact p {
+    margin-bottom: 30px;
+    font-size: 1.2em;
 }
 
 #contact form {
@@ -634,6 +783,11 @@ footer p {
     .hamburger {
         display: flex;
     }
+
+    /* Adjust social-buttons alignment */
+    .social-buttons {
+        gap: 10px;
+    }
 }
 
 @media (max-width: 480px) {
@@ -651,5 +805,39 @@ footer p {
 
     .projects-grid {
         grid-template-columns: 1fr;
+    }
+
+    /* Reduce font size for social icons */
+    .social-buttons a i,
+    .social-buttons button i {
+        font-size: 1.2em;
+    }
+}
+
+/* Additional Styles for Hamburger Menu */
+nav ul.show {
+    display: flex;
+}
+
+.hamburger {
+    z-index: 1001; /* Ensure hamburger is above the nav */
+}
+
+@media (max-width: 768px) {
+    /* Ensure nav and social-buttons don't overlap */
+    header {
+        flex-wrap: wrap;
+    }
+
+    nav ul {
+        width: 100%;
+        top: 50px;
+    }
+
+    .social-buttons {
+        order: 3;
+        width: 100%;
+        justify-content: center;
+        margin-top: 10px;
     }
 }
