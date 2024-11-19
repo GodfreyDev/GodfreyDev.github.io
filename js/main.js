@@ -209,39 +209,6 @@ function startCountdown(date) {
     }, 1000);
 }
 
-// OnlyFans Click Handler - Sends data to Google Sheets and displays updated count
-async function handleOnlyFansClick() {
-    const onlyFansMessage = document.getElementById('onlyfans-message');
-
-    try {
-        onlyFansMessage.innerText = `⌛ Processing...`;
-        onlyFansMessage.style.display = 'block';
-
-        const response = await fetch(WEB_APP_URL, {
-            method: 'POST',
-            mode: 'cors', // Ensure CORS is allowed on the server-side
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({ action: 'increment' }) // Customize as per your API
-        });
-
-        const result = await response.json();
-
-        if (result.success) {
-            onlyFansMessage.innerText = `😏 You've clicked this button ${result.count} time${result.count > 1 ? 's' : ''}. Naughty, naughty...`;
-        } else {
-            onlyFansMessage.innerText = `❌ Error: ${result.message}`;
-        }
-    } catch (error) {
-        onlyFansMessage.innerText = `❌ Error: ${error.message}`;
-    }
-}
-
-
-// Ensure that handleOnlyFansClick is accessible globally
-window.handleOnlyFansClick = handleOnlyFansClick;
-
 // Hamburger Menu for Mobile Navigation
 function initializeHamburgerMenu() {
     const hamburger = document.querySelector('.hamburger');
