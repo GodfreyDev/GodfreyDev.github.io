@@ -1,23 +1,9 @@
 <!--
-  Chat Game Interface - HTML File
-
-  This HTML file sets up the user interface for a socket-based multiplayer chat game.
-  It includes a full-screen game experience with the following key components:
-
-  - A centered canvas for rendering the game using the HTML5 Canvas API.
-  - A chat input box for sending real-time messages to other players through sockets.
-  - A dynamic dialogue box to display in-game conversations or notifications.
-  - An inventory system to list in-game items the player has collected.
-
-  Key functionalities:
-  - Full-screen layout for a seamless gameplay experience with a black background.
-  - Flexbox used to center the canvas and keep it responsive to various screen sizes.
-  - Chat input handled through an 'Enter' key press, which triggers message sending.
-  - Game logic and real-time interaction handled via socket.io, integrated with external `game.js`.
-
-  External Resources:
-  - `socket.io`: For real-time bidirectional communication between players.
-  - `game.js`: This JavaScript file contains the game logic and socket management.
+  Chat Game Interface - HTML File (Updated)
+  Key Changes:
+  - Trade Modal (#tradeModal) structure updated for sending and receiving offers.
+  - Added elements for "Their Offer" and response buttons (Accept/Decline).
+  - Added placeholder for damage numbers (#damageNumbersContainer).
 -->
 <!DOCTYPE html>
 <html lang="en">
@@ -25,366 +11,194 @@
   <meta charset="UTF-8">
   <title>Game - Fullscreen Experience</title>
   <style>
-    body, html {
-      margin: 0;
-      padding: 0;
-      height: 100%;
-      overflow: hidden;
-      background-color: #000;
-      font-family: Arial, sans-serif;
+    /* --- Base Styles (Keep as is) --- */
+    body, html { margin: 0; padding: 0; height: 100%; overflow: hidden; background-color: #000; font-family: Arial, sans-serif; }
+    #gameContainer { position: relative; width: 100%; height: 100%; }
+    canvas { background-color: #000; image-rendering: pixelated; width: 100%; height: 100%; display: block; }
+    #chatContainer { position: absolute; bottom: 20px; left: 20px; width: 350px; max-height: 50%; background-color: rgba(0, 0, 0, 0.6); border-radius: 8px; padding: 10px; display: flex; flex-direction: column; overflow: hidden; z-index: 10; box-shadow: 0 0 10px rgba(0,0,0,0.5); transition: all 0.3s ease; }
+    @media (max-width: 768px) { #chatContainer { width: 90%; left: 5%; bottom: 10px; max-height: 40%; } }
+    #chatLog { background-color: rgba(30, 30, 30, 0.9); font-size: 16px; /* Reduced font size slightly */ color: #f1f1f1; padding: 10px; /* Reduced padding */ border-radius: 8px; flex: 1; overflow-y: auto; margin-bottom: 10px; box-shadow: inset 0 0 10px rgba(0,0,0,0.5); transition: all 0.3s ease; }
+    #chatLog::-webkit-scrollbar { width: 8px; }
+    #chatLog::-webkit-scrollbar-thumb { background-color: rgba(255, 255, 255, 0.2); border-radius: 4px; }
+    #chatLog::-webkit-scrollbar-track { background-color: rgba(255, 255, 255, 0.1); }
+    .message { margin: 3px 0; padding: 6px; border-radius: 5px; background-color: rgba(255, 255, 255, 0.1); transition: background-color 0.3s ease; font-size: 0.9em; line-height: 1.3; }
+    .message.user { background-color: rgba(0, 123, 255, 0.1); }
+    .message.system { background-color: rgba(255, 165, 0, 0.1); font-style: italic; }
+    .message.private { background-color: rgba(108, 52, 131, 0.2); font-style: italic; color: #e8daef; } /* Style for private messages */
+    .timestamp { display: block; color: #aaa; font-size: 0.75em; margin-top: 2px; }
+    #chatLog em { color: #ffd700; font-weight: bold; }
+    #chatInput { width: 100%; padding: 10px; border: none; border-radius: 5px; box-sizing: border-box; font-size: 1em; background-color: rgba(255, 255, 255, 0.1); color: #fff; transition: background-color 0.3s ease; }
+    #chatInput::placeholder { color: #ccc; }
+    #chatInput:focus { outline: none; background-color: rgba(255, 255, 255, 0.2); }
+    #dialogueBox { position: absolute; bottom: 80px; left: 50%; transform: translateX(-50%); background-color: rgba(0, 0, 0, 0.8); color: white; padding: 10px; border-radius: 5px; display: none; z-index: 15; box-shadow: 0 0 10px rgba(0,0,0,0.5); transition: all 0.3s ease; max-width: 80%; text-align: center; }
+    #inventory { position: absolute; font-size: 16px; top: 10px; right: 10px; color: white; z-index: 12; background-color: rgba(0, 0, 0, 0.5); padding: 10px; border-radius: 5px; max-width: 200px; transition: all 0.3s ease; }
+    #inventory p { margin: 0 0 5px 0; font-weight: bold; }
+    #inventory ul { list-style: none; padding: 0; margin: 0; max-height: 150px; overflow-y: auto; }
+    #inventory ul li { background-color: rgba(255, 255, 255, 0.1); margin: 5px 0; padding: 5px; border-radius: 3px; cursor: pointer; transition: background-color 0.3s ease; }
+    #inventory ul li:hover { background-color: rgba(255, 255, 255, 0.2); }
+    #inventory ul li.equipped { background-color: rgba(255, 215, 0, 0.3); /* Gold-ish for equipped */ border: 1px solid gold; }
+    #inventory ul li.selected-for-trade { background-color: rgba(0, 123, 255, 0.3); /* Blue for trade selection */ border: 1px solid #007bff; }
+
+    /* --- Trade Button & Modal Styles --- */
+    #tradeButton { width: 100px; /* Adjusted size */ height: 50px; /* Adjusted size */ font-size: 18px; /* Adjusted size */ position: absolute; bottom: 20px; /* Adjusted position */ right: 20px; z-index: 10; padding: 10px 15px; background-color: #28a745; color: white; border: none; border-radius: 5px; cursor: pointer; transition: background-color 0.3s ease; }
+    #tradeButton:hover { background-color: #218838; }
+    #tradeModal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.7); z-index: 20; display: none; /* Initially hidden */ justify-content: center; align-items: center; transition: opacity 0.3s ease; }
+    #tradeModalContent { background-color: #333; /* Darker background */ color: #eee; padding: 20px; border-radius: 8px; width: 90%; max-width: 550px; box-shadow: 0 0 15px rgba(0,0,0,0.7); transition: all 0.3s ease; border: 1px solid #555; }
+    #tradeModalContent h2, #tradeModalContent h3 { margin-top: 0; margin-bottom: 15px; color: #ffc107; /* Amber heading color */ border-bottom: 1px solid #555; padding-bottom: 5px; }
+    #tradeModalContent label { display: block; margin-bottom: 5px; font-weight: bold; color: #ccc; }
+    #tradeModalContent select, #tradeModalContent input[type="number"] { width: 100%; padding: 10px; margin-bottom: 15px; border: 1px solid #555; border-radius: 4px; box-sizing: border-box; background-color: #444; color: #eee; font-size: 1em; }
+    #tradeModalContent ul { list-style: none; padding: 0; margin: 0 0 15px 0; max-height: 120px; /* Reduced height */ overflow-y: auto; border: 1px solid #555; border-radius: 4px; background-color: #2a2a2a; }
+    #tradeModalContent ul li { background-color: rgba(255, 255, 255, 0.05); color: #ddd; margin: 5px; padding: 8px; border-radius: 3px; cursor: pointer; transition: background-color 0.3s ease; }
+    #tradeModalContent ul li:hover { background-color: rgba(255, 255, 255, 0.1); }
+    #tradeModalContent ul li.selected { background-color: rgba(0, 123, 255, 0.4); border: 1px solid #007bff; }
+
+    /* --- Trade Offer Sections --- */
+    .trade-section { margin-bottom: 20px; padding: 15px; background-color: rgba(0, 0, 0, 0.2); border-radius: 5px; border: 1px solid #444; }
+    .trade-section h3 { margin-top: 0; color: #eee; border-bottom: none; padding-bottom: 0; font-size: 1.1em; }
+    #theirOfferDetails { font-style: italic; color: #bbb; min-height: 40px; /* Ensure space even if empty */ }
+
+    /* --- Trade Buttons --- */
+    #tradeModalButtons button { padding: 12px 18px; margin-top: 10px; margin-right: 10px; border: none; border-radius: 5px; cursor: pointer; transition: background-color 0.3s ease; font-size: 1em; font-weight: bold; }
+    #sendTradeRequest { background-color: #007bff; color: white; }
+    #sendTradeRequest:hover { background-color: #0069d9; }
+    #acceptTradeButton { background-color: #28a745; color: white; display: none; /* Hidden by default */ }
+    #acceptTradeButton:hover { background-color: #218838; }
+    #declineTradeButton { background-color: #ffc107; color: #333; display: none; /* Hidden by default */ }
+    #declineTradeButton:hover { background-color: #e0a800; }
+    #closeTradeModal { background-color: #dc3545; color: white; }
+    #closeTradeModal:hover { background-color: #c82333; }
+
+    /* --- Damage Numbers --- */
+    #damageNumbersContainer {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        pointer-events: none; /* Don't interfere with clicks */
+        overflow: hidden;
+        z-index: 16; /* Above dialogue, below trade modal */
+    }
+    .damage-number {
+        position: absolute;
+        font-size: 18px;
+        font-weight: bold;
+        color: red;
+        text-shadow: 1px 1px #000;
+        white-space: nowrap;
+        animation: floatUpFade 1s ease-out forwards;
+    }
+    @keyframes floatUpFade {
+        0% { transform: translateY(0); opacity: 1; }
+        100% { transform: translateY(-40px); opacity: 0; }
     }
 
-    #gameContainer {
-      position: relative;
-      width: 100%;
-      height: 100%;
-    }
-
-    canvas {
-      background-color: #000;
-      image-rendering: pixelated;
-      width: 100%;
-      height: 100%;
-      display: block;
-    }
-
-    #chatContainer {
+    /* --- HUD Styles --- */
+     #hud {
       position: absolute;
-      bottom: 20px;
-      left: 20px;
-      width: 350px;
-      max-height: 50%;
-      background-color: rgba(0, 0, 0, 0.6);
-      border-radius: 8px;
-      padding: 10px;
-      display: flex;
-      flex-direction: column;
-      overflow: hidden;
-      z-index: 10;
-      box-shadow: 0 0 10px rgba(0,0,0,0.5);
-      transition: all 0.3s ease;
-    }
-
-    @media (max-width: 768px) {
-      #chatContainer {
-        width: 90%;
-        left: 5%;
-        bottom: 10px;
-        max-height: 40%;
-      }
-    }
-
-    #chatLog {
-      background-color: rgba(30, 30, 30, 0.9);
-      font-size: 20px;
-      color: #f1f1f1;
-      padding: 15px;
-      border-radius: 8px;
-      flex: 1;
-      overflow-y: auto;
-      margin-bottom: 10px;
-      box-shadow: inset 0 0 10px rgba(0,0,0,0.5);
-      transition: all 0.3s ease;
-    }
-
-    #chatLog::-webkit-scrollbar {
-      width: 8px;
-    }
-
-    #chatLog::-webkit-scrollbar-thumb {
-      background-color: rgba(255, 255, 255, 0.2);
-      border-radius: 4px;
-    }
-
-    #chatLog::-webkit-scrollbar-track {
-      background-color: rgba(255, 255, 255, 0.1);
-    }
-
-    .message {
-      margin: 5px 0;
-      padding: 8px;
-      border-radius: 5px;
-      background-color: rgba(255, 255, 255, 0.1);
-      transition: background-color 0.3s ease;
-    }
-
-    .message.user {
-      background-color: rgba(0, 123, 255, 0.1);
-    }
-
-    .message.system {
-      background-color: rgba(255, 165, 0, 0.1);
-      font-style: italic;
-    }
-
-    .timestamp {
-      display: block;
-      color: #aaa;
-      font-size: 0.75em;
-      margin-top: 2px;
-    }
-
-    #chatLog em {
-      color: #ffd700;
-    }
-
-    #chatInput {
-      width: 100%;
-      padding: 10px;
-      border: none;
-      border-radius: 5px;
-      box-sizing: border-box;
-      font-size: 1em;
-      background-color: rgba(255, 255, 255, 0.1);
-      color: #fff;
-      transition: background-color 0.3s ease;
-    }
-
-    #chatInput::placeholder {
-      color: #ccc;
-    }
-
-    #chatInput:focus {
-      outline: none;
-      background-color: rgba(255, 255, 255, 0.2);
-    }
-
-    #dialogueBox {
-      position: absolute;
-
-      bottom: 80px;
-      left: 50%;
-      transform: translateX(-50%);
-      background-color: rgba(0, 0, 0, 0.8);
-      color: white;
-      padding: 10px;
-      border-radius: 5px;
-      display: none;
-      z-index: 15;
-      box-shadow: 0 0 10px rgba(0,0,0,0.5);
-      transition: all 0.3s ease;
-    }
-
-    #inventory {
-      position: absolute;
-      font-size: 20px;
       top: 10px;
-      right: 10px;
+      left: 10px;
       color: white;
-      z-index: 12;
       background-color: rgba(0, 0, 0, 0.5);
       padding: 10px;
       border-radius: 5px;
-      max-width: 200px;
-      transition: all 0.3s ease;
+      font-size: 16px;
+      z-index: 11;
     }
-
-    #inventory p {
+    #hud p {
       margin: 0 0 5px 0;
-      font-weight: bold;
-    }
-
-    #inventory ul {
-      list-style: none;
       padding: 0;
-      margin: 0;
-      max-height: 150px;
-      overflow-y: auto;
     }
 
-    #inventory ul li {
-      background-color: rgba(255, 255, 255, 0.1);
-      margin: 5px 0;
-      padding: 5px;
-      border-radius: 3px;
-      cursor: pointer;
-      transition: background-color 0.3s ease;
-    }
-
-    #inventory ul li:hover {
-      background-color: rgba(255, 255, 255, 0.2);
-    }
-
-    #tradeButton {
-      width: 150px;
-      height: 75px;
-      font-size: 25px;
-      position: absolute;
-      bottom: 40px;
-      right: 40px;
-      z-index: 10;
-      padding: 10px 20px;
-      background-color: #28a745;
-      color: white;
-      border: none;
-      border-radius: 5px;
-      cursor: pointer;
-      transition: background-color 0.3s ease;
-    }
-
-    #tradeButton:hover {
-      background-color: #218838;
-    }
-
-    #tradeModal {
-      position: fixed;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      background-color: rgba(0,0,0,0.5);
-      z-index: 20;
-      display: none;
-      justify-content: center;
-      align-items: center;
-      transition: all 0.3s ease;
-    }
-
-    #tradeModalContent {
-      background-color: #fff;
-      padding: 20px;
-      border-radius: 5px;
-      width: 90%;
-      max-width: 500px;
-      box-shadow: 0 0 10px rgba(0,0,0,0.5);
-      transition: all 0.3s ease;
-    }
-
-    #tradeModalContent h2 {
-      margin-top: 0;
-      margin-bottom: 15px;
-    }
-
-    #tradeModalContent label {
-      display: block;
-      margin-bottom: 5px;
-      font-weight: bold;
-    }
-
-    #tradeModalContent select,
-    #tradeModalContent input[type="number"] {
-      width: 100%;
-      padding: 8px;
-      margin-bottom: 15px;
-      border: 1px solid #ccc;
-      border-radius: 4px;
-      box-sizing: border-box;
-    }
-
-    #tradeModalContent ul {
-      list-style: none;
-      padding: 0;
-      margin: 0 0 15px 0;
-      max-height: 150px;
-      overflow-y: auto;
-    }
-
-    #tradeModalContent ul li {
-      background-color: rgba(0, 123, 255, 0.1);
-      margin: 5px 0;
-      padding: 8px;
-      border-radius: 3px;
-      cursor: pointer;
-      transition: background-color 0.3s ease;
-    }
-
-    #tradeModalContent ul li.selected {
-      background-color: rgba(0, 123, 255, 0.3);
-    }
-
-    #tradeModalContent button {
-      padding: 10px 15px;
-      margin-top: 10px;
-      margin-right: 10px;
-      border: none;
-      border-radius: 5px;
-      cursor: pointer;
-      transition: background-color 0.3s ease;
-    }
-
-    #sendTradeRequest {
-      background-color: #007bff;
-      color: white;
-    }
-
-    #sendTradeRequest:hover {
-      background-color: #0069d9;
-    }
-
-    #closeTradeModal {
-      background-color: #dc3545;
-      color: white;
-    }
-
-    #closeTradeModal:hover {
-      background-color: #c82333;
-    }
   </style>
 </head>
 <body>
   <div id="gameContainer">
     <canvas id="gameCanvas"></canvas>
-    
+    <div id="damageNumbersContainer"></div> <!-- Container for floating damage numbers -->
+    <div id="hud">
+        <p id="hudHealth">Health: 100/100</p>
+        <p id="hudEquipped">Equipped: None</p>
+        <p id="hudCopper">Copper: 0</p>
+    </div>
+
+
     <!-- Chat Interface -->
     <div id="chatContainer">
       <div id="chatLog">
-        <!-- Messages -->
-        <div class="message user">
-          <span class="text">Welcome everyone!</span>
-        </div>
+        <!-- Messages dynamically added -->
         <div class="message system">
-          <span class="text">You have joined the game.</span>
+          <span class="text">Welcome to the game!</span>
+          <span class="timestamp"></span> <!-- JS will add time -->
         </div>
       </div>
-      <input type="text" id="chatInput" placeholder="Type your message here..." />
+      <input type="text" id="chatInput" placeholder="Type message or /command..." />
     </div>
-    
+
     <!-- Dialogue Box -->
     <div id="dialogueBox"></div>
-    
+
     <!-- Inventory -->
     <div id="inventory">
       <p>Inventory:</p>
       <ul id="inventoryList">
+        <!-- Items dynamically added -->
       </ul>
     </div>
-    
+
     <!-- Trade Button -->
     <button id="tradeButton">Trade</button>
-    
+
     <!-- Trade Modal -->
     <div id="tradeModal">
       <div id="tradeModalContent">
-        <h2>Trade with Player</h2>
-        <label for="playerSelect">Select Player:</label>
-        <select id="playerSelect">
-          <option value="" disabled selected>Select a player</option>
-        </select>
-        
-        <h3>Your Items</h3>
-        <ul id="yourItems">
-        </ul>
-        
-        <h3>Offer Copper</h3>
-        <input type="number" id="offerCopper" min="0" value="0" />
-        
-        <button id="sendTradeRequest">Send Trade Request</button>
-        <button id="closeTradeModal">Cancel</button>
+        <h2 id="tradeModalTitle">Initiate Trade</h2> <!-- Title changes dynamically -->
+
+        <!-- Section for selecting player and initiating -->
+        <div id="initiateTradeSection">
+             <label for="playerSelect">Select Player:</label>
+             <select id="playerSelect">
+               <option value="" disabled selected>-- Select Player --</option>
+             </select>
+        </div>
+
+        <!-- Section for incoming offer -->
+        <div class="trade-section" id="theirOfferSection" style="display: none;">
+             <h3>Offer From <span id="tradePartnerName">Player</span>:</h3>
+             <div id="theirOfferDetails">
+                 <!-- Dynamically filled -->
+             </div>
+        </div>
+
+        <!-- Your offer section -->
+        <div class="trade-section">
+            <h3>Your Offer:</h3>
+            <label for="yourItems">Select Item to Offer (Optional):</label>
+            <ul id="yourItems">
+                 <!-- Dynamically filled -->
+            </ul>
+            <label for="offerCopper">Offer Copper (Optional):</label>
+            <input type="number" id="offerCopper" min="0" value="0" placeholder="0" />
+        </div>
+
+        <!-- Buttons -->
+        <div id="tradeModalButtons">
+            <button id="sendTradeRequest">Send Request</button>
+            <button id="acceptTradeButton">Accept Trade</button> <!-- Hidden initially -->
+            <button id="declineTradeButton">Decline</button>   <!-- Hidden initially -->
+            <button id="closeTradeModal">Cancel / Close</button>
+        </div>
+
       </div>
     </div>
   </div>
 
-  <script src="https://cdn.socket.io/4.3.2/socket.io.min.js"></script>
-  <script src="game.js"></script>
-  
+  <script src="https://cdn.socket.io/4.6.0/socket.io.min.js"></script> <!-- Updated Socket.IO version -->
+  <script src="game.js"></script> <!-- Keep game.js separate -->
+
   <script>
-    // Event listener for chat input to handle message sending on Enter key
-    document.getElementById('chatInput').addEventListener('keypress', function(e) {
-      if (e.key === 'Enter') {
-        sendMessage();
-      }
-    });
+    // Basic setup - Event listeners moved to game.js for better organization
   </script>
-  
+
 </body>
 </html>

@@ -1,63 +1,28 @@
-// # game.js
+// # game.js (Client-Side Logic - Updated)
 //
-// This JavaScript file defines the core functionality for an online multiplayer game.
-// It sets up the game environment, player interactions, and communication with the server.
-// The game world consists of tiles, rooms, corridors, and objects that players can interact with.
-//
-// Features include:
-// - Player movement and direction management with collision detection for walls and doors.
-// - Dynamic canvas resizing for responsiveness.
-// - Rendering game elements such as players, items, enemies, and the environment on a canvas.
-// - Communication with a server via WebSockets for real-time updates between players.
-// - Inventory system for managing items that players collect.
-// - Combat mechanics allowing players to attack others using equipped weapons.
-// - Death mechanics where players can die and respawn.
-// - Item usage, such as potions for healing and shields for defense.
-// - Projectile mechanics for ranged weapons like staffs.
-// - Basic enemies (NPCs) that roam and can be attacked.
-//
-// Key Variables:
-// - serverUrl: Dynamically sets the server URL depending on the environment (development or production).
-// - TILE_SIZE, WORLD_WIDTH, WORLD_HEIGHT: Define the dimensions of the game world and tiles.
-// - player: Object storing player-specific properties such as position, direction, health, and sprite animation state.
-// - items, inventory, players, enemies: Manage the various objects and characters present in the game world.
-// - equippedItem: Stores the currently equipped item that affects combat.
-// - projectiles: Array storing active projectiles in the game.
-//
-// Functions Overview:
-// - adjustCanvasSize: Adjusts the canvas dimensions dynamically based on window size.
-// - loadTileImages: Loads the images representing various tiles in the game.
-// - loadSpriteImages: Loads all sprite images required for the game.
-// - initializeGameWorld, createRoom, createCorridor: Build the structure of the game world with walls, doors, and corridors.
-// - gameLoop: The main loop that updates player movement, renders the game, and handles animations.
-// - updatePlayerPosition: Moves the player based on input and checks for collisions.
-// - handleAnimation: Manages sprite animations for player movement and attacks.
-// - updateCameraPosition: Keeps the player's position centered on the screen.
-// - drawBackground, drawItems, drawEnemies, drawProjectiles: Renders the game world and in-game elements.
-// - handleAttack: Processes attack inputs and interactions with other players and enemies.
-// - useItem: Allows players to use consumable items like potions.
-
-// game.js
+// Major Changes:
+// - World Generation Removed: Receives world data from the server.
+// - Trading Logic Overhaul: Uses the single modal, handles socket events for UI updates.
+// - Combat Feedback: Displays damage numbers, basic attack animation state.
+// - UI Updates: HUD elements updated directly. Dialogue box used for messages/errors.
+// - Code Organization: Event listeners grouped, functions refined.
+// - Basic Movement Smoothing (Interpolation) added.
 
 const serverUrl = window.location.hostname === 'godfreydev.github.io'
-  ? 'https://cool-accessible-pint.glitch.me'
-  : 'http://localhost:3000';
+    ? 'https://cool-accessible-pint.glitch.me' // Replace with your Glitch URL if deployed
+    : 'http://localhost:3000'; // For local testing
 
-const socket = io.connect(serverUrl);
+const socket = io(serverUrl); // Use io() directly
 
-// Directions based on sprite sheet layout
-const DIRECTIONS = {
-  DOWN: 0, LEFT: 1, RIGHT: 2, UP: 3, DOWN_LEFT: 4, DOWN_RIGHT: 5, UP_LEFT: 6, UP_RIGHT: 7
-};
-
-// Game world configuration
+// --- Constants ---
+const DIRECTIONS = { DOWN: 0, LEFT: 1, RIGHT: 2, UP: 3, DOWN_LEFT: 4, DOWN_RIGHT: 5, UP_LEFT: 6, UP_RIGHT: 7 };
 const TILE_SIZE = 64;
-const WORLD_WIDTH = 200;
-const WORLD_HEIGHT = 200;
+const MOVEMENT_SPEED = 200; // Pixels per second
+const ANIMATION_SPEED = 0.1; // Seconds per frame
+const ATTACK_COOLDOWN = 500; // Milliseconds
+const PROJECTILE_SPEED = 400; // Pixels per second
 
-// Tile types
-const tileImages = {};
-
+// Tile types (used for checking received world data)
 const TILE_WALL = 1;
 const TILE_DOOR = 2;
 const TILE_FLOOR = 3;
@@ -65,1247 +30,1622 @@ const TILE_WATER = 4;
 const TILE_GRASS = 5;
 const TILE_SAND = 6;
 const TILE_BRIDGE = 7;
+const IMPASSABLE_TILES = [TILE_WALL, TILE_WATER]; // Tiles player cannot normally enter
 
-const tileTypes = [TILE_WALL, TILE_DOOR, TILE_FLOOR, TILE_WATER, TILE_GRASS, TILE_SAND, TILE_BRIDGE];
-const impassableTiles = [TILE_WALL, TILE_WATER];
-
-// Game world array
-let gameWorld = [];
-
-// Safe zones
-const safeZones = [
-  { x: 20 * TILE_SIZE, y: 50 * TILE_SIZE, width: 40 * TILE_SIZE, height: 30 * TILE_SIZE },
-  // Add more safe zones if needed
-];
-
-// Player object
+// --- Game State ---
 let player = {
-  id: null,
-  x: 100,
-  y: 100,
-  width: 64,
-  height: 64,
-  direction: DIRECTIONS.DOWN,
-  moving: false,
-  sprite: null,
-  frameIndex: 0,
-  frameCount: 8,
-  health: 100,
-  maxHealth: 100,
-  inventory: [],
-  equippedItem: null,
-  isAttacking: false,
-  attackFrameIndex: 0,
-  copper: 0
+    id: null,
+    name: 'Connecting...',
+    x: 100 * TILE_SIZE, // Default, will be overwritten by server
+    y: 100 * TILE_SIZE,
+    width: 64,
+    height: 64,
+    direction: DIRECTIONS.DOWN,
+    moving: false,
+    sprite: null,
+    frameIndex: 0,
+    frameCount: 8, // Assuming 8 frames per direction in sprite sheet
+    health: 100,
+    maxHealth: 100,
+    inventory: [],
+    equippedItem: null,
+    copper: 0,
+    isAttacking: false,
+    attackFrameIndex: 0,
+    attackAnimTimer: 0,
+    lastAttackTime: 0,
+    // For interpolation
+    targetX: 100 * TILE_SIZE,
+    targetY: 100 * TILE_SIZE,
+    lastUpdateTime: 0,
 };
 
-let players = {};
-let playerMessages = {};
-let items = {};
-let enemies = {};
-let projectiles = [];
+let players = {}; // Other players { id: playerData }
+let playerMessages = {}; // { playerId: messageText } for display above head
+let items = {}; // World items { id: itemData }
+let enemies = {}; // World enemies { id: enemyData }
+let projectiles = []; // { x, y, direction, speed, ownerId, damage, id }
+let damageNumbers = []; // { text, x, y, life, id }
+let gameWorld = []; // Received from server
+let tileImages = {};
+let spriteImages = {};
 let keysPressed = {};
-const movementSpeed = 200;
-const animationSpeed = 0.1;
 let lastRenderTime = 0;
 let animationTimer = 0;
-
-const canvas = document.getElementById('gameCanvas'), ctx = canvas.getContext('2d');
-
-// Adjust the canvas size dynamically
-function adjustCanvasSize() {
-  canvas.width = window.innerWidth;
-  canvas.height = window.innerHeight;
-}
-adjustCanvasSize();
-window.addEventListener('resize', adjustCanvasSize);
-
-// Load tile images
-function loadTileImages(callback) {
-  let loadedImages = 0;
-  const totalImages = tileTypes.length;
-
-  tileTypes.forEach(type => {
-    tileImages[type] = new Image();
-    tileImages[type].src = `Images/tile_${type}.png`;
-    tileImages[type].onload = () => {
-      loadedImages++;
-      if (loadedImages === totalImages) {
-        callback();
-      }
-    };
-    tileImages[type].onerror = () => {
-      console.error(`Failed to load tile image: Images/tile_${type}.png`);
-    };
-  });
-}
-
-// Load sprite images
-const spritesToLoad = [
-  { key: 'player', src: 'Images/player_sprite_frames.png', frames: 8 },
-  { key: 'enemy', src: 'Images/player_sprite_frames.png', frames: 8 } // Enemies use the same sprite as players
-];
-const spriteImages = {};
-
-function loadSpriteImages(callback) {
-  let loadedSprites = 0;
-  spritesToLoad.forEach(sprite => {
-    spriteImages[sprite.key] = new Image();
-    spriteImages[sprite.key].src = sprite.src;
-    spriteImages[sprite.key].onload = () => {
-      loadedSprites++;
-      if (loadedSprites === spritesToLoad.length) {
-        callback();
-      }
-    };
-    spriteImages[sprite.key].onerror = () => {
-      console.error(`Failed to load sprite image: ${sprite.src}`);
-    };
-  });
-}
-
-// Initialize the game world
-function initializeGameWorld() {
-  // Fill the world with grass
-  for (let y = 0; y < WORLD_HEIGHT; y++) {
-    gameWorld[y] = [];
-    for (let x = 0; x < WORLD_WIDTH; x++) {
-      gameWorld[y][x] = TILE_GRASS;
-    }
-  }
-
-  // Add borders
-  for (let x = 0; x < WORLD_WIDTH; x++) {
-    gameWorld[0][x] = TILE_WALL;
-    gameWorld[WORLD_HEIGHT - 1][x] = TILE_WALL;
-  }
-  for (let y = 0; y < WORLD_HEIGHT; y++) {
-    gameWorld[y][0] = TILE_WALL;
-    gameWorld[y][WORLD_WIDTH - 1] = TILE_WALL;
-  }
-
-    // Predefined rooms and structures
-  createRoom(10, 10, 30, 20); // Main hall
-  createRoom(50, 5, 20, 15);  // Library
-  createRoom(80, 20, 25, 25); // Armory
-  createRoom(20, 50, 40, 30); // Dining hall
-  createRoom(70, 60, 30, 20); // Throne room
-
-  // Corridors connecting rooms
-  createCorridor(40, 20, 50, 20); // Main hall to library
-  createCorridor(70, 30, 80, 30); // Library to armory
-  createCorridor(30, 30, 30, 50); // Main hall to dining hall
-  createCorridor(60, 65, 70, 65); // Dining hall to throne room
-
-  // Rivers
-  createRiver(0, 40, WORLD_WIDTH - 1, 40);
-  createRiver(60, 0, 60, WORLD_HEIGHT - 1);
-
-  // Horizontal bridge spanning across at y = 40 (for vertical river)
-  gameWorld[40][30] = TILE_BRIDGE; // Left bridge tile
-  gameWorld[41][30] = TILE_BRIDGE; // Right bridge tile
-
-  // Another horizontal bridge spanning across at y = 40 (for vertical river)
-  gameWorld[40][70] = TILE_BRIDGE; // Left bridge tile
-  gameWorld[41][70] = TILE_BRIDGE; // Right bridge tile
-
-  // Vertical bridge spanning across at x = 60 (for horizontal river)
-  gameWorld[12][60] = TILE_BRIDGE; // Top bridge tile
-  gameWorld[12][61] = TILE_BRIDGE; // Bottom bridge tile
-
-  // Another vertical bridge spanning across at x = 60 (for horizontal river)
-  gameWorld[65][60] = TILE_BRIDGE; // Top bridge tile
-  gameWorld[65][61] = TILE_BRIDGE; // Bottom bridge tile
-
-
-
-  // Sand areas (beach)
-  createArea(TILE_SAND, 0, WORLD_HEIGHT - 10, WORLD_WIDTH, 10);
-
-  // Forests
-  createForest(15, 15, 20, 20);
-  createForest(65, 50, 15, 15);
-
-}
-
-// Create a room with walls and doors at fixed positions
-function createRoom(x, y, width, height) {
-  // Build the room with walls and floors
-  for (let i = y; i < y + height; i++) {
-    for (let j = x; j < x + width; j++) {
-      if (i === y || i === y + height - 1 || j === x || j === x + width - 1) {
-        gameWorld[i][j] = TILE_WALL;
-      } else {
-        gameWorld[i][j] = TILE_FLOOR;
-      }
-    }
-  }
-
-  // Place doors at fixed positions
-  placeDoor('top', x, y, width, height);
-  placeDoor('bottom', x, y, width, height);
-  placeDoor('left', x, y, width, height);
-  placeDoor('right', x, y, width, height);
-}
-
-// Place doors at fixed positions
-function placeDoor(wall, x, y, width, height) {
-  let doorX, doorY;
-  switch (wall) {
-    case 'top':
-      doorX = x + Math.floor(width / 2);
-      doorY = y;
-      break;
-    case 'bottom':
-      doorX = x + Math.floor(width / 2);
-      doorY = y + height - 1;
-      break;
-    case 'left':
-      doorX = x;
-      doorY = y + Math.floor(height / 2);
-      break;
-    case 'right':
-      doorX = x + width - 1;
-      doorY = y + Math.floor(height / 2);
-      break;
-    default:
-      return;
-  }
-  if (gameWorld[doorY][doorX] === TILE_WALL) {
-    gameWorld[doorY][doorX] = TILE_DOOR;
-  }
-}
-
-// Create a river horizontally or vertically
-function createRiver(x1, y1, x2, y2) {
-  if (x1 === x2) {
-    // Vertical river
-    for (let y = y1; y <= y2; y++) {
-      gameWorld[y][x1] = TILE_WATER;
-      gameWorld[y][x1 + 1] = TILE_WATER;
-    }
-  } else if (y1 === y2) {
-    // Horizontal river
-    for (let x = x1; x <= x2; x++) {
-      gameWorld[y1][x] = TILE_WATER;
-      gameWorld[y1 + 1][x] = TILE_WATER;
-    }
-  }
-}
-
-// Create a forest area
-function createForest(x, y, width, height) {
-  for (let i = y; i < y + height; i++) {
-    for (let j = x; j < x + width; j++) {
-      gameWorld[i][j] = TILE_GRASS; // Use a different tile if you have a forest tile
-    }
-  }
-}
-
-// Create an area with a specific tile type
-function createArea(tileType, x, y, width, height) {
-  for (let i = y; i < y + height; i++) {
-    for (let j = x; j < x + width; j++) {
-      if (i >= 0 && i < WORLD_HEIGHT && j >= 0 && j < WORLD_WIDTH) {
-        gameWorld[i][j] = tileType;
-      }
-    }
-  }
-}
-
-// Create a corridor between two points
-function createCorridor(x1, y1, x2, y2) {
-  const dx = x2 - x1;
-  const dy = y2 - y1;
-  const length = Math.max(Math.abs(dx), Math.abs(dy));
-
-  for (let i = 0; i <= length; i++) {
-    const x = x1 + Math.round(i * dx / length);
-    const y = y1 + Math.round(i * dy / length);
-    gameWorld[y][x] = TILE_FLOOR;
-  }
-}
-
-// Game loop for rendering and updating
-function gameLoop(timeStamp) {
-  const deltaTime = (timeStamp - lastRenderTime) / 1000;
-  requestAnimationFrame(gameLoop);
-  if (player.id) {
-    updatePlayerPosition(deltaTime);
-    handleAnimation(deltaTime);
-    handleAttack();
-    updateProjectiles(deltaTime);
-    updateEnemyAnimations(deltaTime); // Update enemy animations
-    updateCameraPosition();
-  }
-  ctx.clearRect(0, 0, canvas.width, canvas.height);
-  drawBackground();
-  drawItems();
-  drawEnemies();
-  drawProjectiles();
-  drawPlayers();
-  drawHUD();
-  lastRenderTime = timeStamp;
-}
-
-// Function to draw items
-function drawItems() {
-  Object.values(items).forEach(item => {
-    const itemX = item.x - cameraX - TILE_SIZE / 2;
-    const itemY = item.y - cameraY - TILE_SIZE / 2;
-    ctx.fillStyle = item.type === 'potion' ? 'red' : item.type === 'sword' ? 'silver' : item.type === 'staff' ? 'purple' : 'blue';
-    ctx.fillRect(itemX, itemY, TILE_SIZE, TILE_SIZE);
-  });
-}
-
-// Function to draw enemies
-function drawEnemies() {
-  Object.values(enemies).forEach(enemy => {
-    if (!enemy.sprite || !enemy.sprite.complete) {
-      // Draw a placeholder rectangle if sprite is not available
-      ctx.fillStyle = 'red';
-      ctx.fillRect(enemy.x - cameraX - enemy.width / 2, enemy.y - cameraY - enemy.height / 2, enemy.width, enemy.height);
-      return;
-    }
-    const srcX = enemy.frameIndex * enemy.width;
-    const srcY = enemy.direction * enemy.height;
-    const screenX = enemy.x - enemy.width / 2 - cameraX;
-    const screenY = enemy.y - enemy.height / 2 - cameraY;
-
-    ctx.drawImage(enemy.sprite, srcX, srcY, enemy.width, enemy.height, screenX, screenY, enemy.width, enemy.height);
-
-    // Draw health bar
-    const healthBarWidth = 50;
-    const healthBarHeight = 5;
-    const healthPercentage = enemy.health / enemy.maxHealth;
-    ctx.fillStyle = 'red';
-    ctx.fillRect(screenX + enemy.width / 2 - healthBarWidth / 2, screenY - 10, healthBarWidth, healthBarHeight);
-    ctx.fillStyle = 'green';
-    ctx.fillRect(screenX + enemy.width / 2 - healthBarWidth / 2, screenY - 10, healthBarWidth * healthPercentage, healthBarHeight);
-  });
-}
-
-// Function to draw projectiles
-function drawProjectiles() {
-  projectiles.forEach(projectile => {
-    ctx.fillStyle = 'yellow';
-    ctx.beginPath();
-    ctx.arc(projectile.x - cameraX, projectile.y - cameraY, 5, 0, Math.PI * 2);
-    ctx.fill();
-  });
-}
-
-// Send chat message to the server
-function sendMessage() {
-  const messageInput = document.getElementById('chatInput');
-  const message = messageInput.value.trim();
-  if (message) {
-    if (message.startsWith('/')) {
-      handleCommand(message);
-    } else {
-      socket.emit('chatMessage', { message });
-    }
-    messageInput.value = '';
-  }
-}
-
-// Handle chat commands
-function handleCommand(message) {
-  const parts = message.split(' ');
-  const command = parts[0].substring(1).toLowerCase();
-  const args = parts.slice(1);
-
-  if (command === 'msg' || command === 'w') {
-    const recipientName = args[0];
-    const messageText = args.slice(1).join(' ');
-    if (recipientName && messageText) {
-      const recipient = Object.values(players).find(p => p.name === recipientName);
-      if (recipient) {
-        socket.emit('privateMessage', { recipientId: recipient.id, message: messageText });
-      } else {
-        showMessage(`Player '${recipientName}' not found.`);
-      }
-    } else {
-      showMessage('Usage: /msg <playerName> <message>');
-    }
-  } else if (command === 'list' || command === 'players') {
-    const playerNames = Object.values(players).map(p => p.name).join(', ');
-    showMessage(`Online players: ${playerNames}`);
-  } else {
-    showMessage(`Unknown command: ${command}`);
-  }
-}
-
-// Function to show messages in the dialogue box
-function showMessage(message) {
-  const dialogueBox = document.getElementById('dialogueBox');
-  dialogueBox.textContent = message;
-  dialogueBox.style.display = 'block';
-  // Hide the message after some time
-  setTimeout(() => {
-    dialogueBox.style.display = 'none';
-  }, 5000); // Hide after 5 seconds
-}
-
-// Handle 'playerKilled' event to refresh the page when the player dies
-socket.on('playerKilled', playerId => {
-  if (playerId === player.id) {
-    alert('You have died! The game will now reload.');
-    window.location.reload();
-  } else {
-    delete players[playerId];
-  }
-});
-
-// Handle player damage
-socket.on('playerDamaged', data => {
-  if (data.playerId === player.id) {
-    player.health = data.health;
-  } else if (players[data.playerId]) {
-    players[data.playerId].health = data.health;
-  }
-});
-
-// Adjust enemy properties upon receiving data from server
-socket.on('updateEnemies', serverEnemies => {
-  // Update existing enemies and add new ones
-  Object.values(serverEnemies).forEach(enemyData => {
-    let enemy = enemies[enemyData.id];
-    if (enemy) {
-      // Update enemy properties
-      Object.assign(enemy, enemyData);
-    } else {
-      // New enemy
-      enemy = { ...enemyData };
-      enemy.sprite = spriteImages.enemy;
-      enemy.frameCount = spritesToLoad.find(s => s.key === 'enemy').frames;
-      enemy.animationTimer = 0;
-      enemy.frameIndex = 0;
-      enemies[enemy.id] = enemy;
-    }
-  });
-  // Remove enemies not in serverEnemies
-  Object.keys(enemies).forEach(id => {
-    if (!serverEnemies[id]) {
-      delete enemies[id];
-    }
-  });
-});
-
-// Handle 'updateCopper' event to update player's copper amount
-socket.on('updateCopper', (copper) => {
-  player.copper = copper;
-  updateInventoryDisplay(); // Update inventory display to show new copper amount
-}); 
-
-// Handle enemy killed
-socket.on('enemyKilled', enemyId => {
-  delete enemies[enemyId];
-});
-
-// Handle attack errors from the server
-socket.on('attackError', message => {
-  showMessage(message);
-});
-
-// Handle 'playerHealed' event from server
-socket.on('playerHealed', data => {
-  if (player.id === socket.id) {
-    player.health = data.health;
-  }
-});
-
-// Modified updatePlayerPosition function to handle door alignment and safe zone spawning
-function updatePlayerPosition(deltaTime) {
-  let dx = 0, dy = 0;
-  player.moving = false;
-
-  if (keysPressed['a'] || keysPressed['ArrowLeft']) { dx -= movementSpeed; player.moving = true; }
-  if (keysPressed['d'] || keysPressed['ArrowRight']) { dx += movementSpeed; player.moving = true; }
-  if (keysPressed['w'] || keysPressed['ArrowUp']) { dy -= movementSpeed; player.moving = true; }
-  if (keysPressed['s'] || keysPressed['ArrowDown']) { dy += movementSpeed; player.moving = true; }
-
-  if (dy < 0 && dx < 0) player.direction = DIRECTIONS.UP_LEFT;
-  else if (dy < 0 && dx > 0) player.direction = DIRECTIONS.UP_RIGHT;
-  else if (dy > 0 && dx < 0) player.direction = DIRECTIONS.DOWN_LEFT;
-  else if (dy > 0 && dx > 0) player.direction = DIRECTIONS.DOWN_RIGHT;
-  else if (dy < 0) player.direction = DIRECTIONS.UP;
-  else if (dy > 0) player.direction = DIRECTIONS.DOWN;
-  else if (dx < 0) player.direction = DIRECTIONS.LEFT;
-  else if (dx > 0) player.direction = DIRECTIONS.RIGHT;
-
-  const newX = player.x + dx * deltaTime;
-  const newY = player.y + dy * deltaTime;
-
-  // Check collision for each corner of the player sprite
-  const topLeftTile = getTileAt(newX - player.width / 2, newY - player.height / 2);
-  const topRightTile = getTileAt(newX + player.width / 2 - 1, newY - player.height / 2);
-  const bottomLeftTile = getTileAt(newX - player.width / 2, newY + player.height / 2 - 1);
-  const bottomRightTile = getTileAt(newX + player.width / 2 - 1, newY + player.height / 2 - 1);
-
-  const collidesWithImpassable = [topLeftTile, topRightTile, bottomLeftTile, bottomRightTile]
-    .some(tile => impassableTiles.includes(tile));
-
-  if (!collidesWithImpassable) {
-    player.x = newX;
-    player.y = newY;
-  } else {
-    // Check for doors or bridges
-    const passableTiles = [TILE_DOOR, TILE_BRIDGE];
-    const passableCollision = [topLeftTile, topRightTile, bottomLeftTile, bottomRightTile]
-      .some(tile => passableTiles.includes(tile));
-
-    if (passableCollision) {
-      const passablePosition = findNearestPassableTile(player.x, player.y);
-      if (passablePosition) {
-        player.x = passablePosition.x;
-        player.y = passablePosition.y;
-      }
-    }
-  }
-
-
-  // Function to find the nearest passable tile and align player to it
-function findNearestPassableTile(x, y) {
-  const tileX = Math.floor(x / TILE_SIZE);
-  const tileY = Math.floor(y / TILE_SIZE);
-
-  // Check adjacent tiles for a door or bridge
-  const directions = [
-    { dx: -1, dy: 0 }, // Left
-    { dx: 1, dy: 0 },  // Right
-    { dx: 0, dy: -1 }, // Up
-    { dx: 0, dy: 1 },  // Down
-  ];
-
-  for (let dir of directions) {
-    const nx = tileX + dir.dx;
-    const ny = tileY + dir.dy;
-    if (gameWorld[ny] && (gameWorld[ny][nx] === TILE_DOOR || gameWorld[ny][nx] === TILE_BRIDGE)) {
-      return { x: nx * TILE_SIZE + TILE_SIZE / 2, y: ny * TILE_SIZE + TILE_SIZE / 2 };
-    }
-  }
-  return null;
-}
-
-  // Check for item pickup
-  Object.values(items).forEach(item => {
-    if (Math.abs(player.x - item.x) < TILE_SIZE && Math.abs(player.y - item.y) < TILE_SIZE) {
-      socket.emit('pickupItem', item.id);
-    }
-  });
-
-  // Emit movement if position or frameIndex changed
-  if (dx !== 0 || dy !== 0 || player.frameIndex !== player.lastFrameIndex) {
-    player.lastFrameIndex = player.frameIndex;
-    socket.emit('playerMovement', { x: player.x, y: player.y, direction: player.direction, frameIndex: player.frameIndex, health: player.health });
-  }
-}
-
-// Function to find the nearest door and align player to it
-function findNearestDoor(x, y) {
-  const tileX = Math.floor(x / TILE_SIZE);
-  const tileY = Math.floor(y / TILE_SIZE);
-
-  // Check adjacent tiles for a door
-  const directions = [
-    { dx: -1, dy: 0 }, // Left
-    { dx: 1, dy: 0 },  // Right
-    { dx: 0, dy: -1 }, // Up
-    { dx: 0, dy: 1 },  // Down
-  ];
-
-  for (let dir of directions) {
-    const nx = tileX + dir.dx;
-    const ny = tileY + dir.dy;
-    if (gameWorld[ny] && gameWorld[ny][nx] === TILE_DOOR) {
-      return { x: nx * TILE_SIZE + TILE_SIZE / 2, y: ny * TILE_SIZE + TILE_SIZE / 2 };
-    }
-  }
-  return null;
-}
-
-// Helper function to check collision at a given position
-function getTileAt(x, y) {
-  const tileX = Math.floor(x / TILE_SIZE);
-  const tileY = Math.floor(y / TILE_SIZE);
-  if (tileX < 0 || tileX >= WORLD_WIDTH || tileY < 0 || tileY >= WORLD_HEIGHT) {
-    return TILE_WALL; // Treat out-of-bounds as wall
-  }
-  return gameWorld[tileY][tileX];
-}
-
-// Handle animation based on player movement and attacking
-function handleAnimation(deltaTime) {
-  if (player.isAttacking) {
-    // Handle attack animation
-    animationTimer += deltaTime;
-    if (animationTimer >= animationSpeed) {
-      player.attackFrameIndex++;
-      animationTimer = 0;
-      if (player.attackFrameIndex >= player.frameCount) {
-        player.attackFrameIndex = 0;
-        player.isAttacking = false;
-      }
-    }
-  } else if (player.moving) {
-    animationTimer += deltaTime;
-    if (animationTimer >= animationSpeed) {
-      player.frameIndex = (player.frameIndex + 1) % player.frameCount;
-      animationTimer = 0;
-    }
-  } else {
-    player.frameIndex = 0; // Reset animation frame if not moving
-  }
-  player.frameIndex = Math.max(0, Math.min(player.frameIndex, player.frameCount - 1)); // Ensure frameIndex is within valid range
-}
-
 let cameraX = 0;
 let cameraY = 0;
-const cameraEasing = 0.1;
+const cameraEasing = 0.1; // Smoother camera follow
 
-function updateCameraPosition() {
-  const targetX = player.x - canvas.width / 2;
-  const targetY = player.y - canvas.height / 2;
-  cameraX += (targetX - cameraX) * cameraEasing;
-  cameraY += (targetY - cameraY) * cameraEasing;
-}
-
-// Draw the safe zone outlines
-function drawSafeZones() {
-  safeZones.forEach(zone => {
-    // Fill the safe zone with a semi-transparent green
-    ctx.fillStyle = 'rgba(0, 255, 0, 0.2)';
-    ctx.fillRect(zone.x, zone.y, zone.width, zone.height);
-    
-    // Draw the border
-    ctx.strokeStyle = 'green';
-    ctx.lineWidth = 2;
-    ctx.strokeRect(zone.x, zone.y, zone.width, zone.height);
-  });
-}
-
-
-// Updated drawBackground function to include safe zone outlines
-function drawBackground() {
-  const startCol = Math.max(0, Math.floor(cameraX / TILE_SIZE));
-  const endCol = Math.min(WORLD_WIDTH - 1, Math.ceil((cameraX + canvas.width) / TILE_SIZE));
-  const startRow = Math.max(0, Math.floor(cameraY / TILE_SIZE));
-  const endRow = Math.min(WORLD_HEIGHT - 1, Math.ceil((cameraY + canvas.height) / TILE_SIZE));
-
-  ctx.save();
-  ctx.translate(-cameraX, -cameraY);
-
-  // Fill the canvas with black
-  ctx.fillStyle = 'black';
-  ctx.fillRect(cameraX, cameraY, canvas.width, canvas.height);
-
-  for (let y = startRow; y <= endRow; y++) {
-    for (let x = startCol; x <= endCol; x++) {
-      const tileX = x * TILE_SIZE;
-      const tileY = y * TILE_SIZE;
-
-      if (gameWorld[y] && gameWorld[y][x]) {
-        const tile = gameWorld[y][x];
-        if (tileImages[tile]) {
-          ctx.drawImage(tileImages[tile], tileX, tileY, TILE_SIZE, TILE_SIZE);
-        }
-      }
+let currentTrade = { // State for the trading modal
+    active: false,
+    isRecipient: false, // Are we receiving an offer?
+    partnerId: null,
+    partnerName: null,
+    mySelectedItemIndex: null, // Index in player.inventory
+    myOfferedCopper: 0,
+    theirOffer: { // What the partner offered (if isRecipient)
+        item: null,
+        copper: 0
     }
-  }
+};
 
-  // Draw safe zone outlines
-  drawSafeZones();
 
-  ctx.restore();
+// --- DOM Elements ---
+const canvas = document.getElementById('gameCanvas');
+const ctx = canvas.getContext('2d');
+const chatLog = document.getElementById('chatLog');
+const chatInput = document.getElementById('chatInput');
+const dialogueBox = document.getElementById('dialogueBox');
+const inventoryList = document.getElementById('inventoryList');
+const tradeButton = document.getElementById('tradeButton');
+const tradeModal = document.getElementById('tradeModal');
+const tradeModalTitle = document.getElementById('tradeModalTitle');
+const playerSelect = document.getElementById('playerSelect');
+const yourItemsList = document.getElementById('yourItems');
+const offerCopperInput = document.getElementById('offerCopper');
+const sendTradeRequestButton = document.getElementById('sendTradeRequest');
+const closeTradeModalButton = document.getElementById('closeTradeModal');
+const acceptTradeButton = document.getElementById('acceptTradeButton');
+const declineTradeButton = document.getElementById('declineTradeButton');
+const theirOfferSection = document.getElementById('theirOfferSection');
+const theirOfferDetails = document.getElementById('theirOfferDetails');
+const tradePartnerNameSpan = document.getElementById('tradePartnerName');
+const initiateTradeSection = document.getElementById('initiateTradeSection');
+const damageNumbersContainer = document.getElementById('damageNumbersContainer'); // Optional container, can draw directly on canvas too
+const hudHealth = document.getElementById('hudHealth');
+const hudEquipped = document.getElementById('hudEquipped');
+const hudCopper = document.getElementById('hudCopper');
+
+// --- Initialization ---
+function adjustCanvasSize() {
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+    // Recalculate camera if needed immediately
+    updateCameraPosition(true); // Force immediate update
 }
 
-// Render players on canvas
-function drawPlayers() {
-  Object.values(players).forEach(p => {
-    if (p.id !== player.id) drawPlayer(p);
-  });
-  drawPlayer(player); // Draw current player last to be on top
-}
+function loadTileImages(callback) {
+    const tileSources = {
+        [TILE_WALL]: 'Images/tile_1.png',
+        [TILE_DOOR]: 'Images/tile_2.png',
+        [TILE_FLOOR]: 'Images/tile_3.png',
+        [TILE_WATER]: 'Images/tile_4.png',
+        [TILE_GRASS]: 'Images/tile_5.png',
+        [TILE_SAND]: 'Images/tile_6.png',
+        [TILE_BRIDGE]: 'Images/tile_7.png',
+    };
+    let loadedCount = 0;
+    const totalCount = Object.keys(tileSources).length;
+    if (totalCount === 0) {
+        callback();
+        return;
+    }
 
-// Draw a single player on the canvas
-function drawPlayer(p) {
-  if (!p.sprite || !p.sprite.complete || p.frameIndex === undefined) return;
-  const srcX = p.frameIndex * p.width;
-  const srcY = p.direction * p.height;
-  const screenX = p.x - p.width / 2;
-  const screenY = p.y - p.height / 2;
-
-  ctx.drawImage(p.sprite, srcX, srcY, p.width, p.height, screenX - cameraX, screenY - cameraY, p.width, p.height);
-  ctx.fillStyle = 'white';
-  ctx.textAlign = 'center';
-  ctx.font = '16px Arial';
-  ctx.fillText(p.name, screenX - cameraX + p.width / 2, screenY - cameraY - 20);
-
-  // Draw health bar
-  const healthBarWidth = 50;
-  const healthBarHeight = 5;
-  const healthPercentage = p.health / p.maxHealth;
-  ctx.fillStyle = 'red';
-  ctx.fillRect(screenX - cameraX + p.width / 2 - healthBarWidth / 2, screenY - cameraY - 10, healthBarWidth, healthBarHeight);
-  ctx.fillStyle = 'green';
-  ctx.fillRect(screenX - cameraX + p.width / 2 - healthBarWidth / 2, screenY - cameraY - 10, healthBarWidth * healthPercentage, healthBarHeight);
-
-  if (playerMessages[p.id]) {
-    ctx.fillStyle = 'yellow';
-    ctx.fillText(playerMessages[p.id], screenX - cameraX + p.width / 2, screenY - cameraY - 40);
-  }
-}
-
-// Helper function to check if a position is within a safe zone
-function isInSafeZone(x, y) {
-  return safeZones.some(zone =>
-    x >= zone.x && x <= zone.x + zone.width &&
-    y >= zone.y && y <= zone.y + zone.height
-  );
-}
-
-// Handle attack input and interactions
-function handleAttack() {
-  if (keysPressed[' ']) { // Spacebar for attack
-    if (!player.attackCooldown || Date.now() - player.attackCooldown > 500) { // 500ms cooldown
-      player.attackCooldown = Date.now();
-      player.isAttacking = true;
-      player.attackFrameIndex = 0;
-
-      // Send attack to server
-      let targetId = null;
-      let minDistance = Infinity;
-      const attackRange = 100;
-
-      // Check for enemies first
-      Object.values(enemies).forEach(enemy => {
-        const distance = Math.hypot(player.x - enemy.x, player.y - enemy.y);
-        if (distance < attackRange && distance < minDistance) {
-          minDistance = distance;
-          targetId = enemy.id;
-        }
-      });
-
-      // Check for players
-      Object.values(players).forEach(p => {
-        if (p.id !== player.id) {
-          const distance = Math.hypot(player.x - p.x, player.y - p.y);
-          if (distance < attackRange && distance < minDistance) {
-            minDistance = distance;
-            targetId = p.id;
-          }
-        }
-      });
-
-      if (targetId) {
-        socket.emit('attack', { targetId, weapon: player.equippedItem });
-      }
-
-      // Handle projectiles if staff is equipped
-      if (player.equippedItem && player.equippedItem.type === 'staff') {
-        const projectile = {
-          x: player.x,
-          y: player.y,
-          direction: player.direction,
-          speed: 300,
-          ownerId: player.id,
-          damage: player.equippedItem.damage || 10
+    for (const type in tileSources) {
+        tileImages[type] = new Image();
+        tileImages[type].onload = () => {
+            loadedCount++;
+            if (loadedCount === totalCount) {
+                console.log("Tile images loaded.");
+                callback();
+            }
         };
-        projectiles.push(projectile);
-      }
+        tileImages[type].onerror = () => {
+            console.error(`Failed to load tile image: ${tileSources[type]}`);
+            loadedCount++; // Still count it to avoid getting stuck
+             if (loadedCount === totalCount) {
+                callback();
+            }
+        };
+        tileImages[type].src = tileSources[type];
     }
-  }
 }
 
-// Update projectiles
-function updateProjectiles(deltaTime) {
-  projectiles = projectiles.filter(projectile => {
-    let dx = 0, dy = 0;
-    const moveDistance = projectile.speed * deltaTime;
-
-    switch (projectile.direction) {
-      case DIRECTIONS.UP:
-        dy = -moveDistance;
-        break;
-      case DIRECTIONS.DOWN:
-        dy = moveDistance;
-        break;
-      case DIRECTIONS.LEFT:
-        dx = -moveDistance;
-        break;
-      case DIRECTIONS.RIGHT:
-        dx = moveDistance;
-        break;
-      case DIRECTIONS.UP_LEFT:
-        dx = -moveDistance / Math.sqrt(2);
-        dy = -moveDistance / Math.sqrt(2);
-        break;
-      case DIRECTIONS.UP_RIGHT:
-        dx = moveDistance / Math.sqrt(2);
-        dy = -moveDistance / Math.sqrt(2);
-        break;
-      case DIRECTIONS.DOWN_LEFT:
-        dx = -moveDistance / Math.sqrt(2);
-        dy = moveDistance / Math.sqrt(2);
-        break;
-      case DIRECTIONS.DOWN_RIGHT:
-        dx = moveDistance / Math.sqrt(2);
-        dy = moveDistance / Math.sqrt(2);
-        break;
+function loadSpriteImages(callback) {
+    const spritesToLoad = [
+        { key: 'player', src: 'Images/player_sprite_frames.png', frames: 8 },
+        // Add other sprites here if needed (e.g., specific enemies)
+         { key: 'enemy_basic', src: 'Images/player_sprite_frames.png', frames: 8 }, // Placeholder
+         { key: 'enemy_strong', src: 'Images/player_sprite_frames.png', frames: 8 } // Placeholder
+    ];
+    let loadedCount = 0;
+    const totalCount = spritesToLoad.length;
+     if (totalCount === 0) {
+        callback();
+        return;
     }
 
-    projectile.x += dx;
-    projectile.y += dy;
-
-    // Check collision with walls
-    const tileX = Math.floor(projectile.x / TILE_SIZE);
-    const tileY = Math.floor(projectile.y / TILE_SIZE);
-
-    if (
-      tileY < 0 || tileY >= WORLD_HEIGHT ||
-      tileX < 0 || tileX >= WORLD_WIDTH ||
-      gameWorld[tileY][tileX] === TILE_WALL
-    ) {
-      // Projectile hits a wall
-      return false;
-    }
-
-    // Check collision with enemies
-    let hit = false;
-    Object.values(enemies).forEach(enemy => {
-      const distance = Math.hypot(projectile.x - enemy.x, projectile.y - enemy.y);
-      if (distance < 20) {
-        socket.emit('attack', { targetId: enemy.id, weapon: { damage: projectile.damage } });
-        hit = true;
-      }
+    spritesToLoad.forEach(spriteInfo => {
+        spriteImages[spriteInfo.key] = new Image();
+        spriteImages[spriteInfo.key].onload = () => {
+            loadedCount++;
+            // Store frame count for animation reference
+            spriteInfo.image = spriteImages[spriteInfo.key]; // Reference loaded image
+            spriteImages[spriteInfo.key].frameCount = spriteInfo.frames; // Attach frame count to image object
+            if (loadedCount === totalCount) {
+                console.log("Sprite images loaded.");
+                callback();
+            }
+        };
+        spriteImages[spriteInfo.key].onerror = () => {
+            console.error(`Failed to load sprite image: ${spriteInfo.src}`);
+             loadedCount++; // Still count it
+            if (loadedCount === totalCount) {
+                callback();
+            }
+        };
+        spriteImages[spriteInfo.key].src = spriteInfo.src;
     });
+}
 
-    // Check collision with players
-    Object.values(players).forEach(p => {
-      if (p.id !== projectile.ownerId) {
-        const distance = Math.hypot(projectile.x - p.x, projectile.y - p.y);
-        if (distance < 20) {
-          socket.emit('attack', { targetId: p.id, weapon: { damage: projectile.damage } });
-          hit = true;
+// --- Game Loop ---
+function gameLoop(timeStamp) {
+    if (!player.id || gameWorld.length === 0) { // Don't run loop until connected and world received
+        requestAnimationFrame(gameLoop);
+        return;
+    }
+
+    const deltaTime = Math.min((timeStamp - lastRenderTime) / 1000, 0.1); // Cap delta time
+    lastRenderTime = timeStamp;
+
+    // Updates
+    updatePlayerState(deltaTime); // Handle input and local movement intention
+    interpolateEntities(deltaTime); // Smooth movement of self and others
+    handleAnimation(deltaTime);
+    updateProjectiles(deltaTime);
+    updateEnemyAnimations(deltaTime); // Update enemy animations locally
+    updateCameraPosition();
+    updateDamageNumbers(deltaTime);
+
+    // Drawing
+    ctx.clearRect(0, 0, canvas.width, canvas.height); // Clear canvas
+    drawBackground();
+    drawItems();
+    drawEnemies();
+    drawPlayers();
+    drawProjectiles();
+    // Damage numbers are now drawn via DOM elements in damageNumbersContainer
+
+    requestAnimationFrame(gameLoop);
+}
+
+// --- Update Functions ---
+
+function updatePlayerState(deltaTime) {
+    let dx = 0;
+    let dy = 0;
+    let intendedMoving = false;
+
+    if (keysPressed['a'] || keysPressed['ArrowLeft']) { dx -= 1; intendedMoving = true; }
+    if (keysPressed['d'] || keysPressed['ArrowRight']) { dx += 1; intendedMoving = true; }
+    if (keysPressed['w'] || keysPressed['ArrowUp']) { dy -= 1; intendedMoving = true; }
+    if (keysPressed['s'] || keysPressed['ArrowDown']) { dy += 1; intendedMoving = true; }
+
+    // Determine direction (even if not moving for attack direction)
+    let newDirection = player.direction;
+     if (dy < 0 && dx < 0) newDirection = DIRECTIONS.UP_LEFT;
+    else if (dy < 0 && dx > 0) newDirection = DIRECTIONS.UP_RIGHT;
+    else if (dy > 0 && dx < 0) newDirection = DIRECTIONS.DOWN_LEFT;
+    else if (dy > 0 && dx > 0) newDirection = DIRECTIONS.DOWN_RIGHT;
+    else if (dy < 0) newDirection = DIRECTIONS.UP;
+    else if (dy > 0) newDirection = DIRECTIONS.DOWN;
+    else if (dx < 0) newDirection = DIRECTIONS.LEFT;
+    else if (dx > 0) newDirection = DIRECTIONS.RIGHT;
+
+    player.moving = intendedMoving; // Update moving state based on input
+
+    // Calculate intended position change
+    let moveX = 0;
+    let moveY = 0;
+    if (player.moving) {
+        const magnitude = Math.sqrt(dx * dx + dy * dy);
+        if (magnitude > 0) {
+             // Normalize and apply speed
+             moveX = (dx / magnitude) * MOVEMENT_SPEED * deltaTime;
+             moveY = (dy / magnitude) * MOVEMENT_SPEED * deltaTime;
         }
-      }
-    });
+    }
 
-    // Remove projectile if it hits something
-    return !hit;
-  });
+     // Client-side prediction (optional, can make movement feel smoother)
+     // Predict next position based on input
+     const predictedX = player.x + moveX;
+     const predictedY = player.y + moveY;
+
+     // Basic client-side collision check (prevents getting stuck visually before server corrects)
+     if (!checkCollision(predictedX, predictedY)) {
+        // If no collision predicted, tentatively update local position for smoother rendering
+        // player.x = predictedX;
+        // player.y = predictedY;
+        // NOTE: Server position (player.targetX/Y) is the authority.
+        // We mainly use this prediction for sending the *intended* move.
+     } else {
+        player.moving = false; // Stop moving if predicted collision
+        moveX = 0;
+        moveY = 0;
+     }
+
+
+    // Only send update if moving or direction changed
+    if (player.moving || newDirection !== player.direction) {
+        player.direction = newDirection; // Update direction regardless of movement
+        socket.emit('playerMovement', {
+            // Send the *intended* move based on input, not the predicted/collided state
+            // Let the server validate and determine the actual resulting position
+            dx: moveX / deltaTime, // Send velocity intent
+            dy: moveY / deltaTime,
+            direction: player.direction,
+            // frameIndex: player.frameIndex, // Server shouldn't trust frameIndex
+            moving: player.moving
+        });
+    }
+
+    handleAttackInput();
+    checkItemPickup();
 }
 
-// Handle receiving items from the server
-socket.on('currentItems', serverItems => {
-  items = serverItems;
-});
 
-// Handle item pickup
-socket.on('itemPickedUp', data => {
-  delete items[data.itemId];
-  if (data.playerId === player.id) {
-    player.inventory.push(data.item); // Add item to inventory if it's the local player
-    updateInventoryDisplay();
-  }
-});
+function checkCollision(x, y) {
+    // Check collision based on player's bounding box corners
+    const halfWidth = player.width / 3; // Use a smaller collision box than sprite?
+    const halfHeight = player.height / 3;
 
-// Keyboard event listeners for movement and item usage
-document.addEventListener('keydown', e => {
-  keysPressed[e.key] = true;
+    const checkPoints = [
+        { cx: x - halfWidth, cy: y - halfHeight }, // Top-left
+        { cx: x + halfWidth, cy: y - halfHeight }, // Top-right
+        { cx: x - halfWidth, cy: y + halfHeight }, // Bottom-left
+        { cx: x + halfWidth, cy: y + halfHeight }  // Bottom-right
+    ];
 
-  // Use item (e.g., potion) when pressing 'e'
-  if (e.key === 'e') {
-    useItem();
-  }
-});
+    for (const point of checkPoints) {
+        const tileType = getTileAt(point.cx, point.cy);
+        if (IMPASSABLE_TILES.includes(tileType)) {
+            return true; // Collision detected
+        }
+    }
+    return false; // No collision
+}
 
-document.addEventListener('keyup', e => {
-  delete keysPressed[e.key];
-});
+function getTileAt(worldX, worldY) {
+    if (!gameWorld || gameWorld.length === 0) return TILE_WALL; // Default if world not loaded
 
-// Event listener for inventory item click to equip or initiate trade
-document.getElementById('inventoryList').addEventListener('click', e => {
-  if (e.target && e.target.nodeName === 'LI') {
-    const itemIndex = e.target.dataset.index;
-    const item = player.inventory[itemIndex];
+    const tileX = Math.floor(worldX / TILE_SIZE);
+    const tileY = Math.floor(worldY / TILE_SIZE);
 
-    if (e.shiftKey) {
-      // Initiate trade when Shift-clicking an item
-      initiateTrade(itemIndex);
+    if (tileY < 0 || tileY >= gameWorld.length || tileX < 0 || !gameWorld[tileY] || tileX >= gameWorld[tileY].length) {
+        return TILE_WALL; // Out of bounds
+    }
+
+    return gameWorld[tileY][tileX];
+}
+
+
+function interpolateEntities(deltaTime) {
+    const lerpFactor = Math.min(deltaTime * 15, 1); // Adjust multiplier for faster/slower interpolation
+
+    // Interpolate local player towards server position (targetX/Y)
+    player.x += (player.targetX - player.x) * lerpFactor;
+    player.y += (player.targetY - player.y) * lerpFactor;
+
+    // Interpolate other players
+    for (const id in players) {
+        const p = players[id];
+        if (p.targetX !== undefined && p.targetY !== undefined) {
+            p.x += (p.targetX - p.x) * lerpFactor;
+            p.y += (p.targetY - p.y) * lerpFactor;
+        } else {
+            // If no target set yet, snap to initial position
+            p.x = p.x || 0;
+            p.y = p.y || 0;
+        }
+    }
+
+     // Interpolate enemies (optional, if server sends frequent updates)
+     for (const id in enemies) {
+        const e = enemies[id];
+         if (e.targetX !== undefined && e.targetY !== undefined) {
+            e.x += (e.targetX - e.x) * lerpFactor;
+            e.y += (e.targetY - e.y) * lerpFactor;
+         }
+    }
+}
+
+
+function handleAnimation(deltaTime) {
+    // Player Animation
+    if (player.isAttacking) {
+        player.attackAnimTimer += deltaTime;
+        if (player.attackAnimTimer >= ANIMATION_SPEED / 1.5) { // Faster attack animation
+            player.attackFrameIndex++;
+            player.attackAnimTimer = 0;
+            const attackFrames = player.sprite?.frameCount || 4; // Use sprite frame count or a default
+            if (player.attackFrameIndex >= attackFrames) { // Assuming attack uses same number of frames as walk
+                player.attackFrameIndex = 0;
+                player.isAttacking = false; // End attack animation
+            }
+        }
+         // Use attack frame index for drawing if attacking
+         player.currentFrame = player.attackFrameIndex;
+    } else if (player.moving) {
+        animationTimer += deltaTime;
+        if (animationTimer >= ANIMATION_SPEED) {
+            player.frameIndex = (player.frameIndex + 1) % (player.sprite?.frameCount || 1);
+            animationTimer = 0;
+        }
+         player.currentFrame = player.frameIndex; // Use walk frame index
     } else {
-      // Equip item on normal click
-      player.equippedItem = item;
-      updateInventoryDisplay();
+        player.frameIndex = 0; // Idle frame
+        player.attackFrameIndex = 0;
+        player.attackAnimTimer = 0;
+         player.currentFrame = 0; // Use idle frame index
     }
-  }
-});
-
-// Function to open the trade modal
-function openTradeModal() {
-  const tradeModal = document.getElementById('tradeModal');
-  const playerSelect = document.getElementById('playerSelect');
-  const yourItems = document.getElementById('yourItems');
-
-  // Populate player list
-  playerSelect.innerHTML = '';
-  Object.values(players).forEach(p => {
-    if (p.id !== player.id) {
-      const option = document.createElement('option');
-      option.value = p.id;
-      option.textContent = p.name;
-      playerSelect.appendChild(option);
-    }
-  });
-
-  // Populate your items
-  yourItems.innerHTML = '';
-  player.inventory.forEach((item, index) => {
-    const li = document.createElement('li');
-    li.textContent = item.type;
-    li.dataset.index = index;
-    yourItems.appendChild(li);
-  });
-
-  tradeModal.style.display = 'flex';
-}
-
-// Event listener to open trade modal
-document.getElementById('tradeButton').addEventListener('click', openTradeModal);
-
-// Event listener for sending trade request
-document.getElementById('sendTradeRequest').addEventListener('click', () => {
-  const playerSelect = document.getElementById('playerSelect');
-  const selectedPlayerId = playerSelect.value;
-  const yourItems = document.getElementById('yourItems');
-  const selectedItemIndex = yourItems.querySelector('li.selected')?.dataset.index;
-  const offeredCopper = parseInt(document.getElementById('offerCopper').value) || 0;
-
-  if (selectedPlayerId && (selectedItemIndex !== undefined || offeredCopper > 0)) {
-    socket.emit('tradeRequest', {
-      recipientId: selectedPlayerId,
-      offeredItemIndex: selectedItemIndex ? parseInt(selectedItemIndex) : null,
-      offeredCopper: offeredCopper
-    });
-    closeTradeModal();
-  } else {
-    alert('Please select a player and an item or copper to offer.');
-  }
-});
-
-// Event listener for closing trade modal
-document.getElementById('closeTradeModal').addEventListener('click', closeTradeModal);
-
-function closeTradeModal() {
-  document.getElementById('tradeModal').style.display = 'none';
-}
-
-// Handle item selection in trade modal
-document.getElementById('yourItems').addEventListener('click', e => {
-  if (e.target && e.target.nodeName === 'LI') {
-    const lis = document.querySelectorAll('#yourItems li');
-    lis.forEach(li => li.classList.remove('selected'));
-    e.target.classList.add('selected');
-  }
-});
-
-// Handle incoming trade requests
-socket.on('tradeRequest', data => {
-  const acceptTrade = confirm(`${data.senderName} wants to trade with you. Do you accept?`);
-  if (acceptTrade) {
-    // Open trade accept modal
-    openTradeAcceptModal(data);
-  } else {
-    socket.emit('declineTrade', data.senderId);
-  }
-});
-
-function openTradeAcceptModal(data) {
-  // Implement the trade accept modal where you can select items or copper to trade
-  // For simplicity, let's assume you can select an item or enter copper to trade back
-
-  const acceptModal = document.createElement('div');
-  acceptModal.id = 'acceptTradeModal';
-  acceptModal.style.position = 'fixed';
-  acceptModal.style.top = '0';
-  acceptModal.style.left = '0';
-  acceptModal.style.width = '100%';
-  acceptModal.style.height = '100%';
-  acceptModal.style.backgroundColor = 'rgba(0,0,0,0.5)';
-  acceptModal.style.display = 'flex';
-  acceptModal.style.justifyContent = 'center';
-  acceptModal.style.alignItems = 'center';
-  acceptModal.style.zIndex = '30';
-
-  const content = document.createElement('div');
-  content.style.backgroundColor = 'white';
-  content.style.padding = '20px';
-  content.style.borderRadius = '5px';
-
-  content.innerHTML = `
-    <h2>Trade Offer from ${data.senderName}</h2>
-    <p>They offer: ${data.offeredItem ? data.offeredItem.type : ''} ${data.offeredCopper ? 'and ' + data.offeredCopper + ' copper' : ''}</p>
-    <h3>Select Item to Trade</h3>
-    <ul id="theirItems"></ul>
-    <h3>Offer Copper</h3>
-    <input type="number" id="requestedCopper" min="0" value="0" />
-    <button id="confirmTrade">Confirm Trade</button>
-    <button id="cancelTrade">Cancel</button>
-  `;
-
-  acceptModal.appendChild(content);
-  document.body.appendChild(acceptModal);
-
-  const theirItems = content.querySelector('#theirItems');
-  player.inventory.forEach((item, index) => {
-    const li = document.createElement('li');
-    li.textContent = item.type;
-    li.dataset.index = index;
-    theirItems.appendChild(li);
-  });
-
-  theirItems.addEventListener('click', e => {
-    if (e.target && e.target.nodeName === 'LI') {
-      const lis = theirItems.querySelectorAll('li');
-      lis.forEach(li => li.classList.remove('selected'));
-      e.target.classList.add('selected');
-    }
-  });
-
-  content.querySelector('#confirmTrade').addEventListener('click', () => {
-    const selectedItemIndex = theirItems.querySelector('li.selected')?.dataset.index;
-    const requestedCopper = parseInt(content.querySelector('#requestedCopper').value) || 0;
-
-    socket.emit('acceptTrade', {
-      senderId: data.senderId,
-      requestedItemIndex: selectedItemIndex ? parseInt(selectedItemIndex) : null,
-      requestedCopper: requestedCopper
-    });
-    document.body.removeChild(acceptModal);
-  });
-
-  content.querySelector('#cancelTrade').addEventListener('click', () => {
-    socket.emit('declineTrade', data.senderId);
-    document.body.removeChild(acceptModal);
-  });
-}
-
-// Handle trade success
-socket.on('tradeSuccess', data => {
-  player.inventory = data.newInventory;
-  player.copper = data.copper || player.copper;
-  updateInventoryDisplay();
-  alert('Trade successful!');
-});
-
-// Handle trade errors
-socket.on('tradeError', message => {
-  alert(`Trade error: ${message}`);
-});
-
-// Handle trade declined
-socket.on('tradeDeclined', data => {
-  alert(`Player declined your trade request.`);
-});
-
-// Handle code rewards
-socket.on('rewardCode', code => {
-  alert(`You have received a reward code: ${code}`);
-});
-
-// After receiving the current players from the server and setting up the local player
-socket.on('currentPlayers', playersData => {
-  Object.values(playersData).forEach(p => {
-    if (p.id === socket.id) {
-      player = { ...player, ...p };
-      player.sprite = spriteImages.player;
-
-      // Emit the player's initial state
-      socket.emit('playerMovement', {
-        x: player.x,
-        y: player.y,
-        direction: player.direction,
-        moving: player.moving,
-        frameIndex: player.frameIndex,
-        health: player.health
-      });
-    } else {
-      p.sprite = spriteImages.player;
-      players[p.id] = p;
-    }
-  });
-});
-
-socket.on('newPlayer', playerData => {
-  playerData.sprite = spriteImages.player;
-  players[playerData.id] = playerData;
-});
-
-socket.on('playerMoved', data => {
-  if (data.playerId in players) {
-    const p = players[data.playerId];
-    p.x = data.x;
-    p.y = data.y;
-    p.direction = data.direction;
-    p.frameIndex = data.frameIndex;
-    p.health = data.health;
-  }
-});
-
-socket.on('playerDisconnected', id => delete players[id]);
-
-// Handle incoming chat messages and update chat log
-socket.on('chatMessage', data => {
-  const chatLog = document.getElementById('chatLog');
-  let playerName;
-  if (data.playerId === player.id) {
-    playerName = player.name;
-  } else if (players[data.playerId]) {
-    playerName = players[data.playerId].name;
-  } else {
-    playerName = 'Unknown';
-  }
-  const messageElement = document.createElement('p');
-  const timestamp = new Date().toLocaleTimeString();
-  messageElement.innerHTML = `<span class="timestamp">[${timestamp}]</span> <strong>${playerName}:</strong> ${data.message}`;
-  chatLog.appendChild(messageElement);
-  chatLog.scrollTop = chatLog.scrollHeight;
-
-  // Optionally display the message above the player's head for a few seconds
-  playerMessages[data.playerId] = data.message;
-  setTimeout(() => delete playerMessages[data.playerId], 5000);
-});
-
-// Handle private messages
-socket.on('privateMessage', data => {
-  const senderName = players[data.senderId] ? players[data.senderId].name : 'Unknown';
-  const chatLog = document.getElementById('chatLog');
-  const messageElement = document.createElement('p');
-  const timestamp = new Date().toLocaleTimeString();
-  messageElement.innerHTML = `<span class="timestamp">[${timestamp}]</span> <em>Private message from ${senderName}:</em> ${data.message}`;
-  chatLog.appendChild(messageElement);
-  chatLog.scrollTop = chatLog.scrollHeight;
-});
-
-// Initialize the game after all assets are loaded
-function startGame() {
-  initializeGameWorld();
-  requestAnimationFrame(gameLoop);
-}
-
-// Load all assets and then start the game
-loadTileImages(() => {
-  loadSpriteImages(() => {
-    startGame();
-  });
-});
-
-// Update inventory display
-function updateInventoryDisplay() {
-  const inventoryList = document.getElementById('inventoryList');
-  inventoryList.innerHTML = '';
-  player.inventory.forEach((item, index) => {
-    const li = document.createElement('li');
-    if (item.type === 'potion') {
-      li.textContent = `Potion (Healing: ${item.healing})`;
-    } else if (item.type === 'shield') {
-      li.textContent = `Shield (Defense: ${item.defense})`;
-    } else if (item.type === 'sword' || item.type === 'staff') {
-      li.textContent = `${item.type.charAt(0).toUpperCase() + item.type.slice(1)} (Damage: ${item.damage})`;
-    } else {
-      li.textContent = item.type;
-    }
-    li.dataset.index = index;
-    if (player.equippedItem === item) {
-      li.style.backgroundColor = 'yellow';
-    }
-
-    inventoryList.appendChild(li);
-  });
-  // Update HUD to display copper
-  drawHUD();
-}
-
-// Use item (e.g., potion)
-function useItem() {
-  const potionIndex = player.inventory.findIndex(item => item.type === 'potion');
-  if (potionIndex !== -1) {
-    const potion = player.inventory.splice(potionIndex, 1)[0];
-    player.health = Math.min(player.maxHealth, player.health + potion.healing);
-    updateInventoryDisplay();
-    // Emit health update to server
-    socket.emit('playerMovement', {
-      x: player.x,
-      y: player.y,
-      direction: player.direction,
-      frameIndex: player.frameIndex,
-      health: player.health
-    });
-  }
-}
-
-// Draw Heads-Up Display (HUD) for the player
-function drawHUD() {
-  ctx.save();
-  ctx.fillStyle = 'white';
-  ctx.font = '20px Arial';
-  ctx.textAlign = 'left';
-  ctx.textBaseline = 'top';
-
-  let hudX = 10;
-  let hudY = 10;
-
-  ctx.fillText(`Health: ${player.health}/${player.maxHealth}`, hudX, hudY);
-  hudY += 30;
-
-  if (player.equippedItem) {
-    ctx.fillText(`Equipped: ${player.equippedItem.type}`, hudX, hudY);
-    hudY += 30;
-  }
-
-  // Display copper
-  ctx.fillText(`Copper: ${player.copper || 0}`, hudX, hudY);
-  hudY += 30;
-
-  ctx.restore();
 }
 
 function updateEnemyAnimations(deltaTime) {
-  Object.values(enemies).forEach(enemy => {
-    enemy.animationTimer = (enemy.animationTimer || 0) + deltaTime;
-    if (enemy.animationTimer >= animationSpeed) {
-      enemy.frameIndex = (enemy.frameIndex + 1) % enemy.frameCount;
-      enemy.animationTimer = 0;
-    }
-  });
+    Object.values(enemies).forEach(enemy => {
+        // Enemies also interpolate, so their animation should depend on their 'moving' state from server
+        if (enemy.moving) {
+            enemy.animationTimer = (enemy.animationTimer || 0) + deltaTime;
+            if (enemy.animationTimer >= ANIMATION_SPEED) {
+                 const frameCount = spriteImages[enemy.type]?.frameCount || spriteImages['enemy_basic']?.frameCount || 1;
+                 enemy.frameIndex = (enemy.frameIndex + 1) % frameCount;
+                 enemy.animationTimer = 0;
+            }
+        } else {
+             enemy.frameIndex = 0; // Idle frame
+        }
+    });
 }
 
-// Function to open the trade modal
+
+function updateCameraPosition(forceImmediate = false) {
+    const targetX = player.x - canvas.width / 2;
+    const targetY = player.y - canvas.height / 2;
+
+    if (forceImmediate) {
+         cameraX = targetX;
+         cameraY = targetY;
+    } else {
+         cameraX += (targetX - cameraX) * cameraEasing;
+         cameraY += (targetY - cameraY) * cameraEasing;
+    }
+
+    // Clamp camera to world boundaries (optional)
+    // const maxCameraX = WORLD_WIDTH * TILE_SIZE - canvas.width;
+    // const maxCameraY = WORLD_HEIGHT * TILE_SIZE - canvas.height;
+    // cameraX = Math.max(0, Math.min(cameraX, maxCameraX));
+    // cameraY = Math.max(0, Math.min(cameraY, maxCameraY));
+}
+
+function checkItemPickup() {
+    Object.values(items).forEach(item => {
+        const dist = Math.hypot(player.x - item.x, player.y - item.y);
+        if (dist < TILE_SIZE * 0.75) { // Pickup radius
+            socket.emit('pickupItem', item.id);
+            // Optional: Add a small delay or visual indication before removing locally
+        }
+    });
+}
+
+function handleAttackInput() {
+    if (keysPressed[' '] && player.health > 0) { // Spacebar for attack, ensure player is alive
+        const now = Date.now();
+        if (now - player.lastAttackTime > ATTACK_COOLDOWN) {
+            player.lastAttackTime = now;
+            player.isAttacking = true; // Start animation state
+            player.attackFrameIndex = 0;
+            player.attackAnimTimer = 0;
+
+            // Determine target (simple proximity check)
+            let targetId = null;
+            let targetType = null; // 'player' or 'enemy'
+            let minDistance = 80; // Attack range
+
+            // Check enemies first
+            for (const id in enemies) {
+                 if (enemies[id].health > 0) { // Only target alive enemies
+                    const dist = Math.hypot(player.x - enemies[id].x, player.y - enemies[id].y);
+                    if (dist < minDistance) {
+                        minDistance = dist;
+                        targetId = id;
+                        targetType = 'enemy';
+                    }
+                 }
+            }
+
+            // Check players if no enemy is closer
+            if (targetType !== 'enemy') {
+                for (const id in players) {
+                    if (id !== player.id && players[id].health > 0) { // Don't target self, only alive players
+                        const dist = Math.hypot(player.x - players[id].x, player.y - players[id].y);
+                        if (dist < minDistance) {
+                            minDistance = dist;
+                            targetId = id;
+                            targetType = 'player';
+                        }
+                    }
+                }
+            }
+
+            // Emit attack event to server
+            socket.emit('attack', { targetId, targetType }); // Send target ID and type
+
+            // Handle local projectile creation if staff equipped
+            if (player.equippedItem && player.equippedItem.type === 'staff') {
+                createProjectile(player.x, player.y, player.direction, player.id, player.equippedItem.damage || 5);
+                // Note: Server should ideally validate and create projectiles too for authority
+            }
+        }
+    }
+}
+
+function createProjectile(x, y, direction, ownerId, damage) {
+     const projectile = {
+        id: `proj_${ownerId}_${Date.now()}`, // Simple unique ID
+        x: x,
+        y: y,
+        startX: x, // Remember start position for range check
+        startY: y,
+        direction: direction,
+        speed: PROJECTILE_SPEED,
+        ownerId: ownerId,
+        damage: damage,
+        width: 10, // For drawing/collision
+        height: 10
+    };
+    projectiles.push(projectile);
+    // Optionally, emit this projectile to the server for broadcasting to others
+    // socket.emit('projectileFired', projectile);
+}
+
+
+function updateProjectiles(deltaTime) {
+    projectiles = projectiles.filter(p => {
+        let dx = 0, dy = 0;
+        const moveDistance = p.speed * deltaTime;
+
+        // Calculate movement vector based on direction
+        switch (p.direction) {
+            case DIRECTIONS.UP: dy = -moveDistance; break;
+            case DIRECTIONS.DOWN: dy = moveDistance; break;
+            case DIRECTIONS.LEFT: dx = -moveDistance; break;
+            case DIRECTIONS.RIGHT: dx = moveDistance; break;
+            case DIRECTIONS.UP_LEFT: dx = -moveDistance / Math.SQRT2; dy = -moveDistance / Math.SQRT2; break;
+            case DIRECTIONS.UP_RIGHT: dx = moveDistance / Math.SQRT2; dy = -moveDistance / Math.SQRT2; break;
+            case DIRECTIONS.DOWN_LEFT: dx = -moveDistance / Math.SQRT2; dy = moveDistance / Math.SQRT2; break;
+            case DIRECTIONS.DOWN_RIGHT: dx = moveDistance / Math.SQRT2; dy = moveDistance / Math.SQRT2; break;
+        }
+        p.x += dx;
+        p.y += dy;
+
+        // Check range limit
+        const distTraveled = Math.hypot(p.x - p.startX, p.y - p.startY);
+        if (distTraveled > 500) { // Max range of 500 pixels
+            return false; // Remove projectile
+        }
+
+        // Check collision with walls
+        if (getTileAt(p.x, p.y) === TILE_WALL) {
+            return false; // Remove projectile
+        }
+
+        // Check collision with enemies (ONLY if projectile is from a player)
+        if (players[p.ownerId]) { // Check if owner is a player
+            for (const id in enemies) {
+                const e = enemies[id];
+                 if (e.health > 0 && Math.hypot(p.x - e.x, p.y - e.y) < (e.width / 2 + p.width / 2)) {
+                    // Client doesn't apply damage, server does.
+                    // We *could* emit a hit event here, but server attack handles it.
+                     displayDamageNumber(p.damage, e.x, e.y); // Show damage locally immediately
+                    return false; // Remove projectile on hit
+                }
+            }
+        }
+
+        // Check collision with players (ONLY if projectile is from a player and not the owner)
+         if (players[p.ownerId]) {
+            for (const id in players) {
+                if (id !== p.ownerId) { // Don't hit self
+                    const targetP = players[id];
+                     if (targetP.health > 0 && Math.hypot(p.x - targetP.x, p.y - targetP.y) < (targetP.width / 2 + p.width / 2)) {
+                        // Client doesn't apply damage.
+                        displayDamageNumber(p.damage, targetP.x, targetP.y); // Show damage locally immediately
+                        return false; // Remove projectile
+                    }
+                }
+            }
+         }
+        // TODO: Add collision check if projectile is from an ENEMY hitting a PLAYER
+
+        return true; // Keep projectile
+    });
+}
+
+function updateDamageNumbers(deltaTime) {
+    const container = damageNumbersContainer; // Use the DOM container
+    container.innerHTML = ''; // Clear previous numbers
+
+    damageNumbers = damageNumbers.filter(dn => {
+        dn.life -= deltaTime * 1.5; // Faster fade
+
+        if (dn.life <= 0) return false; // Remove faded numbers
+
+        // Create/Update DOM Element
+        const dnElement = document.createElement('div');
+        dnElement.className = 'damage-number';
+        dnElement.textContent = dn.text;
+
+        // Calculate screen position based on world coords and camera
+        const screenX = dn.x - cameraX;
+        const screenY = dn.y - cameraY - (1.0 - dn.life) * 40; // Float up effect
+
+        // Check if on screen before adding to DOM (optimization)
+        if (screenX > -50 && screenX < canvas.width + 50 && screenY > -50 && screenY < canvas.height + 50) {
+             dnElement.style.left = `${screenX}px`;
+             dnElement.style.top = `${screenY}px`;
+             dnElement.style.opacity = dn.life > 0.2 ? '1' : (dn.life / 0.2).toString(); // Fade out quickly at the end
+             container.appendChild(dnElement);
+        }
+
+
+        return true;
+    });
+}
+
+function displayDamageNumber(amount, x, y) {
+    if (amount <= 0) return; // Don't show 0 damage
+    damageNumbers.push({
+        id: `dmg_${Date.now()}_${Math.random()}`, // Unique ID
+        text: String(amount),
+        x: x + (Math.random() - 0.5) * 20, // Slight random offset
+        y: y - player.height / 2, // Start above head
+        life: 1.0 // Lifetime (1 second)
+    });
+}
+
+// --- Drawing Functions ---
+
+function drawBackground() {
+    const startCol = Math.max(0, Math.floor(cameraX / TILE_SIZE));
+    const endCol = Math.min(gameWorld[0]?.length || 0, Math.ceil((cameraX + canvas.width) / TILE_SIZE));
+    const startRow = Math.max(0, Math.floor(cameraY / TILE_SIZE));
+    const endRow = Math.min(gameWorld.length, Math.ceil((cameraY + canvas.height) / TILE_SIZE));
+
+    ctx.save();
+    ctx.translate(-cameraX, -cameraY); // Apply camera offset
+
+    // Optional: Fill background if tiles don't cover everything
+    ctx.fillStyle = 'black';
+    ctx.fillRect(cameraX, cameraY, canvas.width, canvas.height);
+
+    for (let y = startRow; y < endRow; y++) {
+        for (let x = startCol; x < endCol; x++) {
+            const tileType = gameWorld[y]?.[x];
+            if (tileType && tileImages[tileType]) {
+                ctx.drawImage(tileImages[tileType], x * TILE_SIZE, y * TILE_SIZE, TILE_SIZE, TILE_SIZE);
+            } else if (tileType) {
+                // Draw placeholder if image missing
+                ctx.fillStyle = '#555';
+                ctx.fillRect(x * TILE_SIZE, y * TILE_SIZE, TILE_SIZE, TILE_SIZE);
+                ctx.strokeRect(x * TILE_SIZE, y * TILE_SIZE, TILE_SIZE, TILE_SIZE);
+            }
+        }
+    }
+
+     // Draw safe zones (get data from server or define statically if matching server)
+     // drawSafeZones(); // Assuming safeZones array is defined globally/received
+
+    ctx.restore(); // Remove camera offset
+}
+
+
+function drawItems() {
+    ctx.save();
+    ctx.translate(-cameraX, -cameraY);
+    Object.values(items).forEach(item => {
+        // Use placeholder colors/shapes for now
+        ctx.fillStyle = item.type === 'potion' ? 'red'
+                       : item.type === 'sword' ? 'silver'
+                       : item.type === 'staff' ? 'purple'
+                       : item.type === 'shield' ? 'brown'
+                       : 'blue'; // Default
+        const itemSize = TILE_SIZE * 0.4;
+        ctx.fillRect(item.x - itemSize / 2, item.y - itemSize / 2, itemSize, itemSize);
+        // TODO: Draw item sprites when available
+    });
+    ctx.restore();
+}
+
+function drawPlayers() {
+    // Draw other players first
+    Object.values(players).forEach(p => {
+        if (p.id !== player.id && p.health > 0) { // Only draw others if alive
+             drawCharacter(p);
+        }
+    });
+    // Draw local player last (on top)
+    if (player.health > 0) {
+         drawCharacter(player);
+    }
+}
+
+function drawEnemies() {
+     ctx.save();
+     ctx.translate(-cameraX, -cameraY);
+    Object.values(enemies).forEach(enemy => {
+        if (enemy.health > 0) {
+            const enemySprite = spriteImages[enemy.type] || spriteImages['enemy_basic'] || player.sprite; // Fallback sprite
+            if (!enemySprite || !enemySprite.complete) {
+                // Draw placeholder if sprite missing/loading
+                ctx.fillStyle = 'darkred';
+                ctx.fillRect(enemy.x - enemy.width / 2, enemy.y - enemy.height / 2, enemy.width, enemy.height);
+            } else {
+                const frameCount = enemySprite.frameCount || 1;
+                const srcX = (enemy.frameIndex % frameCount) * enemy.width;
+                const srcY = enemy.direction * enemy.height; // Assuming same sprite sheet layout
+                 const drawWidth = enemy.width;
+                 const drawHeight = enemy.height;
+
+                ctx.drawImage(enemySprite,
+                    srcX, srcY, drawWidth, drawHeight, // Source rect
+                    enemy.x - drawWidth / 2, enemy.y - drawHeight / 2, // Destination pos (center)
+                    drawWidth, drawHeight // Destination size
+                );
+            }
+            // Draw health bar for enemy
+            drawHealthBar(enemy.x, enemy.y, enemy.width, enemy.health, enemy.maxHealth, 'Enemy'); // Pass name/type later
+        }
+    });
+     ctx.restore();
+}
+
+function drawCharacter(p) {
+     ctx.save();
+     ctx.translate(-cameraX, -cameraY);
+
+    const charSprite = p.sprite || spriteImages.player; // Use assigned sprite or default player sprite
+    if (charSprite && charSprite.complete && p.frameIndex !== undefined) {
+        const frameCount = charSprite.frameCount || 1;
+        // Use currentFrame which considers attack animation state
+        const frameToDraw = p.currentFrame !== undefined ? p.currentFrame : p.frameIndex;
+        const srcX = (frameToDraw % frameCount) * p.width;
+        const srcY = p.direction * p.height;
+
+        // Flashing effect when damaged (optional)
+         // if (p.lastDamageTime && Date.now() - p.lastDamageTime < 150) { // Flash for 150ms
+         //    ctx.globalAlpha = 0.6;
+         // }
+
+        ctx.drawImage(charSprite,
+            srcX, srcY, p.width, p.height,
+            p.x - p.width / 2, p.y - p.height / 2, p.width, p.height);
+
+         ctx.globalAlpha = 1.0; // Reset alpha
+
+    } else {
+        // Draw placeholder if sprite missing
+        ctx.fillStyle = p.id === player.id ? 'cyan' : 'orange';
+        ctx.fillRect(p.x - p.width / 2, p.y - p.height / 2, p.width, p.height);
+    }
+
+     // Draw Name
+     ctx.fillStyle = 'white';
+     ctx.textAlign = 'center';
+     ctx.font = '14px Arial';
+     ctx.fillText(p.name || 'Unknown', p.x, p.y - p.height / 2 - 15);
+
+    // Draw Health Bar
+    drawHealthBar(p.x, p.y, p.width, p.health, p.maxHealth);
+
+    // Draw chat message above head
+    if (playerMessages[p.id]) {
+        ctx.fillStyle = '#FFF'; // White text for chat bubbles
+        ctx.font = '12px Arial';
+        ctx.fillText(playerMessages[p.id], p.x, p.y - p.height / 2 - 35);
+    }
+
+    ctx.restore();
+}
+
+function drawHealthBar(x, y, width, health, maxHealth) {
+    const barWidth = Math.max(50, width * 0.8);
+    const barHeight = 6;
+    const barX = x - barWidth / 2;
+    const barY = y - width / 2 - 10; // Position above the character's head space
+
+    const healthPercentage = Math.max(0, health) / maxHealth;
+
+    ctx.fillStyle = '#550000'; // Dark red background
+    ctx.fillRect(barX, barY, barWidth, barHeight);
+
+    ctx.fillStyle = '#00CC00'; // Green health fill
+    ctx.fillRect(barX, barY, barWidth * healthPercentage, barHeight);
+
+    // Optional: Add border
+    ctx.strokeStyle = '#333';
+    ctx.lineWidth = 1;
+    ctx.strokeRect(barX, barY, barWidth, barHeight);
+}
+
+
+function drawProjectiles() {
+    ctx.save();
+    ctx.translate(-cameraX, -cameraY);
+    ctx.fillStyle = 'yellow';
+    projectiles.forEach(p => {
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, p.width / 2, 0, Math.PI * 2);
+        ctx.fill();
+    });
+    ctx.restore();
+}
+
+// --- UI Update Functions ---
+
+function updateHUD() {
+    hudHealth.textContent = `Health: ${player.health}/${player.maxHealth}`;
+    hudEquipped.textContent = `Equipped: ${player.equippedItem ? formatItemName(player.equippedItem) : 'None'}`;
+    hudCopper.textContent = `Copper: ${player.copper}`;
+}
+
+function formatItemName(item) {
+     if (!item || !item.type) return 'Unknown Item';
+     let name = item.type.charAt(0).toUpperCase() + item.type.slice(1);
+     if (item.damage) name += ` (Dmg: ${item.damage})`;
+     if (item.healing) name += ` (Heal: ${item.healing})`;
+     if (item.defense) name += ` (Def: ${item.defense})`;
+     return name;
+}
+
+function updateInventoryDisplay() {
+    inventoryList.innerHTML = ''; // Clear previous list
+    player.inventory.forEach((item, index) => {
+        const li = document.createElement('li');
+        li.textContent = formatItemName(item);
+        li.dataset.index = index; // Store index for equipping/trading
+
+        // Highlight equipped item
+        if (player.equippedItem && player.equippedItem.id === item.id) { // Compare by unique ID if available, else by object ref
+            li.classList.add('equipped');
+        }
+         // Highlight item selected for trade
+         if (currentTrade.active && currentTrade.mySelectedItemIndex === index) {
+             li.classList.add('selected-for-trade');
+         }
+
+        inventoryList.appendChild(li);
+    });
+     // Also update HUD in case copper changed via inventory actions (like selling)
+     updateHUD();
+}
+
+
+function addChatMessage(data, type = 'normal') {
+    const messageDiv = document.createElement('div');
+    messageDiv.classList.add('message');
+
+    const textSpan = document.createElement('span');
+    textSpan.classList.add('text');
+
+    const timestampSpan = document.createElement('span');
+    timestampSpan.classList.add('timestamp');
+    timestampSpan.textContent = `[${new Date().toLocaleTimeString()}]`;
+
+    let senderName = 'System';
+    if (data.playerId) {
+        senderName = (players[data.playerId]?.name || (player.id === data.playerId ? player.name : 'Unknown'));
+    } else if (data.senderName) {
+        senderName = data.senderName; // Use if provided directly (e.g., system messages)
+    }
+
+
+    if (type === 'system' || !data.playerId) {
+        messageDiv.classList.add('system');
+        textSpan.innerHTML = data.message; // System messages might have formatting
+    } else if (type === 'private') {
+        messageDiv.classList.add('private');
+        textSpan.innerHTML = `<em>${data.direction === 'to' ? 'To' : 'From'} ${senderName}:</em> ${data.message}`;
+    }
+    else {
+         // Normal user message
+         if (data.playerId === player.id) {
+            messageDiv.classList.add('user'); // Optional: Style own messages differently
+            textSpan.innerHTML = `<strong>You:</strong> ${data.message}`;
+         } else {
+            textSpan.innerHTML = `<strong>${senderName}:</strong> ${data.message}`;
+         }
+    }
+
+    messageDiv.appendChild(textSpan);
+    messageDiv.appendChild(timestampSpan);
+    chatLog.appendChild(messageDiv);
+
+    // Auto-scroll to bottom
+    chatLog.scrollTop = chatLog.scrollHeight;
+
+    // Display message above player head (only for non-system, non-private messages)
+    if (data.playerId && type === 'normal') {
+        playerMessages[data.playerId] = data.message;
+        setTimeout(() => {
+            if (playerMessages[data.playerId] === data.message) { // Avoid deleting newer message
+                 delete playerMessages[data.playerId];
+            }
+        }, 5000); // Message disappears after 5 seconds
+    }
+}
+
+function showDialogue(message, duration = 4000) {
+    dialogueBox.textContent = message;
+    dialogueBox.style.display = 'block';
+    setTimeout(() => {
+        dialogueBox.style.display = 'none';
+    }, duration);
+}
+
+// --- Trading Logic (Client-Side) ---
+
+function resetTradeState() {
+     currentTrade = {
+        active: false,
+        isRecipient: false,
+        partnerId: null,
+        partnerName: null,
+        mySelectedItemIndex: null,
+        myOfferedCopper: 0,
+        theirOffer: { item: null, copper: 0 }
+    };
+     // Reset UI elements
+     tradeModalTitle.textContent = 'Initiate Trade';
+     playerSelect.disabled = false;
+     initiateTradeSection.style.display = 'block';
+     theirOfferSection.style.display = 'none';
+     theirOfferDetails.innerHTML = '';
+     acceptTradeButton.style.display = 'none';
+     declineTradeButton.style.display = 'none';
+     sendTradeRequestButton.style.display = 'inline-block';
+     offerCopperInput.value = '0';
+     offerCopperInput.disabled = false;
+     // Clear selection styles
+     document.querySelectorAll('#yourItems li.selected').forEach(li => li.classList.remove('selected'));
+     updateInventoryDisplay(); // Refresh inventory display to remove trade selection highlight
+}
+
 function openTradeModal() {
-  const tradeModal = document.getElementById('tradeModal');
-  const playerSelect = document.getElementById('playerSelect');
-  const yourItems = document.getElementById('yourItems');
+    resetTradeState(); // Start fresh
+    currentTrade.active = true;
 
-  // Populate player list
-  playerSelect.innerHTML = '';
-  Object.values(players).forEach(p => {
-    if (p.id !== player.id) {
-      const option = document.createElement('option');
-      option.value = p.id;
-      option.textContent = p.name;
-      playerSelect.appendChild(option);
-    }
-  });
+    // Populate player list for initiating trade
+    playerSelect.innerHTML = '<option value="" disabled selected>-- Select Player --</option>'; // Reset
+    Object.values(players).forEach(p => {
+        if (p.id !== player.id && p.health > 0) { // Can only trade with alive players
+            const option = document.createElement('option');
+            option.value = p.id;
+            option.textContent = p.name;
+            playerSelect.appendChild(option);
+        }
+    });
 
-  // Populate your items
-  yourItems.innerHTML = '';
-  player.inventory.forEach((item, index) => {
-    const li = document.createElement('li');
-    li.textContent = item.type;
-    li.dataset.index = index;
-    yourItems.appendChild(li);
-  });
+    // Populate your items list
+    populateTradeItemsList();
 
-  tradeModal.style.display = 'flex';
+    tradeModal.style.display = 'flex'; // Show the modal
 }
+
+function populateTradeItemsList() {
+     yourItemsList.innerHTML = '';
+     player.inventory.forEach((item, index) => {
+        const li = document.createElement('li');
+        li.textContent = formatItemName(item);
+        li.dataset.index = index;
+        // Add click listener for selection within the trade modal
+        li.addEventListener('click', handleTradeItemSelect);
+        yourItemsList.appendChild(li);
+    });
+}
+
+function handleTradeItemSelect(event) {
+     if (!currentTrade.active || currentTrade.isRecipient) return; // Don't allow selection if receiving offer
+
+     const selectedLi = event.target;
+     const selectedIndex = parseInt(selectedLi.dataset.index);
+
+     // Toggle selection
+     if (currentTrade.mySelectedItemIndex === selectedIndex) {
+         currentTrade.mySelectedItemIndex = null; // Deselect
+         selectedLi.classList.remove('selected');
+     } else {
+         // Deselect previous, select new
+         const previouslySelected = yourItemsList.querySelector('li.selected');
+         if (previouslySelected) {
+             previouslySelected.classList.remove('selected');
+         }
+         currentTrade.mySelectedItemIndex = selectedIndex;
+         selectedLi.classList.add('selected');
+     }
+}
+
+
+function closeTradeModal() {
+    if (!currentTrade.active) return;
+
+    // If we are the recipient of an active offer, closing means declining
+    if (currentTrade.isRecipient && currentTrade.partnerId) {
+         socket.emit('declineTrade', { senderId: currentTrade.partnerId }); // Notify the original sender
+         showDialogue(`Declined trade with ${currentTrade.partnerName}.`);
+    }
+    // If we initiated a trade that hasn't been responded to, closing means cancelling
+    else if (!currentTrade.isRecipient && currentTrade.partnerId) {
+         socket.emit('cancelTrade', { recipientId: currentTrade.partnerId }); // Notify the potential recipient
+         showDialogue(`Cancelled trade offer to ${currentTrade.partnerName}.`);
+    }
+
+    resetTradeState();
+    tradeModal.style.display = 'none';
+}
+
+function setupTradeUIForReceiving(data) {
+     currentTrade.isRecipient = true;
+     currentTrade.partnerId = data.senderId;
+     currentTrade.partnerName = data.senderName || 'Another Player';
+     currentTrade.theirOffer.item = data.offeredItem;
+     currentTrade.theirOffer.copper = data.offeredCopper || 0;
+
+     tradeModalTitle.textContent = `Trade Offer From ${currentTrade.partnerName}`;
+     initiateTradeSection.style.display = 'none'; // Hide player selection
+     theirOfferSection.style.display = 'block';
+
+     let offerText = 'Nothing';
+     if (currentTrade.theirOffer.item && currentTrade.theirOffer.copper > 0) {
+         offerText = `${formatItemName(currentTrade.theirOffer.item)} and ${currentTrade.theirOffer.copper} Copper`;
+     } else if (currentTrade.theirOffer.item) {
+         offerText = formatItemName(currentTrade.theirOffer.item);
+     } else if (currentTrade.theirOffer.copper > 0) {
+         offerText = `${currentTrade.theirOffer.copper} Copper`;
+     }
+     theirOfferDetails.textContent = `Offering: ${offerText}`;
+     tradePartnerNameSpan.textContent = currentTrade.partnerName;
+
+
+     // Update buttons
+     sendTradeRequestButton.style.display = 'none';
+     acceptTradeButton.style.display = 'inline-block';
+     declineTradeButton.style.display = 'inline-block';
+
+     // Allow player to select items/copper to offer back
+     populateTradeItemsList(); // Repopulate items, now they are for *your* counter-offer
+     offerCopperInput.disabled = false; // Enable copper input for counter-offer
+
+     // Show the modal if it wasn't already open
+     tradeModal.style.display = 'flex';
+}
+
+// --- Event Listeners ---
+function setupEventListeners() {
+    window.addEventListener('resize', adjustCanvasSize);
+
+    document.addEventListener('keydown', (e) => {
+        keysPressed[e.key.toLowerCase()] = true; // Use lower case for consistency
+
+        // Prevent browser search on spacebar, etc. if canvas focused
+        if (document.activeElement === canvas || document.activeElement === document.body) {
+             if (e.key === ' ' || e.key.startsWith('Arrow')) {
+                 e.preventDefault();
+             }
+        }
+
+        // Use item (e.g., potion) when pressing 'e' - only if not typing in chat
+        if (e.key.toLowerCase() === 'e' && document.activeElement !== chatInput) {
+            useItem('potion'); // Example: use first available potion
+        }
+    });
+
+    document.addEventListener('keyup', (e) => {
+        delete keysPressed[e.key.toLowerCase()];
+    });
+
+    // Chat Input
+    chatInput.addEventListener('keypress', (e) => {
+        if (e.key === 'Enter') {
+            sendMessage();
+        }
+    });
+
+     // Prevent keydown events from triggering game actions when chat is focused
+    chatInput.addEventListener('focus', () => {
+        keysPressed = {}; // Clear pressed keys when chat gains focus
+    });
+
+
+    // Inventory Click (Equip)
+    inventoryList.addEventListener('click', (e) => {
+        if (e.target && e.target.nodeName === 'LI') {
+            const itemIndex = parseInt(e.target.dataset.index);
+            const item = player.inventory[itemIndex];
+            if (item) {
+                // Simple equip logic: Unequip current, equip new if different
+                // Only equip 'sword', 'shield', 'staff' types for now
+                if (['sword', 'shield', 'staff'].includes(item.type)) {
+                    if (player.equippedItem && player.equippedItem.id === item.id) {
+                        player.equippedItem = null; // Unequip if clicking the same equipped item
+                    } else {
+                         // Check if equipping a shield while sword/staff is equipped, or vice-versa (allow both)
+                         // Simple approach: just equip the new one. Improve later if needed (e.g., weapon/offhand slots)
+                        player.equippedItem = item;
+                         // TODO: Maybe emit 'equipItem' to server if needed for stats/effects?
+                    }
+                    updateInventoryDisplay(); // Update highlight
+                    updateHUD(); // Update HUD equipped display
+                } else if (item.type === 'potion') {
+                    // Use potion immediately on click? Or keep 'e' key?
+                    // showDialogue(`Selected potion. Press 'E' to use.`);
+                }
+            }
+        }
+    });
+
+    // Trade Button
+    tradeButton.addEventListener('click', openTradeModal);
+
+    // Trade Modal Buttons
+    sendTradeRequestButton.addEventListener('click', () => {
+        const selectedPlayerId = playerSelect.value;
+        const offeredCopper = parseInt(offerCopperInput.value) || 0;
+        // Find the index of the selected item LI element
+        const selectedLi = yourItemsList.querySelector('li.selected');
+        const offeredItemIndex = selectedLi ? parseInt(selectedLi.dataset.index) : null;
+
+
+        if (!selectedPlayerId) {
+            return showDialogue('Please select a player to trade with.');
+        }
+        if (offeredItemIndex === null && offeredCopper <= 0) {
+            return showDialogue('You must offer an item or copper.');
+        }
+         if (!players[selectedPlayerId]) {
+             return showDialogue('Selected player is no longer available.');
+         }
+
+         currentTrade.partnerId = selectedPlayerId; // Store who we sent it to
+         currentTrade.partnerName = players[selectedPlayerId].name;
+
+
+        socket.emit('tradeRequest', {
+            recipientId: selectedPlayerId,
+            offeredItemIndex: offeredItemIndex, // Send index
+            offeredCopper: offeredCopper
+        });
+
+        showDialogue(`Sending trade request to ${players[selectedPlayerId]?.name || 'player'}...`);
+        // Keep modal open but maybe disable inputs until response? Or close and wait?
+        // Let's close it for simplicity now.
+        resetTradeState();
+        tradeModal.style.display = 'none';
+    });
+
+    acceptTradeButton.addEventListener('click', () => {
+        if (!currentTrade.isRecipient || !currentTrade.partnerId) return;
+
+        const selectedLi = yourItemsList.querySelector('li.selected');
+        const requestedItemIndex = selectedLi ? parseInt(selectedLi.dataset.index) : null;
+        const requestedCopper = parseInt(offerCopperInput.value) || 0;
+
+         // Basic validation before sending acceptance
+         if (requestedCopper < 0 || (requestedCopper > 0 && player.copper < requestedCopper)) {
+            return showDialogue("You don't have enough copper to offer.");
+        }
+         if (requestedItemIndex !== null && !player.inventory[requestedItemIndex]) {
+             return showDialogue("The item you selected to offer is no longer in your inventory.");
+         }
+
+
+        socket.emit('acceptTrade', {
+            senderId: currentTrade.partnerId, // The ID of the person who INITIATED the trade
+            requestedItemIndex: requestedItemIndex, // What YOU are giving (index)
+            requestedCopper: requestedCopper     // What YOU are giving (copper)
+        });
+
+        // UI will update on 'tradeSuccess' or 'tradeError'
+        // Temporarily disable buttons?
+        acceptTradeButton.disabled = true;
+        declineTradeButton.disabled = true;
+    });
+
+    declineTradeButton.addEventListener('click', () => {
+        if (!currentTrade.isRecipient || !currentTrade.partnerId) return;
+
+        socket.emit('declineTrade', { senderId: currentTrade.partnerId });
+        showDialogue(`Declined trade with ${currentTrade.partnerName}.`);
+        closeTradeModal(); // Also resets state
+    });
+
+    closeTradeModalButton.addEventListener('click', closeTradeModal);
+}
+
+// Function to handle chat input (messages and commands)
+function sendMessage() {
+    const message = chatInput.value.trim();
+    if (!message) return;
+
+    if (message.startsWith('/')) {
+        handleCommand(message);
+    } else {
+        socket.emit('chatMessage', { message });
+    }
+    chatInput.value = ''; // Clear input field
+}
+
+// Handle slash commands
+function handleCommand(message) {
+    const parts = message.split(' ');
+    const command = parts[0].substring(1).toLowerCase();
+    const args = parts.slice(1);
+
+    switch (command) {
+        case 'w':
+        case 'msg':
+        case 'tell':
+            const recipientName = args[0];
+            const privateMessage = args.slice(1).join(' ');
+            if (recipientName && privateMessage) {
+                 // Find recipient ID (case-insensitive search)
+                 const recipient = Object.values(players).find(p => p.name.toLowerCase() === recipientName.toLowerCase());
+                if (recipient && recipient.id !== player.id) {
+                    socket.emit('privateMessage', { recipientId: recipient.id, message: privateMessage });
+                } else if (recipient && recipient.id === player.id) {
+                     addChatMessage({ message: "You can't whisper to yourself." }, 'system');
+                }
+                 else {
+                    addChatMessage({ message: `Player '${recipientName}' not found or is offline.` }, 'system');
+                }
+            } else {
+                addChatMessage({ message: 'Usage: /msg <PlayerName> <Your Message>' }, 'system');
+            }
+            break;
+
+        case 'players':
+        case 'who':
+            const playerNames = Object.values(players).map(p => p.name).join(', ');
+            addChatMessage({ message: `Online (${Object.keys(players).length}): ${playerNames || 'Just you!'}` }, 'system');
+            break;
+
+         case 'help':
+             addChatMessage({ message: 'Available commands: /msg [name] [message], /players, /help' }, 'system');
+             break;
+
+        default:
+            addChatMessage({ message: `Unknown command: '${command}'. Type /help for options.` }, 'system');
+            break;
+    }
+}
+
+// Function to use an item from inventory
+function useItem(itemType) {
+    const itemIndex = player.inventory.findIndex(item => item.type === itemType);
+    if (itemIndex !== -1) {
+        const item = player.inventory[itemIndex]; // Get item ref before potential splice
+
+        if (item.type === 'potion') {
+            if (player.health >= player.maxHealth) {
+                showDialogue("Your health is already full!");
+                return;
+            }
+            // Send request to server to use item
+            socket.emit('useItem', { itemIndex: itemIndex });
+            // Optimistic UI update (server will confirm)
+            player.health = Math.min(player.maxHealth, player.health + (item.healing || 0));
+            player.inventory.splice(itemIndex, 1); // Remove locally for responsiveness
+            showDialogue(`Used ${formatItemName(item)}.`);
+            updateInventoryDisplay();
+            updateHUD();
+        }
+        // Add logic for other usable items here
+    } else {
+        showDialogue(`You don't have any ${itemType}s.`);
+    }
+}
+
+
+// --- Socket Event Handlers ---
+function setupSocketListeners() {
+    socket.on('connect', () => {
+        console.log('Connected to server with ID:', socket.id);
+        // Player ID is set upon receiving 'assignId' or 'currentPlayers'
+    });
+
+    socket.on('disconnect', () => {
+        console.log('Disconnected from server.');
+        showDialogue('Disconnected from server!', 10000);
+        // Reset game state? Grey out screen?
+         player.id = null;
+         players = {};
+         enemies = {};
+         items = {};
+         gameWorld = [];
+    });
+
+    socket.on('connect_error', (err) => {
+        console.error('Connection Error:', err.message);
+        showDialogue(`Connection failed: ${err.message}. Trying to reconnect...`, 10000);
+    });
+
+    // 1. Receive World Data
+    socket.on('worldData', (data) => {
+        console.log("Received world data.");
+        gameWorld = data.map;
+        // If player ID already known, we can start the game loop
+        if (player.id) {
+             lastRenderTime = performance.now(); // Reset timer
+             requestAnimationFrame(gameLoop);
+        }
+    });
+
+     // 2. Receive Player ID and Initial State
+    socket.on('assignId', (assignedData) => {
+        console.log(`Assigned ID: ${assignedData.id}, Name: ${assignedData.name}`);
+        player.id = assignedData.id;
+        player.name = assignedData.name;
+        player.x = assignedData.x;
+        player.y = assignedData.y;
+        player.targetX = assignedData.x; // Init interpolation target
+        player.targetY = assignedData.y;
+        player.health = assignedData.health;
+        player.maxHealth = assignedData.maxHealth;
+        player.copper = assignedData.copper;
+        player.inventory = assignedData.inventory || [];
+        player.sprite = spriteImages.player; // Assign loaded sprite
+
+        updateInventoryDisplay();
+        updateHUD();
+
+        // If world already received, start game loop
+        if (gameWorld.length > 0) {
+            lastRenderTime = performance.now(); // Reset timer
+            requestAnimationFrame(gameLoop);
+        }
+    });
+
+
+    // 3. Receive Full Game State (Players, Items, Enemies) - Can replace assignId + currentPlayers/Items/Enemies
+    // socket.on('gameState', (state) => {
+    //    // Process players
+    //    const serverPlayers = state.players || {};
+    //    players = {}; // Reset local players map
+    //    for(const id in serverPlayers) {
+    //        if (id === socket.id) { // Found self
+    //            Object.assign(player, serverPlayers[id]); // Update local player data
+    //            player.id = socket.id; // Ensure ID is set
+    //            player.targetX = player.x;
+    //            player.targetY = player.y;
+    //            player.sprite = spriteImages.player;
+    //        } else { // Other player
+    //            players[id] = serverPlayers[id];
+    //            players[id].sprite = spriteImages.player; // Assign sprite
+    //            players[id].targetX = players[id].x; // Init interpolation target
+    //            players[id].targetY = players[id].y;
+    //        }
+    //    }
+    //
+    //    // Process items
+    //    items = state.items || {};
+    //
+    //    // Process enemies
+    //    enemies = {}; // Reset
+    //    const serverEnemies = state.enemies || {};
+    //    for (const id in serverEnemies) {
+    //         enemies[id] = serverEnemies[id];
+    //         const enemySpriteKey = enemies[id].type || 'enemy_basic';
+    //         enemies[id].sprite = spriteImages[enemySpriteKey];
+    //         enemies[id].targetX = enemies[id].x; // Init interpolation target
+    //         enemies[id].targetY = enemies[id].y;
+    //         enemies[id].animationTimer = 0; // Reset animation timer
+    //    }
+    //
+    //    gameWorld = state.world || []; // Get world map
+    //
+    //    console.log("Received initial game state.");
+    //    updateInventoryDisplay();
+    //    updateHUD();
+    //
+    //    // Start game loop if not already started
+    //    if (player.id && gameWorld.length > 0 && lastRenderTime === 0) {
+    //         lastRenderTime = performance.now();
+    //         requestAnimationFrame(gameLoop);
+    //    }
+    // });
+
+
+    // Player Updates
+    socket.on('playerJoined', (playerData) => {
+        if (playerData.id === player.id) return; // Ignore self
+        console.log('Player joined:', playerData.name);
+        players[playerData.id] = playerData;
+        players[playerData.id].sprite = spriteImages.player; // Assign default sprite
+        // Initialize interpolation targets
+        players[playerData.id].targetX = playerData.x;
+        players[playerData.id].targetY = playerData.y;
+        players[playerData.id].currentFrame = 0; // Initialize animation frame
+        addChatMessage({ senderName: playerData.name, message: 'has joined the game.' }, 'system');
+    });
+
+    socket.on('playerLeft', (playerId) => {
+         if (players[playerId]) {
+             console.log('Player left:', players[playerId].name);
+             addChatMessage({ senderName: players[playerId].name, message: 'has left the game.' }, 'system');
+             delete players[playerId];
+         }
+         // If this player was involved in a trade, cancel it
+         if (currentTrade.active && currentTrade.partnerId === playerId) {
+             showDialogue(`${currentTrade.partnerName} disconnected. Trade cancelled.`);
+             closeTradeModal(); // Resets state and closes
+         }
+    });
+
+    socket.on('playerMoved', (data) => {
+        // Update the target position for interpolation
+        if (player.id === data.playerId) { // Update local player's target to server position
+             player.targetX = data.x;
+             player.targetY = data.y;
+             player.direction = data.direction; // Update direction immediately
+             player.moving = data.moving; // Update moving state based on server
+             // Optional: Server could send validated frameIndex, but client anim usually handles it
+        } else if (players[data.playerId]) { // Update other players
+            players[data.playerId].targetX = data.x;
+            players[data.playerId].targetY = data.y;
+            players[data.playerId].direction = data.direction;
+            players[data.playerId].moving = data.moving; // Use for their animation state
+            // players[data.playerId].frameIndex = data.frameIndex; // If server sends frame index
+        }
+    });
+
+     // Force position correction from server (e.g., due to failed validation)
+     socket.on('forcePosition', (data) => {
+        if (player.id) {
+            console.log("Server corrected position.");
+            player.x = data.x;
+            player.y = data.y;
+            player.targetX = data.x; // Snap target as well
+            player.targetY = data.y;
+        }
+    });
+
+    // Combat & Health Updates
+    socket.on('playerDamaged', (data) => {
+        // Find the character (player or other player)
+        let target = null;
+        if (data.playerId === player.id) {
+            target = player;
+            showDialogue(`Ouch! Took ${data.damage} damage!`, 2000); // Show message to self
+        } else if (players[data.playerId]) {
+            target = players[data.playerId];
+        }
+
+        if (target) {
+            target.health = data.newHealth; // Update health based on server message
+             displayDamageNumber(data.damage, target.x, target.y); // Show visual feedback
+            // target.lastDamageTime = Date.now(); // For flashing effect
+
+            if (target === player) updateHUD(); // Update local player HUD
+        }
+    });
+
+     socket.on('enemyDamaged', (data) => {
+        if (enemies[data.enemyId]) {
+            enemies[data.enemyId].health = data.newHealth;
+             displayDamageNumber(data.damage, enemies[data.enemyId].x, enemies[data.enemyId].y);
+        }
+    });
+
+
+    socket.on('playerKilled', (data) => {
+        if (data.playerId === player.id) {
+            showDialogue(`You were killed by ${data.killerName || 'something'}!`, 10000);
+            // Handle player death - maybe show a respawn button or overlay
+            player.health = 0;
+             keysPressed = {}; // Stop movement
+            updateHUD();
+             // Optional: reload page after a delay
+             // setTimeout(() => window.location.reload(), 5000);
+        } else if (players[data.playerId]) {
+            addChatMessage({ message: `${players[data.playerId].name} was killed by ${data.killerName || 'something'}.` }, 'system');
+             players[data.playerId].health = 0; // Mark as dead visually
+             // Optionally remove from players map after a delay or fade out
+        }
+    });
+
+    socket.on('enemyKilled', (data) => {
+        if (enemies[data.enemyId]) {
+            // Optional: Play death animation/effect
+            delete enemies[data.enemyId];
+            addChatMessage({ message: `You defeated the enemy!` + (data.copperReward ? ` (+${data.copperReward} Copper)` : '') }, 'system');
+            // Copper/inventory updates handled by specific events below
+        }
+    });
+
+     // Item/Inventory Updates
+    socket.on('updateInventory', (newInventory) => {
+        player.inventory = newInventory;
+        updateInventoryDisplay();
+    });
+
+    socket.on('updateCopper', (newCopperAmount) => {
+        player.copper = newCopperAmount;
+        updateHUD();
+    });
+
+
+    socket.on('itemPickedUp', (data) => {
+        // Server now sends 'updateInventory' and 'updateCopper' instead
+        // Just remove the item visually from the world
+        if (items[data.itemId]) {
+             delete items[data.itemId];
+             // Optional: confirmation message
+             if (data.playerId === player.id) {
+                showDialogue(`Picked up ${formatItemName(data.item)}.`, 2000);
+             }
+        }
+    });
+
+     socket.on('itemUsed', (data) => {
+        if (data.playerId === player.id) {
+            // Server confirmed item use, update health if needed (e.g., potion)
+            if (data.effect === 'heal') {
+                player.health = data.newHealth;
+                updateHUD();
+            }
+            // Inventory is already updated via 'updateInventory' event from server
+            // showDialogue(`Used ${formatItemName(data.item)}.`, 1500);
+        }
+        // We might need to remove item from inventory again if server sends index?
+        // Best practice: Server sends full new inventory state via 'updateInventory'.
+    });
+
+    socket.on('currentItems', (serverItems) => {
+        items = serverItems;
+    });
+
+     socket.on('updateEnemies', (serverEnemies) => {
+        // Update existing enemies, add new ones, remove old ones
+        const currentEnemyIds = Object.keys(enemies);
+        const serverEnemyIds = Object.keys(serverEnemies);
+
+        // Add/Update
+        serverEnemyIds.forEach(id => {
+            const data = serverEnemies[id];
+            if (enemies[id]) {
+                // Update existing enemy target position and state
+                enemies[id].targetX = data.x;
+                enemies[id].targetY = data.y;
+                 enemies[id].health = data.health; // Keep health synced
+                 enemies[id].direction = data.direction;
+                 enemies[id].moving = data.moving; // Use for animation
+                 // Don't snap x/y directly, let interpolation handle it
+            } else {
+                // Add new enemy
+                 enemies[id] = data;
+                 const enemySpriteKey = enemies[id].type || 'enemy_basic';
+                 enemies[id].sprite = spriteImages[enemySpriteKey] || spriteImages['enemy_basic']; // Assign sprite
+                 enemies[id].targetX = data.x; // Initialize target for interpolation
+                 enemies[id].targetY = data.y;
+                 enemies[id].x = data.x; // Initial position snap
+                 enemies[id].y = data.y;
+                 enemies[id].animationTimer = 0;
+                 enemies[id].frameIndex = 0;
+                 console.log(`Enemy spawned: ${id} (${enemies[id].type})`);
+            }
+        });
+
+        // Remove
+        currentEnemyIds.forEach(id => {
+            if (!serverEnemies[id]) {
+                 console.log(`Enemy removed: ${id}`);
+                delete enemies[id];
+            }
+        });
+    });
+
+    // Chat Updates
+    socket.on('chatMessage', (data) => {
+        addChatMessage(data, 'normal');
+    });
+
+    socket.on('privateMessage', (data) => {
+        addChatMessage(data, 'private');
+    });
+
+     socket.on('chatError', (message) => {
+         addChatMessage({ message: `Error: ${message}` }, 'system');
+     });
+
+     // Trading Updates
+     socket.on('tradeRequest', (data) => {
+         // Only show if not already in a trade
+         if (!currentTrade.active) {
+             setupTradeUIForReceiving(data);
+             showDialogue(`${data.senderName} wants to trade. Open the Trade window!`); // Prompt user
+         } else {
+             // Auto-decline if busy?
+             socket.emit('declineTrade', { senderId: data.senderId, reason: "Busy" });
+         }
+     });
+
+     socket.on('tradeSuccess', (data) => {
+         showDialogue(`Trade with ${currentTrade.partnerName || 'player'} successful!`, 5000);
+         // Server should send updated inventory/copper via separate events
+         closeTradeModal(); // Reset state and close
+     });
+
+     socket.on('tradeError', (message) => {
+         showDialogue(`Trade Error: ${message}`, 5000);
+         // Re-enable buttons if they were disabled during accept attempt
+          acceptTradeButton.disabled = false;
+          declineTradeButton.disabled = false;
+         // Don't automatically close modal on error, let user decide.
+     });
+
+     socket.on('tradeDeclined', (data) => {
+         // data might contain { recipientName } or { senderName } depending on who declined
+         showDialogue(data.message || `Trade was declined.`, 4000);
+          if (currentTrade.active && (currentTrade.partnerId === data.senderId || currentTrade.partnerId === data.recipientId)) {
+             closeTradeModal(); // Close if the declined trade was the one we were involved in
+         }
+     });
+
+     socket.on('tradeCancelled', (data) => {
+         showDialogue(data.message || `Trade was cancelled.`, 4000);
+         if (currentTrade.active && currentTrade.isRecipient && currentTrade.partnerId === data.senderId) {
+            closeTradeModal(); // Close if the offer we were looking at was cancelled
+         }
+     });
+
+      socket.on('tradeExpired', (data) => {
+          showDialogue(`Trade offer ${data.senderName ? 'from ' + data.senderName : (data.recipientName ? 'to ' + data.recipientName : '')} expired.`, 5000);
+         if (currentTrade.active && (currentTrade.partnerId === data.senderId || currentTrade.partnerId === data.recipientId)) {
+             closeTradeModal(); // Close if the expired trade was the one we were involved in
+         }
+     });
+
+
+     // Misc
+     socket.on('rewardCode', (code) => {
+         showDialogue(`Reward Code Earned: ${code}`, 10000);
+         addChatMessage({ message: `You received a reward code: ${code}`}, 'system');
+     });
+
+}
+
+// --- Start ---
+function initializeGame() {
+    console.log("Initializing game...");
+    adjustCanvasSize();
+    setupEventListeners();
+    setupSocketListeners();
+
+    // Load assets, then connect or wait for connection
+    loadTileImages(() => {
+        loadSpriteImages(() => {
+            console.log("Assets loaded. Waiting for server connection and data...");
+            // Game loop will be started by socket event handlers once ready
+        });
+    });
+}
+
+initializeGame();
