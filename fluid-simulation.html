@@ -3,67 +3,71 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <title>Enhanced Fluid Simulation</title>
+    <title>Advanced Fluid Simulation</title>
     <style>
         body {
             margin: 0;
             overflow: hidden; /* Prevent scrollbars */
-            background: linear-gradient(to bottom, #111133, #331111); /* Default Gradient, updated by JS */
-            color: white; /* Default text color */
+            background: #050510; /* Dark base, gradient will be less impactful with bloom */
+            color: white;
             font-family: Arial, sans-serif;
         }
         canvas {
-            display: block; /* Remove potential space below canvas */
+            display: block;
         }
-        #fpsCounter {
+        #infoPanel { /* Combined FPS and Instructions */
             position: absolute;
-            top: 10px;
+            bottom: 10px;
             left: 10px;
             background: rgba(0, 0, 0, 0.6);
-            padding: 5px 10px;
+            padding: 8px 12px;
             border-radius: 5px;
-            z-index: 100; /* Ensure visibility above canvas */
-            user-select: none; /* Prevent text selection */
-            pointer-events: none; /* Allow clicks to pass through */
-            font-size: 14px;
+            z-index: 100;
+            user-select: none;
+            pointer-events: none;
+            font-size: 12px;
+            color: rgba(255, 255, 255, 0.8);
+            line-height: 1.5;
         }
-        #instructions {
-             position: absolute;
-             bottom: 10px;
-             left: 10px;
-             color: rgba(255, 255, 255, 0.7);
-             font-size: 11px; /* Slightly smaller */
-             background: rgba(0, 0, 0, 0.6);
-             padding: 5px 10px;
-             border-radius: 5px;
-             z-index: 100;
-             user-select: none;
-             pointer-events: none;
-             max-width: calc(100% - 30px); /* Prevent overflow on small screens */
+        #infoPanel span { /* Style FPS counter */
+             display: block;
+             font-weight: bold;
+             color: white;
+             margin-bottom: 5px;
+             font-size: 14px;
          }
          /* Style for lil-gui panel */
          .lil-gui {
-            z-index: 101 !important; /* Ensure GUI is above other elements */
+            z-index: 101 !important;
          }
     </style>
     <!-- Link to the lil-gui CSS -->
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/lil-gui@0.17/dist/lil-gui.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/lil-gui@0.18/dist/lil-gui.min.css"> <!-- Updated lil-gui version -->
 </head>
 <body>
-    <!-- FPS Counter Display -->
-    <div id="fpsCounter">FPS: ...</div>
-
-    <!-- User Instructions -->
-    <div id="instructions">
-        <b>Mouse:</b> Attract (Left), Repel (Right), Vortex (Middle/Shift+Click), Stir (Ctrl+Click)<br/>
+    <!-- Combined Info Panel -->
+    <div id="infoPanel">
+        <span id="fpsCounter">FPS: ...</span>
+        <b>Mouse:</b> Attract (L), Repel (R), Vortex (M/Shift+L), Stir (Ctrl+L)<br/>
         <b>Keys:</b> G: Gravity | P: Pause | R: Reset
     </div>
 
-    <!-- Three.js Library (ensure this loads before your script) -->
+    <!-- Core Three.js -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+
+    <!-- Addons for EffectComposer & Bloom -->
+    <!-- IMPORTANT: Ensure these match your three.js version if not using r128 -->
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/postprocessing/EffectComposer.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/postprocessing/RenderPass.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/postprocessing/ShaderPass.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/shaders/CopyShader.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/postprocessing/UnrealBloomPass.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/shaders/LuminosityHighPassShader.js"></script> <!-- Needed by Bloom -->
+
 
     <!-- Your Simulation Script (as a module) -->
     <!-- Make sure the path 'js/fluid-simulation.js' is correct -->
     <script type="module" src="js/fluid-simulation.js"></script>
+
 </body>
 </html>
