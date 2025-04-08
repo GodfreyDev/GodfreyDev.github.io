@@ -519,28 +519,29 @@ class FluidSimulation {
         }
 
         const oldParticleCount = this.params.particlesCount;
+        // *** Store the current pause state *before* any overwriting ***
+        // This ensures we have the value set in the constructor on initial load,
+        // or the current value when switching presets later.
+        const currentPauseState = this.params.paused;
 
         // --- Parameter Merging ---
-        // Start with a deep copy of the 'Medium' preset as a base default structure
-        // This ensures all expected keys exist.
+        // Start with a deep copy of the 'Medium' preset as a reliable base structure
         const baseParams = JSON.parse(JSON.stringify(PRESETS['Medium']));
 
         // Merge the selected preset over the base defaults
         const newParams = { ...baseParams, ...preset };
 
-        // Preserve essential states across presets if not initial load
-        if (!isInitial) {
-             newParams.paused = this.params.paused; // Keep pause state
-        }
-         // Always update the current preset name
+        // *** Explicitly restore/set the pause state in the new object ***
+        newParams.paused = currentPauseState;
+
+         // Always update the current preset name field
         newParams.currentPreset = name;
 
-
-        // Update the main params object
+        // Now, update the main params object with the fully formed new state
         this.params = newParams;
 
 
-        // --- Apply changes ---
+        // --- Apply changes based on the now complete this.params ---
 
         // Handle particle count changes OR initial particle setup
         if (!isInitial && this.params.particlesCount !== oldParticleCount) {
@@ -550,7 +551,6 @@ class FluidSimulation {
              // This is the very first load, initialize particle state in buffers
              this.initializeParticles(true); // true = full reset of positions etc.
         }
-
 
         // Update simulation components based on new params
         this.baseColor.set(this.params.particleBaseColor);
@@ -568,17 +568,16 @@ class FluidSimulation {
 
 
         // Update GUI to reflect the new state (if GUI exists)
+        // This is now safe as this.params definitely has 'paused'
         if (this.gui) {
             this.gui.controllersRecursive().forEach(controller => controller.updateDisplay());
         }
 
-        // Reset simulation state only when *switching* presets for a clean comparison,
-        // not on the very initial load.
+        // Reset simulation state only when *switching* presets, not on initial load.
          if (!isInitial) {
              this.resetSimulation();
          }
     }
-
     // --- Helpers ---
     updateBackgroundColor() {
         if (this.renderer) this.renderer.setClearColor(this.params.bgColor, 1);
