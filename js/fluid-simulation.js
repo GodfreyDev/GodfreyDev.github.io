@@ -453,11 +453,11 @@ class FluidSimulation {
         // --- Physics ---
         const physicsFolder = this.gui.addFolder('Physics');
         // Add checks to ensure params exist before creating controllers
-        if ('damping' in this.params) physicsFolder.add(this.params, 'damping', 0.85, 1.0, 0.005).name('Damping');
-        if ('edgeDamping' in this.params) physicsFolder.add(this.params, 'edgeDamping', 0.0, 1.5, 0.05).name('Edge Damping');
-        if ('maxVelocity' in this.params) physicsFolder.add(this.params, 'maxVelocity', 0.5, 10.0, 0.1).name('Max Velocity');
+        if ('damping' in this.params) physicsFolder.add(this.params, 'damping', 0.5, 1.0, 0.005).name('Damping');
+        if ('edgeDamping' in this.params) physicsFolder.add(this.params, 'edgeDamping', 0.0, 2.0, 0.05).name('Edge Damping');
+        if ('maxVelocity' in this.params) physicsFolder.add(this.params, 'maxVelocity', 0.0, 20.0, 0.1).name('Max Velocity');
         if ('gravityEnabled' in this.params) physicsFolder.add(this.params, 'gravityEnabled').name('Enable Gravity (G)').listen();
-        if ('gravityStrength' in this.params) physicsFolder.add(this.params, 'gravityStrength', 0.0, 0.2, 0.005).name('Gravity Strength');
+        if ('gravityStrength' in this.params) physicsFolder.add(this.params, 'gravityStrength', 0.0, 2.0, 0.005).name('Gravity Strength');
         if ('containerRadius' in this.params) physicsFolder.add(this.params, 'containerRadius', 20, Math.max(100, FRUSTUM_SIZE/2), 1).name('Container Radius')
             .onFinishChange(() => this.setupSpatialGrid()); // Recalculate grid
         physicsFolder.close(); // Close by default
@@ -465,21 +465,21 @@ class FluidSimulation {
         // --- Mouse Interaction ---
         const mouseFolder = this.gui.addFolder('Mouse Interaction');
         if ('interactionRadius' in this.params) mouseFolder.add(this.params, 'interactionRadius', 1, 40, 0.5).name('Mouse Radius').onChange(() => this.createInteractionRing());
-        if ('attractionStrength' in this.params) mouseFolder.add(this.params, 'attractionStrength', 0.0, 0.8, 0.01).name('Attraction Str.');
-        if ('repellingStrength' in this.params) mouseFolder.add(this.params, 'repellingStrength', 0.0, 1.2, 0.01).name('Repulsion Str.');
-        if ('vortexStrength' in this.params) mouseFolder.add(this.params, 'vortexStrength', 0.0, 0.6, 0.01).name('Vortex Str.');
-        if ('stirStrength' in this.params) mouseFolder.add(this.params, 'stirStrength', 0.0, 0.6, 0.01).name('Stir Str.');
+        if ('attractionStrength' in this.params) mouseFolder.add(this.params, 'attractionStrength', 0.0, 5.0, 0.01).name('Attraction Str.');
+        if ('repellingStrength' in this.params) mouseFolder.add(this.params, 'repellingStrength', 0.0, 5.0, 0.01).name('Repulsion Str.');
+        if ('vortexStrength' in this.params) mouseFolder.add(this.params, 'vortexStrength', 0.0, 5.0, 0.01).name('Vortex Str.');
+        if ('stirStrength' in this.params) mouseFolder.add(this.params, 'stirStrength', 0.0, 5.0, 0.01).name('Stir Str.');
         if ('showInteractionRadius' in this.params) mouseFolder.add(this.params, 'showInteractionRadius').name('Show Mouse Radius').onChange(v => { if(this.interactionRing) this.interactionRing.visible = v; });
         mouseFolder.close();
 
         // --- Particle Physics ---
         const particlePhysicsFolder = this.gui.addFolder('Particle Physics');
-        if ('particleRepulsionRadius' in this.params) particlePhysicsFolder.add(this.params, 'particleRepulsionRadius', 0.5, 20.0, 0.1).name('Repulsion Radius')
+        if ('particleRepulsionRadius' in this.params) particlePhysicsFolder.add(this.params, 'particleRepulsionRadius', 0.25, 20.0, 0.1).name('Repulsion Radius')
             .onFinishChange(() => this.setupSpatialGrid()); // Grid depends on this
-        if ('repulsionStrength' in this.params) particlePhysicsFolder.add(this.params, 'repulsionStrength', 0.0, 1.0, 0.01).name('Repulsion Str.');
+        if ('repulsionStrength' in this.params) particlePhysicsFolder.add(this.params, 'repulsionStrength', 0.0, 5.0, 0.01).name('Repulsion Str.');
         if ('cohesionRadius' in this.params) particlePhysicsFolder.add(this.params, 'cohesionRadius', 1.0, 30.0, 0.1).name('Cohesion Radius')
              .onFinishChange(() => this.setupSpatialGrid()); // Grid depends on this
-        if ('cohesionStrength' in this.params) particlePhysicsFolder.add(this.params, 'cohesionStrength', 0.0, 0.1, 0.001).name('Cohesion Str.');
+        if ('cohesionStrength' in this.params) particlePhysicsFolder.add(this.params, 'cohesionStrength', 0.0, 1.0, 0.001).name('Cohesion Str.');
         particlePhysicsFolder.close();
 
         // --- Visualization ---
