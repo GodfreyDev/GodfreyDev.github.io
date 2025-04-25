@@ -25,15 +25,15 @@ document.addEventListener('DOMContentLoaded', () => {
     // --- Game Configuration ---
     // ... (same symbols, weights, payouts, etc. as before) ...
     const ROWS = 3; const COLS = 5;
-    const WILD_SYMBOL = 'images/shield.png'; const SCATTER_SYMBOL = 'images/dragon.png'; const BONUS_SYMBOL = 'images/chest.png'; // Use actual image path
-    const weightedSymbols = [ { src: 'images/map_scroll.png', weight: 10 }, { src: 'images/coin.png', weight: 10 }, { src: 'images/map_scroll.png', weight: 10 }, { src: 'images/mana_potion.png', weight: 9 }, { src: 'images/key.png', weight: 9 }, { src: 'images/health_potion.png', weight: 8 }, { src: 'images/axe.png', weight: 7 }, { src: 'images/staff.png', weight: 6 }, { src: 'images/ring.png', weight: 6 }, { src: 'images/gem.png', weight: 4 }, { src: WILD_SYMBOL, weight: 3 }, { src: 'images/sword2.png', weight: 2 }, { src: SCATTER_SYMBOL, weight: 8 }, { src: BONUS_SYMBOL, weight: 3 } ]; // Scatter weight increased
-    const imageAltText = { 'images/map_scroll.png': 'Map/Scroll', 'images/coin.png': 'Coin', 'images/mana_potion.png': 'MP Potion', 'images/key.png': 'Key', 'images/health_potion.png': 'HP Potion', 'images/axe.png': 'Axe', 'images/staff.png': 'Staff', 'images/ring.png': 'Ring', 'images/gem.png': 'Gem', 'images/shield.png': 'WILD Shield', 'images/sword2.png': 'Sword', 'images/dragon.png': 'Dragon Scatter', 'images/chest.png': 'Chest Bonus' };
+    const WILD_SYMBOL = 'Images/shield.png'; const SCATTER_SYMBOL = 'Images/dragon.png'; const BONUS_SYMBOL = 'Images/chest.png'; // Use actual image path
+    const weightedSymbols = [ { src: 'Images/map_scroll.png', weight: 10 }, { src: 'Images/coin.png', weight: 10 }, { src: 'Images/map_scroll.png', weight: 10 }, { src: 'Images/mana_potion.png', weight: 9 }, { src: 'Images/key.png', weight: 9 }, { src: 'Images/health_potion.png', weight: 8 }, { src: 'Images/axe.png', weight: 7 }, { src: 'Images/staff.png', weight: 6 }, { src: 'Images/ring.png', weight: 6 }, { src: 'Images/gem.png', weight: 4 }, { src: WILD_SYMBOL, weight: 3 }, { src: 'Images/sword2.png', weight: 2 }, { src: SCATTER_SYMBOL, weight: 8 }, { src: BONUS_SYMBOL, weight: 3 } ]; // Scatter weight increased
+    const imageAltText = { 'Images/map_scroll.png': 'Map/Scroll', 'Images/coin.png': 'Coin', 'Images/mana_potion.png': 'MP Potion', 'Images/key.png': 'Key', 'Images/health_potion.png': 'HP Potion', 'Images/axe.png': 'Axe', 'Images/staff.png': 'Staff', 'Images/ring.png': 'Ring', 'Images/gem.png': 'Gem', 'Images/shield.png': 'WILD Shield', 'Images/sword2.png': 'Sword', 'Images/dragon.png': 'Dragon Scatter', 'Images/chest.png': 'Chest Bonus' };
     const symbols = weightedSymbols.map(s => s.src);
     const weightedPool = []; weightedSymbols.forEach(s => { for (let i = 0; i < s.weight; i++) weightedPool.push(s.src); });
     const coinValues = [0.01, 0.05, 0.10, 0.25, 0.50, 1.00, 2.00, 5.00];
     const betLevels = [ { level: 1, linesActive: 5, linesIndices: [0, 1, 2, 3, 4], costMultiplier: 5 }, { level: 2, linesActive: 9, linesIndices: [0, 1, 2, 3, 4, 5, 6, 7, 8], costMultiplier: 9 }, { level: 3, linesActive: 15, linesIndices: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14], costMultiplier: 15 } ];
     const maxBetLevelIndex = betLevels.length - 1; const maxCoinValueIndex = coinValues.length - 1;
-    const paytableMultipliers = { 'images/sword2.png': [20, 60, 150], 'images/shield.png': [0, 0, 250], 'images/gem.png': [15, 45, 125], 'images/ring.png': [10, 30, 100], 'images/staff.png': [8, 20, 75], 'images/axe.png': [6, 18, 60], 'images/health_potion.png': [5, 15, 40], 'images/key.png': [4, 10, 30], 'images/mana_potion.png': [3, 8, 20], 'images/coin.png': [1, 4, 10], 'images/map_scroll.png': [1, 3, 8], 'images/dragon.png': [0, 0, 0], 'images/chest.png': [0, 0, 0] };
+    const paytableMultipliers = { 'Images/sword2.png': [20, 60, 150], 'Images/shield.png': [0, 0, 250], 'Images/gem.png': [15, 45, 125], 'Images/ring.png': [10, 30, 100], 'Images/staff.png': [8, 20, 75], 'Images/axe.png': [6, 18, 60], 'Images/health_potion.png': [5, 15, 40], 'Images/key.png': [4, 10, 30], 'Images/mana_potion.png': [3, 8, 20], 'Images/coin.png': [1, 4, 10], 'Images/map_scroll.png': [1, 3, 8], 'Images/dragon.png': [0, 0, 0], 'Images/chest.png': [0, 0, 0] };
     const scatterPayouts = { 3: 2, 4: 8, 5: 40 };
     const FREE_SPINS_AWARDED = 10; const FREE_SPINS_MULTIPLIER = 2;
     const AUTO_SPIN_DELAY = 300; // Increased delay slightly for visibility
@@ -50,7 +50,7 @@ document.addEventListener('DOMContentLoaded', () => {
     function initializeSlots() { /* ... same ... */
         if (!slotMachineGrid || !spinButton || /* ... other checks ... */ stopButtons.some(b => !b)) { console.error("Init failed: Missing elements."); return; }
         createGridCells(); preloadImages();
-        gridCells.forEach(cell => { const s = 'images/map_scroll.png'; cell.innerHTML = `<img src="${s}" alt="${imageAltText[s] || 'S'}" class="reel-img">`; });
+        gridCells.forEach(cell => { const s = 'Images/map_scroll.png'; cell.innerHTML = `<img src="${s}" alt="${imageAltText[s] || 'S'}" class="reel-img">`; });
         updateBalanceDisplay(); updateBettingInfo(); updateButtonStates();
         resultMessage.textContent = 'Select Bet Level/Coin Value and Spin.';
         spinButton.addEventListener('click', handleSpinStopClick);
@@ -60,7 +60,7 @@ document.addEventListener('DOMContentLoaded', () => {
         console.log("5x3 Slot machine initialized (Free Spin Fix).");
     }
     function createGridCells() { gridCells = []; for(let r=0;r<ROWS;r++){for(let c=0;c<COLS;c++){const cell=document.getElementById(`cell-${r}-${c}`); if(!cell)console.error(`Cell cell-${r}-${c} not found!`); gridCells.push(cell);}}}
-    function preloadImages() { symbols.forEach(src => { if (!src.includes('/')) return; const img = new Image(); img.src = src; }); console.log("RPG images preloading..."); }
+    function preloadImages() { symbols.forEach(src => { if (!src.includes('/')) return; const img = new Image(); img.src = src; }); console.log("RPG Images preloading..."); }
 
     // --- Betting Functions ---
     function decreaseBetLevel() { if (currentBetLevelIndex > 0 && !isSpinning && freeSpinsRemaining <= 0) { currentBetLevelIndex--; updateBettingInfo(); updateButtonStates(); } }
