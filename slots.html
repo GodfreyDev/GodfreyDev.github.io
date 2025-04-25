@@ -3,32 +3,25 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Slot Machine Game</title>
+    <title>RPG Slot Adventure - Deluxe</title>
 
     <!-- Theme Loading Script -->
     <script>
-        function applyGameTheme(themeName) {
-            const validTheme = (themeName === 'dark-mode' || themeName === 'light-mode') ? themeName : 'light-mode';
-            document.documentElement.className = validTheme;
-        }
-        try { const savedTheme = localStorage.getItem('theme'); applyGameTheme(savedTheme); }
-        catch (e) { console.error("Could not access localStorage for theme", e); applyGameTheme('light-mode'); }
+        function applyGameTheme(themeName){const validTheme=(themeName==='dark-mode'||themeName==='light-mode')?themeName:'light-mode';document.documentElement.className=validTheme;} try{const savedTheme=localStorage.getItem('theme');applyGameTheme(savedTheme);}catch(e){console.error("Could not access localStorage for theme",e);applyGameTheme('light-mode');}
     </script>
 
     <!-- Stylesheets -->
-    <link rel="stylesheet" href="css/style.css"> <!-- Shared styles first -->
-    <link rel="stylesheet" href="css/slots.css"> <!-- Slot-specific styles -->
-    <!-- Font Awesome for Icons -->
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/slots.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
-<!-- Class is set by script in head -->
 <body>
-    <!-- Game Header (Restructured) -->
+    <!-- Game Header -->
     <header class="game-header">
         <div class="container">
             <a href="index.html#casino" class="btn back-btn" aria-label="Back to portfolio casino section">← Back</a>
-            <h1><i class="fas fa-dice-three" aria-hidden="true"></i> Slot Machine</h1>
-            <div class="header-spacer" aria-hidden="true"></div> <!-- Spacer for centering title -->
+            <h1><i class="fas fa-dice-d20" aria-hidden="true"></i> RPG Slot Adventure</h1>
+            <div class="header-spacer" aria-hidden="true"></div>
         </div>
     </header>
 
@@ -38,54 +31,97 @@
 
             <!-- Wrapper for main slot elements -->
             <div class="slot-main-area">
-                <h2>Spin the Reels!</h2>
+                <h2>Set Your Bet & Spin!</h2>
 
                 <!-- Slot Machine Visual Area -->
-                <div id="slot-machine" role="img" aria-label="Slot machine reels">
-                    <div class="reel reel-symbol" id="reel1" aria-live="polite">?</div>
-                    <div class="reel reel-symbol" id="reel2" aria-live="polite">?</div>
-                    <div class="reel reel-symbol" id="reel3" aria-live="polite">?</div>
-                </div>
+                <div id="slot-machine-wrapper">
+                    <div id="slot-machine" role="region" aria-label="Slot machine 5x3 grid">
+                        <div class="reel-cell" id="cell-0-0"></div><div class="reel-cell" id="cell-0-1"></div><div class="reel-cell" id="cell-0-2"></div><div class="reel-cell" id="cell-0-3"></div><div class="reel-cell" id="cell-0-4"></div>
+                        <div class="reel-cell" id="cell-1-0"></div><div class="reel-cell" id="cell-1-1"></div><div class="reel-cell" id="cell-1-2"></div><div class="reel-cell" id="cell-1-3"></div><div class="reel-cell" id="cell-1-4"></div>
+                        <div class="reel-cell" id="cell-2-0"></div><div class="reel-cell" id="cell-2-1"></div><div class="reel-cell" id="cell-2-2"></div><div class="reel-cell" id="cell-2-3"></div><div class="reel-cell" id="cell-2-4"></div>
+                    </div>
+                    <!-- Individual Reel Stop Buttons (Updated with aria-disabled) -->
+                    <div class="reel-stop-controls" role="group" aria-label="Stop individual reels">
+                        <button class="btn stop-btn" aria-disabled="true" id="stop-reel-0" aria-label="Stop reel 1" disabled>Stop</button>
+                        <button class="btn stop-btn" aria-disabled="true" id="stop-reel-1" aria-label="Stop reel 2" disabled>Stop</button>
+                        <button class="btn stop-btn" aria-disabled="true" id="stop-reel-2" aria-label="Stop reel 3" disabled>Stop</button>
+                        <button class="btn stop-btn" aria-disabled="true" id="stop-reel-3" aria-label="Stop reel 4" disabled>Stop</button>
+                        <button class="btn stop-btn" aria-disabled="true" id="stop-reel-4" aria-label="Stop reel 5" disabled>Stop</button>
+                    </div>
+                </div> <!-- END: slot-machine-wrapper -->
+
 
                 <!-- Controls -->
                 <div class="controls">
-                    <div class="bet-controls" role="group" aria-label="Adjust bet amount">
-                        <button id="decrease-bet" class="btn bet-btn" aria-label="Decrease bet by 1 dollar">-</button>
-                        <span class="bet-display" aria-live="polite">Bet: $<span id="current-bet">1</span></span>
-                        <button id="increase-bet" class="btn bet-btn" aria-label="Increase bet by 1 dollar">+</button>
+                    <div class="bet-controls-group" role="group" aria-label="Adjust bet level">
+                        <span class="control-label">Level</span>
+                        <button id="decrease-level" class="btn bet-btn" aria-label="Decrease bet level">-</button>
+                        <span class="control-value" id="bet-level-display">1</span>
+                        <button id="increase-level" class="btn bet-btn" aria-label="Increase bet level">+</button>
                     </div>
-                    <button id="spin-button" class="btn casino-btn spin-btn">Spin!</button>
+                    <div class="bet-controls-group" role="group" aria-label="Adjust coin value">
+                         <span class="control-label">Coin Value</span>
+                        <button id="decrease-coin" class="btn bet-btn" aria-label="Decrease coin value">-</button>
+                        <span class="control-value" id="coin-value-display">0.10</span>
+                        <button id="increase-coin" class="btn bet-btn" aria-label="Increase coin value">+</button>
+                    </div>
+                    <button id="spin-button" class="btn casino-btn spin-btn">Spin <span id="spin-cost-display">$?</span></button>
+                     <div class="info-display">
+                        <span>Lines: <span id="active-lines-display">?</span></span>
+                        <span>Bet/Line: $<span id="bet-per-line-display">?</span></span>
+                    </div>
                 </div>
 
-                <!-- Results/Status Display -->
-                <div id="result-message" class="game-status-message" aria-live="assertive"> <!-- Changed class for consistency -->
-                    <p>Adjust your bet and press Spin.</p>
+                <!-- Status Displays -->
+                <div class="status-area">
+                    <div id="result-message" class="game-status-message" aria-live="assertive">
+                        <p>Set your bet and press Spin.</p>
+                    </div>
+                    <div id="free-spins-display" class="free-spins-info" aria-live="polite" style="display: none;">
+                        Free Spins Remaining: <span id="free-spins-count">0</span> (Wins x2!)
+                    </div>
+                    <div id="balance-display" class="game-balance" aria-live="polite">
+                        <p>Balance: $<span id="balance-amount">100</span></p>
+                    </div>
                 </div>
 
-                <!-- Balance Display -->
-                <div id="balance-display" class="game-balance" aria-live="polite"> <!-- Changed class for consistency -->
-                    <p>Balance: $<span id="balance-amount">100</span></p>
-                </div>
-            </div>
-            <!-- END: Wrapper for main slot elements -->
+            </div> <!-- END: slot-main-area -->
 
             <!-- Paytable Section -->
-            <aside id="paytable" aria-labelledby="paytable-heading"> <!-- Use aside for supplementary content -->
-                <h3 id="paytable-heading">Paytable (Payout x Bet)</h3>
-                <ul>
-                    <li>💎💎💎 = 50x</li>
-                    <li>⭐⭐⭐ = 25x</li>
-                    <li>🔔🔔🔔 = 15x</li>
-                    <li>🍉🍉🍉 = 10x</li>
-                    <li>🍀🍀🍀 = 8x</li>
-                    <li>🍊🍊🍊 = 5x</li>
-                    <li>🍋🍋🍋 = 3x</li>
-                    <li>🍒🍒🍒 = 2x</li>
-                    <li>Any Two 💎 = 4x</li>
-                    <li>Any Two ⭐ = 3x</li>
-                    <li>Any Two 🍒 = 1x (Bet Back)</li>
-                    <!-- Add more rules as desired -->
-                </ul>
+            <aside id="paytable" aria-labelledby="paytable-heading">
+                 <h3 id="paytable-heading">Paytable (Payout x Coin Value)</h3>
+                 <p class="paytable-note">Wins paid left-to-right on active lines.</p>
+                 <ul>
+                    <li><img src="images/shield.png" alt="WILD Shield" class="paytable-icon"> WILD except for<img src="images/dragon.png" alt="Dragon Scatter" class="paytable-icon">&<img src="images/chest.png" alt="Bonus Chest" class="paytable-icon"></li>
+                    <li>5 x <img src="images/shield.png" alt="WILD Shield" class="paytable-icon"> = 250x</li>
+                    <li>5x <img src="images/sword2.png" alt="Sword" class="paytable-icon"> = 150x | 4x=60x | 3x=20x</li>
+                    <li>5x <img src="images/gem.png" alt="Gem" class="paytable-icon"> = 125x | 4x=45x | 3x=15x</li> <!-- Updated Gem -->
+                    <li>5x <img src="images/ring.png" alt="Ring" class="paytable-icon"> = 100x | 4x=30x | 3x=10x</li> <!-- Updated Ring -->
+                    <li>5x <img src="images/staff.png" alt="Staff" class="paytable-icon"> = 75x | 4x=20x | 3x=8x</li>
+                    <li>5x <img src="images/axe.png" alt="Axe" class="paytable-icon"> = 60x | 4x=18x | 3x=6x</li>
+                    <li>5x <img src="images/health_potion.png" alt="HP Potion" class="paytable-icon"> = 40x | 4x=15x | 3x=5x</li>
+                    <li>5x <img src="images/key.png" alt="Key" class="paytable-icon"> = 30x | 4x=10x | 3x=4x</li> <!-- Updated Key -->
+                    <li>5x <img src="images/mana_potion.png" alt="MP Potion" class="paytable-icon"> = 20x | 4x=8x | 3x=3x</li>
+                    <li>5x <img src="images/map_scroll.png" alt="Old Scroll" class="paytable-icon"> = 15x | 4x=6x | 3x=2x</li> <!-- Updated Old Scroll (using map_scroll img) -->
+                    <li>5x <img src="images/coin.png" alt="Coin" class="paytable-icon"> = 10x | 4x=4x | 3x=1x</li> <!-- Updated Coin (using tile_1 img) -->
+                    <li>5x <img src="images/map_scroll.png" alt="Map" class="paytable-icon"> = 8x | 4x=3x | 3x=1x</li> <!-- Kept Map Fragment -->
+                 </ul>
+                 <div class="scatter-info">
+                     <h4><img src="images/dragon.png" alt="Scatter" class="paytable-icon"> Scatter Bonus:</h4>
+                     <p>Pays anywhere on reels based on TOTAL BET:</p>
+                     <p>3 = 2x | 4 = 8x | 5 = 40x</p>
+                     <p>3+ triggers 10 Auto Free Spins (All wins x2!)</p>
+                 </div>
+                  <div class="bonus-info">
+                     <h4><img src="images/chest.png" alt="Chest Bonus" class="paytable-icon"> Bonus Trigger:</h4>
+                     <p>3+ Chests on active line (L-to-R) triggers Bonus Game! (Coming Soon)</p>
+                 </div>
+                 <div class="payline-info" aria-label="Active Paylines Information">
+                     <h4>Active Paylines by Level:</h4>
+                     <p id="payline-desc-L1">Level 1 (Cost x1): Line 1 (Middle)</p>
+                     <p id="payline-desc-L2">Level 2 (Cost x3): Lines 1-3 (Horizontals)</p>
+                     <p id="payline-desc-L3">Level 3 (Cost x5): Lines 1-5 (All)</p>
+                 </div>
             </aside>
             <!-- END: Paytable Section -->
 
@@ -95,13 +131,12 @@
     <!-- Simple Footer -->
     <footer class="game-footer">
         <div class="container">
-            <p>© 2024 Gavin - Simple Slots</p>
+            <p>© 2024 Gavin - RPG Slot Adventure</p>
         </div>
     </footer>
 
     <!-- Game Logic Script -->
     <script src="js/slots.js"></script>
-    <!-- Optional: Initialization check script (can be removed if JS handles it robustly) -->
     <script>
         if (typeof initializeSlots === 'undefined' && document.getElementById('result-message')) {
             document.getElementById('result-message').innerHTML = '<p>Slot machine logic (initializeSlots) not found in js/slots.js</p>';

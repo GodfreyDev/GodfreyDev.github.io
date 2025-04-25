@@ -1,244 +1,139 @@
-/* # css/slots.css - Styles specific to the Slot Machine Game */
+/* # css/slots.css - Styles specific to the 5x3 Slot Machine Game */
 
-/* Layout Container using Flexbox */
-.slot-layout-container {
-    display: flex;
-    flex-wrap: wrap; /* Allow wrapping on smaller screens */
-    gap: 30px; /* Space between main area and paytable */
-    align-items: flex-start; /* Align items to the top */
-    justify-content: center; /* Center items if space allows */
-    padding-top: 30px;
-    padding-bottom: 30px;
-    /* Removed text-align: center; */
-    /* Removed background/padding/shadow - handled by items now */
-}
+/* Layout Container */
+.slot-layout-container { display: flex; flex-wrap: wrap; gap: 30px; align-items: flex-start; justify-content: center; padding: 30px 15px; }
 
 /* Main Slot Area Wrapper */
-.slot-main-area {
-    flex: 2 1 400px; /* Allow growing, base width 400px */
+.slot-main-area { flex: 2 1 450px; display: flex; flex-direction: column; align-items: center; min-width: 320px; }
+.slot-main-area h2 { margin: 0 0 20px 0; font-size: 1.5em; color: inherit; }
+
+/* Slot Machine Wrapper */
+#slot-machine-wrapper { display: flex; flex-direction: column; align-items: center; width: 100%; max-width: 450px; margin: 0 auto 15px auto; }
+
+/* Slot Machine Grid */
+#slot-machine { display: grid; grid-template-columns: repeat(5, 1fr); grid-template-rows: repeat(3, 1fr); gap: 5px; width: 100%; height: 270px; padding: 10px; background-color: #555; border-radius: 10px; border: 5px solid #333; box-shadow: inset 0 0 10px rgba(0,0,0,0.6); box-sizing: border-box; }
+html.dark-mode #slot-machine { background-color: #3a3a3a; border-color: #111; }
+
+/* Grid Cells */
+.reel-cell { background-color: #fff; border: 1px solid #999; border-radius: 5px; display: flex; align-items: center; justify-content: center; overflow: hidden; box-shadow: inset 0 0 3px rgba(0,0,0,0.2); position: relative; font-size: 2.5em; line-height: 1; transform: translateZ(0); backface-visibility: hidden; }
+html.dark-mode .reel-cell { background-color: #ddd; border-color: #aaa; }
+
+/* Reel Image / Emoji */
+.reel-img { display: block; width: 85%; height: 85%; object-fit: contain; transition: transform 0.2s ease, opacity 0.3s ease; transform: translateZ(0); backface-visibility: hidden; }
+
+/* Spinning Effect */
+.reel-cell.is-spinning .reel-img { filter: blur(2px); opacity: 0.7; }
+
+/* Cell Win Highlight */
+.reel-cell-win { background-color: #fff7d6; box-shadow: inset 0 0 10px 2px #f39c12; border-color: #f39c12; z-index: 1; }
+.reel-cell-win .reel-img { transform: scale(1.1); filter: none; opacity: 1; }
+html.dark-mode .reel-cell-win { background-color: #4d4836; box-shadow: inset 0 0 10px 2px #e67e22; border-color: #e67e22; }
+
+/* Expanding Wild Styles */
+.reel-cell.expanding-wild {}
+.reel-cell .reel-img.wild-expanded { position: absolute; top: 0; left: 0; width: 100%; height: 310%; object-fit: cover; z-index: 5; border-radius: 5px; }
+
+/* Reel Stop Buttons */
+.reel-stop-controls { display: flex; justify-content: space-around; width: 100%; max-width: 450px; margin-top: 8px; padding: 0 10px; box-sizing: border-box; }
+.stop-btn { padding: 10px; min-width: 70px; font-size: 1em; margin: 5px; border-radius: 8px; transition: all 0.2s ease-in-out; width: 18%; flex-basis: 18%; line-height: 1.2; background-color: #ccc; cursor: not-allowed; }
+html.dark-mode .stop-btn { background-color: #555; }
+.stop-btn:not(:disabled) { background-color: #dc3545; cursor: pointer; }
+html.dark-mode .stop-btn:not(:disabled) { background-color: #c82333; }
+.stop-btn:not(:disabled):hover { background-color: #ff4444; transform: scale(1.05); }
+html.dark-mode .stop-btn:not(:disabled):hover { background-color: #b21f2d; transform: scale(1.05); }
+.stop-btn:disabled { background-color: #ccc; cursor: not-allowed; opacity: 0.6; }
+html.dark-mode .stop-btn:disabled { background-color: #555; }
+
+/* Controls Layout (Simplified) */
+#slot-game-container .controls {
     display: flex;
-    flex-direction: column;
-    align-items: center; /* Center contents of this column */
-    min-width: 300px; /* Prevent excessive shrinking */
-}
-.slot-main-area h2 { /* Style heading within this area */
-     margin-top: 0;
-     margin-bottom: 20px;
-     font-size: 1.5em;
-     color: inherit;
-}
-
-
-/* Slot Machine Visual */
-#slot-machine {
-    display: inline-flex; /* Keep as inline-flex */
-    gap: 15px;
-    margin: 0 auto 30px auto; /* Center horizontally within its container, add bottom margin */
-    padding: 20px;
-    background-color: #d0d0d0;
-    border-radius: 10px;
-    border: 5px solid #555;
-    box-shadow: inset 0 0 10px rgba(0,0,0,0.5);
-}
-html.dark-mode #slot-machine {
-    background-color: #444;
-    border-color: #888;
-}
-
-/* Individual Reels */
-.reel {
-    width: 80px;
-    height: 100px;
-    background-color: #fff;
-    border: 2px solid #888;
-    border-radius: 5px;
-    display: flex;
-    align-items: center;
+    flex-wrap: wrap;
     justify-content: center;
-    font-size: 3em;
-    font-weight: bold;
-    overflow: hidden;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.2);
-    color: #333;
-    /* Added back transition for highlighting */
-    transition: transform 0.1s ease-out, background-color 0.3s ease, box-shadow 0.3s ease;
-}
-html.dark-mode .reel {
-    background-color: #ddd;
-    color: #333;
-    border-color: #aaa;
-}
-
-/* --- START: Added back .reel-win STYLES --- */
-.reel-win {
-    background-color: #fff7d6; /* Light yellow highlight */
-    box-shadow: 0 0 10px #f39c12; /* Orange glow */
-    transform: scale(1.05); /* Slightly larger */
-}
-html.dark-mode .reel-win {
-    background-color: #4d4836; /* Darker yellow highlight */
-    box-shadow: 0 0 10px #e67e22; /* Darker orange glow */
-}
-/* --- END: Added back .reel-win STYLES --- */
-
-
-/* Controls Layout */
-#slot-game-container .controls { /* Target specifically */
-    display: flex;
-    flex-direction: column;
     align-items: center;
-    gap: 15px;
-    margin-top: 20px;
-    margin-bottom: 20px;
-    width: 100%; /* Ensure controls take width within flex item */
+    gap: 20px; /* Gap between level controls and spin button */
+    margin: 20px 0;
+    width: 100%;
 }
-
-.bet-controls {
+.bet-controls-group { /* Style for the remaining Level group */
     display: flex;
     align-items: center;
-    gap: 10px;
-}
-
-.bet-display {
-    font-size: 1.1em;
-    font-weight: 500;
-    min-width: 80px;
-    text-align: center;
+    gap: 8px;
+    background-color: rgba(0,0,0,0.05);
     padding: 5px 10px;
-    background-color: rgba(0, 0, 0, 0.05);
-    border-radius: 4px;
-    color: inherit;
+    border-radius: 5px;
 }
-html.dark-mode .bet-display {
-    background-color: rgba(255, 255, 255, 0.1);
-}
+html.dark-mode .bet-controls-group { background-color: rgba(255, 255, 255, 0.1); }
+.control-label { font-size: 0.9em; font-weight: 500; margin-right: 5px; color: inherit; opacity: 0.8; }
+.control-value { font-size: 1.1em; font-weight: 500; min-width: 30px; text-align: center; color: inherit; }
+.bet-btn { padding: 5px 10px; font-size: 1.1em; line-height: 1; min-width: 30px; }
 
-.bet-btn {
-    padding: 5px 10px;
-    font-size: 1.2em;
-    line-height: 1;
-    min-width: 35px;
-}
+/* Spin Button */
+.spin-btn { padding: 10px 25px; font-size: 1.1em; min-width: 150px; border-radius: 10px; white-space: nowrap; display: inline-flex; align-items: center; justify-content: center; min-height: 44px; line-height: 1.2; }
+.spin-btn:disabled { opacity: 0.6; cursor: not-allowed; transform: none; }
+.spin-btn span { margin-left: 5px; }
 
-.spin-btn {
-    padding: 12px 30px;
-    font-size: 1.2em;
-}
-
-/* Results and Balance Display */
-#result-message,
-#slot-game-container #balance-display {
-    margin-top: 15px;
-    font-size: 1.2em;
-    font-weight: bold;
-    min-height: 1.5em;
-    color: inherit;
-    width: 100%; /* Take full width for centering text */
+/* Info Display (Simplified) */
+.info-display {
+    width: 100%;
     text-align: center;
+    font-size: 0.9em;
+    opacity: 0.8;
+    margin-top: -10px; /* Pull closer to buttons */
 }
-#slot-game-container #balance-display span {
-    color: #008000;
-}
-html.dark-mode #slot-game-container #balance-display span {
-    color: #32cd32;
-}
-
-/* Paytable Styling (Now a Flex Item) */
-#paytable {
-    flex: 1 1 250px; /* Allow growing/shrinking, base width 250px */
-    padding: 15px;
-    border: 1px solid #ccc;
-    border-radius: 8px;
-    background-color: #f9f9f9;
-    /* Removed max-width and centering margins */
-    color: inherit;
-    align-self: stretch; /* Make paytable height match main area if needed */
-    min-width: 220px; /* Prevent excessive shrinking */
-}
-html.dark-mode #paytable {
-    background-color: #2e2e2e;
-    border-color: #555;
+.info-display span:not(:last-child) {
+    margin-right: 15px; /* Add space if more items added later */
 }
 
-#paytable h3 {
-    margin-top: 0;
-    margin-bottom: 15px;
-    text-align: center;
-    color: #555;
-    font-size: 1.1em;
-}
-html.dark-mode #paytable h3 {
-    color: #bbb;
-}
+/* Status Area Styling */
+.status-area { margin-top: 20px; width: 100%; text-align: center; }
+.game-balance, .free-spins-info { font-size: 1.2em; font-weight: bold; min-height: 1.5em; color: inherit; margin-bottom: 5px; }
+.game-status-message { font-size: 1.2em; font-weight: bold; color: inherit; margin-bottom: 5px; min-height: 4.5em; padding-top: 5px; padding-bottom: 5px; display: flex; align-items: center; justify-content: center; flex-direction: column; }
+.free-spins-info { color: #e67e22; font-size: 1.3em; animation: pulse 1.5s infinite; }
+html.dark-mode .free-spins-info { color: #f39c12; }
+@keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.7; } }
+#balance-display span { color: #008000; }
+html.dark-mode #balance-display span { color: #32cd32; }
 
-#paytable ul {
-    list-style: none;
-    padding: 0;
-    margin: 0;
-    font-size: 0.95em;
-}
+/* Paytable Styling */
+#paytable { flex: 1 1 300px; padding: 20px; border: 1px solid #ccc; border-radius: 8px; background-color: #f9f9f9; color: inherit; align-self: stretch; min-width: 250px; }
+html.dark-mode #paytable { background-color: #2e2e2e; border-color: #555; }
+#paytable h3 { margin: 0 0 10px 0; text-align: center; color: #555; font-size: 1.2em; }
+html.dark-mode #paytable h3 { color: #bbb; }
+.paytable-note { font-size: 0.85em; text-align: center; margin: -5px 0 10px 0; opacity: 0.8; }
+#paytable ul { list-style: none; padding: 0; margin: 0 0 15px 0; font-size: 0.9em; }
+#paytable li { padding: 5px 0; border-bottom: 1px solid #eee; text-align: left; line-height: 1.6; display: flex; align-items: center; gap: 5px; }
+html.dark-mode #paytable li { border-bottom-color: #444; }
+#paytable li:last-child { border-bottom: none; }
+.paytable-icon { width: 1.5em; height: 1.5em; object-fit: contain; vertical-align: middle; margin-right: 3px; font-size: 1.1em; display: inline-block; text-align: center; }
+.symbol-type { font-size: 0.8em; opacity: 0.7; margin-left: 5px; }
+.scatter-info, .bonus-info { margin-top: 15px; padding-top: 10px; border-top: 1px solid #ccc; font-size: 0.9em; }
+html.dark-mode .scatter-info, html.dark-mode .bonus-info { border-top-color: #555; }
+.scatter-info h4, .bonus-info h4 { margin: 0 0 8px 0; font-size: 1.1em; display: flex; align-items: center; gap: 5px; }
+.scatter-info p, .bonus-info p { margin: 2px 0; }
+.payline-info { margin-top: 15px; padding-top: 10px; border-top: 1px solid #ccc; font-size: 0.9em; }
+html.dark-mode .payline-info { border-top-color: #555; }
+.payline-info h4 { margin: 0 0 10px 0; text-align: center; font-size: 1.1em; }
+.payline-info p { margin: 3px 0; text-align: center; transition: color 0.3s ease, font-weight 0.3s ease; }
+.active-payline-desc { color: #e67e22; font-weight: bold; }
+html.dark-mode .active-payline-desc { color: #f39c12; }
 
-#paytable li {
-    padding: 4px 0;
-    border-bottom: 1px dashed #eee;
-    text-align: center;
-}
-html.dark-mode #paytable li {
-    border-bottom-color: #444;
-}
-#paytable li:last-child {
-    border-bottom: none;
-}
-
-/* Responsive adjustments for the new layout */
-@media (max-width: 768px) { /* Adjust breakpoint if needed */
-    .slot-layout-container {
-        flex-direction: column; /* Stack items vertically */
-        align-items: center; /* Center items when stacked */
-        gap: 20px;
-    }
-    .slot-main-area {
-        flex-basis: auto; /* Reset flex basis */
-        width: 100%; /* Take full width */
-        max-width: 500px; /* Optional: Limit max width */
-    }
-    #paytable {
-        flex-basis: auto; /* Reset flex basis */
-        width: 100%; /* Take full width */
-        max-width: 350px; /* Limit width when stacked */
-        align-self: center; /* Center paytable when stacked */
-        margin-top: 20px; /* Add space when stacked */
-    }
-}
-
-
+/* Responsive adjustments */
+@media (max-width: 850px) { .slot-layout-container { flex-direction: column; align-items: center; gap: 25px; } .slot-main-area { flex-basis: auto; width: 100%; max-width: 500px; } #paytable { flex-basis: auto; width: 100%; max-width: 400px; align-self: center; margin-top: 20px; } }
 @media (max-width: 480px) {
-    #slot-machine {
-        gap: 10px;
-        padding: 15px;
-        border-width: 3px;
-    }
-    .reel {
-        width: 60px;
-        height: 80px;
-        font-size: 2.5em;
-    }
-    /* Paytable max-width already handled by stacking rules */
-    .bet-display {
-        min-width: 60px;
-        font-size: 1em;
-    }
-    .bet-btn {
-        padding: 4px 8px;
-        font-size: 1.1em;
-        min-width: 30px;
-    }
-    .spin-btn {
-        padding: 10px 25px;
-        font-size: 1.1em;
-    }
-     /* Adjust container padding on smallest screens */
-     .slot-layout-container { /* Target new layout container */
-        padding: 20px 10px;
-    }
+    #slot-machine-wrapper { max-width: 95%; }
+    #slot-machine { gap: 3px; padding: 5px; border-width: 3px; height: auto; aspect-ratio: 5 / 3; }
+    .reel-cell { border-radius: 3px; font-size: 1.8em; }
+    .reel-img { width: 80%; height: 80%; }
+    .stop-btn { font-size: 0.7em; min-width: 45px; padding: 4px 0; margin: 2px; }
+    .bet-controls-group { padding: 4px 8px; gap: 5px; }
+    .control-label { font-size: 0.8em; }
+    .control-value { font-size: 1em; min-width: 25px; }
+    .bet-btn { padding: 4px 8px; font-size: 1em; min-width: 28px; }
+    .spin-btn { padding: 10px 20px; font-size: 1em; min-width: 100px; min-height: 38px; }
+    .info-display { font-size: 0.8em; gap: 10px; }
+    .slot-layout-container { padding: 15px 5px; }
+    #paytable { padding: 15px; }
+    #paytable ul, .scatter-info, .bonus-info, .payline-info { font-size: 0.8em; }
+    .game-status-message { min-height: 3.5em; }
+    .paytable-icon { width: 1.2em; height: 1.2em; }
 }
