@@ -1,0 +1,244 @@
+/* # css/slots.css - Styles specific to the Slot Machine Game */
+
+/* Layout Container using Flexbox */
+.slot-layout-container {
+    display: flex;
+    flex-wrap: wrap; /* Allow wrapping on smaller screens */
+    gap: 30px; /* Space between main area and paytable */
+    align-items: flex-start; /* Align items to the top */
+    justify-content: center; /* Center items if space allows */
+    padding-top: 30px;
+    padding-bottom: 30px;
+    /* Removed text-align: center; */
+    /* Removed background/padding/shadow - handled by items now */
+}
+
+/* Main Slot Area Wrapper */
+.slot-main-area {
+    flex: 2 1 400px; /* Allow growing, base width 400px */
+    display: flex;
+    flex-direction: column;
+    align-items: center; /* Center contents of this column */
+    min-width: 300px; /* Prevent excessive shrinking */
+}
+.slot-main-area h2 { /* Style heading within this area */
+     margin-top: 0;
+     margin-bottom: 20px;
+     font-size: 1.5em;
+     color: inherit;
+}
+
+
+/* Slot Machine Visual */
+#slot-machine {
+    display: inline-flex; /* Keep as inline-flex */
+    gap: 15px;
+    margin: 0 auto 30px auto; /* Center horizontally within its container, add bottom margin */
+    padding: 20px;
+    background-color: #d0d0d0;
+    border-radius: 10px;
+    border: 5px solid #555;
+    box-shadow: inset 0 0 10px rgba(0,0,0,0.5);
+}
+html.dark-mode #slot-machine {
+    background-color: #444;
+    border-color: #888;
+}
+
+/* Individual Reels */
+.reel {
+    width: 80px;
+    height: 100px;
+    background-color: #fff;
+    border: 2px solid #888;
+    border-radius: 5px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 3em;
+    font-weight: bold;
+    overflow: hidden;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+    color: #333;
+    /* Added back transition for highlighting */
+    transition: transform 0.1s ease-out, background-color 0.3s ease, box-shadow 0.3s ease;
+}
+html.dark-mode .reel {
+    background-color: #ddd;
+    color: #333;
+    border-color: #aaa;
+}
+
+/* --- START: Added back .reel-win STYLES --- */
+.reel-win {
+    background-color: #fff7d6; /* Light yellow highlight */
+    box-shadow: 0 0 10px #f39c12; /* Orange glow */
+    transform: scale(1.05); /* Slightly larger */
+}
+html.dark-mode .reel-win {
+    background-color: #4d4836; /* Darker yellow highlight */
+    box-shadow: 0 0 10px #e67e22; /* Darker orange glow */
+}
+/* --- END: Added back .reel-win STYLES --- */
+
+
+/* Controls Layout */
+#slot-game-container .controls { /* Target specifically */
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 15px;
+    margin-top: 20px;
+    margin-bottom: 20px;
+    width: 100%; /* Ensure controls take width within flex item */
+}
+
+.bet-controls {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.bet-display {
+    font-size: 1.1em;
+    font-weight: 500;
+    min-width: 80px;
+    text-align: center;
+    padding: 5px 10px;
+    background-color: rgba(0, 0, 0, 0.05);
+    border-radius: 4px;
+    color: inherit;
+}
+html.dark-mode .bet-display {
+    background-color: rgba(255, 255, 255, 0.1);
+}
+
+.bet-btn {
+    padding: 5px 10px;
+    font-size: 1.2em;
+    line-height: 1;
+    min-width: 35px;
+}
+
+.spin-btn {
+    padding: 12px 30px;
+    font-size: 1.2em;
+}
+
+/* Results and Balance Display */
+#result-message,
+#slot-game-container #balance-display {
+    margin-top: 15px;
+    font-size: 1.2em;
+    font-weight: bold;
+    min-height: 1.5em;
+    color: inherit;
+    width: 100%; /* Take full width for centering text */
+    text-align: center;
+}
+#slot-game-container #balance-display span {
+    color: #008000;
+}
+html.dark-mode #slot-game-container #balance-display span {
+    color: #32cd32;
+}
+
+/* Paytable Styling (Now a Flex Item) */
+#paytable {
+    flex: 1 1 250px; /* Allow growing/shrinking, base width 250px */
+    padding: 15px;
+    border: 1px solid #ccc;
+    border-radius: 8px;
+    background-color: #f9f9f9;
+    /* Removed max-width and centering margins */
+    color: inherit;
+    align-self: stretch; /* Make paytable height match main area if needed */
+    min-width: 220px; /* Prevent excessive shrinking */
+}
+html.dark-mode #paytable {
+    background-color: #2e2e2e;
+    border-color: #555;
+}
+
+#paytable h3 {
+    margin-top: 0;
+    margin-bottom: 15px;
+    text-align: center;
+    color: #555;
+    font-size: 1.1em;
+}
+html.dark-mode #paytable h3 {
+    color: #bbb;
+}
+
+#paytable ul {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    font-size: 0.95em;
+}
+
+#paytable li {
+    padding: 4px 0;
+    border-bottom: 1px dashed #eee;
+    text-align: center;
+}
+html.dark-mode #paytable li {
+    border-bottom-color: #444;
+}
+#paytable li:last-child {
+    border-bottom: none;
+}
+
+/* Responsive adjustments for the new layout */
+@media (max-width: 768px) { /* Adjust breakpoint if needed */
+    .slot-layout-container {
+        flex-direction: column; /* Stack items vertically */
+        align-items: center; /* Center items when stacked */
+        gap: 20px;
+    }
+    .slot-main-area {
+        flex-basis: auto; /* Reset flex basis */
+        width: 100%; /* Take full width */
+        max-width: 500px; /* Optional: Limit max width */
+    }
+    #paytable {
+        flex-basis: auto; /* Reset flex basis */
+        width: 100%; /* Take full width */
+        max-width: 350px; /* Limit width when stacked */
+        align-self: center; /* Center paytable when stacked */
+        margin-top: 20px; /* Add space when stacked */
+    }
+}
+
+
+@media (max-width: 480px) {
+    #slot-machine {
+        gap: 10px;
+        padding: 15px;
+        border-width: 3px;
+    }
+    .reel {
+        width: 60px;
+        height: 80px;
+        font-size: 2.5em;
+    }
+    /* Paytable max-width already handled by stacking rules */
+    .bet-display {
+        min-width: 60px;
+        font-size: 1em;
+    }
+    .bet-btn {
+        padding: 4px 8px;
+        font-size: 1.1em;
+        min-width: 30px;
+    }
+    .spin-btn {
+        padding: 10px 25px;
+        font-size: 1.1em;
+    }
+     /* Adjust container padding on smallest screens */
+     .slot-layout-container { /* Target new layout container */
+        padding: 20px 10px;
+    }
+}

@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Slot Machine Game</title>
+
+    <!-- Theme Loading Script -->
+    <script>
+        function applyGameTheme(themeName) {
+            const validTheme = (themeName === 'dark-mode' || themeName === 'light-mode') ? themeName : 'light-mode';
+            document.documentElement.className = validTheme;
+        }
+        try { const savedTheme = localStorage.getItem('theme'); applyGameTheme(savedTheme); }
+        catch (e) { console.error("Could not access localStorage for theme", e); applyGameTheme('light-mode'); }
+    </script>
+
+    <!-- Stylesheets -->
+    <link rel="stylesheet" href="css/style.css"> <!-- Shared styles first -->
+    <link rel="stylesheet" href="css/slots.css"> <!-- Slot-specific styles -->
+    <!-- Font Awesome for Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<!-- Class is set by script in head -->
+<body>
+    <!-- Game Header (Restructured) -->
+    <header class="game-header">
+        <div class="container">
+            <a href="index.html#casino" class="btn back-btn" aria-label="Back to portfolio casino section">← Back</a>
+            <h1><i class="fas fa-dice-three" aria-hidden="true"></i> Slot Machine</h1>
+            <div class="header-spacer" aria-hidden="true"></div> <!-- Spacer for centering title -->
+        </div>
+    </header>
+
+    <!-- Main Game Area -->
+    <main id="slot-game-container">
+        <div class="container slot-layout-container">
+
+            <!-- Wrapper for main slot elements -->
+            <div class="slot-main-area">
+                <h2>Spin the Reels!</h2>
+
+                <!-- Slot Machine Visual Area -->
+                <div id="slot-machine" role="img" aria-label="Slot machine reels">
+                    <div class="reel reel-symbol" id="reel1" aria-live="polite">?</div>
+                    <div class="reel reel-symbol" id="reel2" aria-live="polite">?</div>
+                    <div class="reel reel-symbol" id="reel3" aria-live="polite">?</div>
+                </div>
+
+                <!-- Controls -->
+                <div class="controls">
+                    <div class="bet-controls" role="group" aria-label="Adjust bet amount">
+                        <button id="decrease-bet" class="btn bet-btn" aria-label="Decrease bet by 1 dollar">-</button>
+                        <span class="bet-display" aria-live="polite">Bet: $<span id="current-bet">1</span></span>
+                        <button id="increase-bet" class="btn bet-btn" aria-label="Increase bet by 1 dollar">+</button>
+                    </div>
+                    <button id="spin-button" class="btn casino-btn spin-btn">Spin!</button>
+                </div>
+
+                <!-- Results/Status Display -->
+                <div id="result-message" class="game-status-message" aria-live="assertive"> <!-- Changed class for consistency -->
+                    <p>Adjust your bet and press Spin.</p>
+                </div>
+
+                <!-- Balance Display -->
+                <div id="balance-display" class="game-balance" aria-live="polite"> <!-- Changed class for consistency -->
+                    <p>Balance: $<span id="balance-amount">100</span></p>
+                </div>
+            </div>
+            <!-- END: Wrapper for main slot elements -->
+
+            <!-- Paytable Section -->
+            <aside id="paytable" aria-labelledby="paytable-heading"> <!-- Use aside for supplementary content -->
+                <h3 id="paytable-heading">Paytable (Payout x Bet)</h3>
+                <ul>
+                    <li>💎💎💎 = 50x</li>
+                    <li>⭐⭐⭐ = 25x</li>
+                    <li>🔔🔔🔔 = 15x</li>
+                    <li>🍉🍉🍉 = 10x</li>
+                    <li>🍀🍀🍀 = 8x</li>
+                    <li>🍊🍊🍊 = 5x</li>
+                    <li>🍋🍋🍋 = 3x</li>
+                    <li>🍒🍒🍒 = 2x</li>
+                    <li>Any Two 💎 = 4x</li>
+                    <li>Any Two ⭐ = 3x</li>
+                    <li>Any Two 🍒 = 1x (Bet Back)</li>
+                    <!-- Add more rules as desired -->
+                </ul>
+            </aside>
+            <!-- END: Paytable Section -->
+
+        </div>
+    </main>
+
+    <!-- Simple Footer -->
+    <footer class="game-footer">
+        <div class="container">
+            <p>© 2024 Gavin - Simple Slots</p>
+        </div>
+    </footer>
+
+    <!-- Game Logic Script -->
+    <script src="js/slots.js"></script>
+    <!-- Optional: Initialization check script (can be removed if JS handles it robustly) -->
+    <script>
+        if (typeof initializeSlots === 'undefined' && document.getElementById('result-message')) {
+            document.getElementById('result-message').innerHTML = '<p>Slot machine logic (initializeSlots) not found in js/slots.js</p>';
+            if(document.getElementById('spin-button')) document.getElementById('spin-button').disabled = true;
+        }
+    </script>
+</body>
+</html>

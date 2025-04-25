@@ -1,4 +1,4 @@
-/* # css/style.css */
+/* # css/style.css - Core/Shared Styles */
 
 /* General Styles */
 body {
@@ -9,36 +9,24 @@ body {
     color: #333;
     transition: background-color 0.4s ease, color 0.4s ease;
     line-height: 1.6;
-    padding-top: 80px; /* Prevent content from being hidden behind the fixed header */
+    padding-top: 80px; /* Default padding for fixed header */
 }
-
-body.light-mode {
-    background-color: #f5f5f5;
-    color: #333;
-}
-
-body.dark-mode {
+html.dark-mode body {
     background-color: #1a1a1a;
     color: #ccc;
 }
-
-/* Container */
 .container {
     width: 90%;
     max-width: 1200px;
     margin: auto;
-    padding: 40px 0;
 }
 
-/* Header */
+/* Header (Main Portfolio) */
 header {
-    padding: 10px 20px;
+    padding: 10px 0;
     width: 100%;
     background: rgba(255, 255, 255, 0.9);
     box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
     position: fixed;
     top: 0;
     left: 0;
@@ -46,27 +34,31 @@ header {
     z-index: 1000;
     transition: background-color 0.4s ease, box-shadow 0.4s ease;
 }
-
-body.dark-mode header {
-    background: rgba(26, 26, 26, 0.9);
+header .container {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0;
+    width: 90%;
+    max-width: 1200px;
 }
-
+html.dark-mode header {
+    background: rgba(26, 26, 26, 0.9);
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.5);
+}
 header h1 {
     font-size: 1.8em;
     font-weight: 700;
     margin: 0;
 }
-
 header h1 a {
     text-decoration: none;
     color: inherit;
     transition: color 0.3s ease;
 }
-
 header h1 a:hover {
     color: #f39c12;
 }
-
 nav ul {
     list-style: none;
     display: flex;
@@ -74,7 +66,6 @@ nav ul {
     margin: 0;
     padding: 0;
 }
-
 nav ul li a {
     font-size: 1em;
     text-decoration: none;
@@ -82,762 +73,440 @@ nav ul li a {
     font-weight: 500;
     transition: color 0.3s ease;
 }
-
-body.dark-mode nav ul li a {
+html.dark-mode nav ul li a {
     color: #aaa;
 }
-
 nav ul li a:hover {
     color: #f39c12;
 }
-
-/* Social Buttons Styling */
 .social-buttons {
     display: flex;
     gap: 15px;
     align-items: center;
 }
-
-.social-buttons a i,
-.social-buttons button i {
+.social-buttons a i {
     font-size: 1.5em;
     color: #555;
     transition: color 0.3s ease, transform 0.3s ease;
 }
-
-body.dark-mode .social-buttons a i,
-body.dark-mode .social-buttons button i {
+html.dark-mode .social-buttons a i {
     color: #aaa;
 }
-
-.social-buttons a:hover i,
-.social-buttons button:hover i {
+.social-buttons a:hover i {
     color: #f39c12;
     transform: scale(1.1);
 }
-
-/* Theme Toggle Button */
 .theme-toggle {
     cursor: pointer;
     background: none;
     border: none;
-    transition: background-color 0.3s ease;
-    width: 40px;
-    height: 40px;
-    border-radius: 50%;
+    padding: 0;
+    margin-left: 15px;
+    width: 30px;
+    height: 30px;
     display: flex;
     align-items: center;
     justify-content: center;
 }
-
-body.light-mode .theme-toggle {
-    background-color: #fff; /* White background in light mode */
-}
-
-body.dark-mode .theme-toggle {
-    background-color: #000; /* Black background in dark mode */
-}
-
 .theme-toggle:hover {
     opacity: 0.8;
 }
-
-.theme-toggle #toggle-icon::before {
-    content: "\f186"; /* Font Awesome sun icon */
-    font-family: "Font Awesome 5 Free";
-    font-weight: 900;
+.theme-toggle #toggle-icon {
     font-size: 1.2em;
-    color: #f39c12;
+    color: #555;
+    transition: color 0.3s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    height: 100%;
 }
-
-body.dark-mode .theme-toggle #toggle-icon::before {
-    content: "\f186"; /* You can switch to a moon icon if preferred */
-    color: #f39c12;
+.theme-toggle #toggle-icon svg {
+    width: 100%;
+    height: 100%;
+    stroke: #555;
 }
-
-/* Hamburger Menu */
+html.dark-mode .theme-toggle #toggle-icon {
+    color: #aaa;
+}
+html.dark-mode .theme-toggle #toggle-icon svg {
+     stroke: #aaa;
+}
+.theme-toggle:hover #toggle-icon svg {
+    stroke: #f39c12;
+}
 .hamburger {
-    display: none; /* Hidden by default */
+    display: none;
     flex-direction: column;
-    justify-content: space-between;
+    justify-content: space-around;
     width: 25px;
-    height: 20px;
+    height: 21px;
     cursor: pointer;
+    margin-left: 15px;
 }
-
 .hamburger span {
     display: block;
     height: 3px;
     background-color: #333;
     border-radius: 2px;
-    transition: all 0.3s ease;
+    transition: all 0.3s ease-in-out;
 }
-
-body.dark-mode .hamburger span {
+html.dark-mode .hamburger span {
     background-color: #aaa;
 }
+.hamburger.active span:nth-child(1) { transform: rotate(45deg) translate(5px, 5px); }
+.hamburger.active span:nth-child(2) { opacity: 0; }
+.hamburger.active span:nth-child(3) { transform: rotate(-45deg) translate(5px, -5px); }
 
-.hamburger.active span:nth-child(1) {
-    transform: rotate(45deg) translate(5px, 5px);
-}
-
-.hamburger.active span:nth-child(2) {
-    opacity: 0;
-}
-
-.hamburger.active span:nth-child(3) {
-    transform: rotate(-45deg) translate(5px, -5px);
-}
-
-/* Hero Section */
-#hero {
-    background: url('images/hero-bg.jpg') no-repeat center center/cover; /* Updated path */
-    color: #333; /* Dark text for light mode */
-    text-align: center;
-    padding: 150px 20px 100px; /* Adjusted padding */
-    position: relative;
-    transition: color 0.4s ease;
-}
-
-body.dark-mode #hero {
-    background: url('images/hero-bg-dark.jpg') no-repeat center center/cover; /* Updated path */
-    color: #fff; /* Light text for dark mode */
-}
-
-#hero h2 {
-    font-size: 2.5em;
-    margin-bottom: 20px;
-    animation: fadeInDown 1s ease-in-out;
-}
-
-#hero p {
-    font-size: 1.2em;
-    margin-bottom: 30px;
-}
-
-#hero .btn {
+/* General Button Style */
+.btn {
+    display: inline-block;
     background-color: #f39c12;
-    color: #fff;
-    padding: 12px 25px;
+    color: #fff !important;
+    padding: 10px 20px;
     text-decoration: none;
     border-radius: 5px;
     font-size: 1em;
     font-weight: 500;
-    transition: background-color 0.3s ease;
-}
-
-body.dark-mode #hero .btn {
-    background-color: #e67e22;
-    color: #fff;
-}
-
-#hero .btn:hover {
-    background-color: #e67e22;
-}
-
-body.dark-mode #hero .btn:hover {
-    background-color: #d35400;
-}
-
-/* About Section */
-#about {
-    background: #fff;
-    padding: 60px 20px;
-    margin: 40px 0;
-    border-radius: 10px;
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-    transition: background-color 0.3s ease, color 0.3s ease;
-}
-
-body.dark-mode #about {
-    background: #2a2a2a;
-    color: #ddd;
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.5);
-}
-
-.about-content {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 20px;
-    align-items: center;
-}
-
-.profile-pic {
-    flex: 1 1 250px;
-    max-width: 250px;
-    border-radius: 10px;
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-}
-
-.about-text {
-    flex: 2 1 400px;
-}
-
-.about-text p {
-    margin-bottom: 20px;
-    line-height: 1.6;
-}
-
-.countdown-container {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    margin-bottom: 10px;
-}
-
-.countdown-container input {
-    padding: 10px;
-    border: 1px solid #ccc;
-    border-radius: 5px;
-    font-size: 1em;
-    background-color: inherit; /* Match the theme */
-    color: inherit; /* Match the theme */
-    transition: background-color 0.3s ease, color 0.3s ease;
-}
-
-.countdown-container input::-webkit-calendar-picker-indicator {
-    filter: invert(1); /* Adjust for dark mode */
-}
-
-.countdown-container button {
-    background-color: #f39c12;
     border: none;
-    padding: 10px 20px;
-    color: #fff;
-    border-radius: 5px;
     cursor: pointer;
-    transition: background-color 0.3s ease;
-    font-size: 1em;
-}
-
-body.dark-mode .countdown-container button {
-    background-color: #e67e22;
-}
-
-.countdown-container button:hover {
-    background-color: #e67e22;
-}
-
-body.dark-mode .countdown-container button:hover {
-    background-color: #d35400;
-}
-
-#countdown {
-    font-size: 1.2em;
-    color: #f39c12;
-}
-
-body.dark-mode #countdown {
-    color: #e67e22;
-}
-
-/* Skills Section */
-#skills {
-    background: #fff;
-    padding: 60px 20px;
-    margin: 40px 0;
-    border-radius: 10px;
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-    transition: background-color 0.3s ease, color 0.3s ease;
-}
-
-body.dark-mode #skills {
-    background: #2a2a2a;
-    color: #ddd;
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.5);
-}
-
-.skills-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-    gap: 20px;
-}
-
-.skill {
-    background: #fff;
-    padding: 20px;
-    border-radius: 10px;
+    transition: background-color 0.3s ease, transform 0.2s ease;
     text-align: center;
-    box-shadow: 0 4px 8px rgba(0,0,0,0.1);
-    transition: transform 0.3s ease, background-color 0.3s ease, color 0.3s ease;
+    white-space: nowrap; /* Prevent button text wrapping */
 }
-
-body.dark-mode .skill {
-    background: #3a3a3a;
-    box-shadow: 0 4px 8px rgba(0,0,0,0.3);
-}
-
-.skill:hover {
-    transform: translateY(-5px);
-    background-color: #f39c12;
-    color: #fff;
-}
-
-.skill i {
-    font-size: 2em;
-    margin-bottom: 10px;
-    transition: color 0.3s ease;
-}
-
-.skill h3 {
-    margin-bottom: 10px;
-    font-size: 1.2em;
-}
-
-.skill p {
-    font-size: 0.95em;
-}
-
-/* Projects Section */
-#projects {
-    background: #fff;
-    padding: 60px 20px;
-    margin: 40px 0;
-    border-radius: 10px;
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-    transition: background-color 0.3s ease, color 0.3s ease;
-}
-
-body.dark-mode #projects {
-    background: #2a2a2a;
-    color: #ddd;
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.5);
-}
-
-.projects-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-    gap: 20px;
-}
-
-.project-card {
-    background: #fff;
-    border-radius: 10px;
-    overflow: hidden;
-    box-shadow: 0 4px 8px rgba(0,0,0,0.1);
-    transition: transform 0.3s ease, box-shadow 0.3s ease;
-}
-
-body.dark-mode .project-card {
-    background: #3a3a3a;
-    box-shadow: 0 4px 8px rgba(0,0,0,0.3);
-}
-
-.project-card:hover {
-    transform: translateY(-5px);
-    box-shadow: 0 6px 12px rgba(0,0,0,0.2);
-}
-
-.project-card img {
-    width: 100%;
-    height: 200px;
-    object-fit: cover;
-}
-
-.project-info {
-    padding: 15px;
-}
-
-.project-info h3 {
-    margin-top: 0;
-    font-size: 1.5em;
-}
-
-.project-info p {
-    font-size: 0.95em;
-    margin-bottom: 15px;
-}
-
-.project-info .btn {
-    background-color: #f39c12;
-    color: #fff;
-    padding: 8px 15px;
-    text-decoration: none;
-    border-radius: 5px;
-    font-size: 0.95em;
-    transition: background-color 0.3s ease;
-}
-
-body.dark-mode .project-info .btn {
-    background-color: #e67e22;
-    color: #fff;
-}
-
-.project-info .btn:hover,
-.project-info .btn.disabled:hover {
+html.dark-mode .btn {
     background-color: #e67e22;
 }
-
-body.dark-mode .project-info .btn:hover {
+.btn:hover {
+    background-color: #e67e22;
+    transform: translateY(-2px); /* Default hover lift */
+}
+html.dark-mode .btn:hover {
     background-color: #d35400;
 }
-
-.project-info .btn.disabled {
+.btn.disabled, .btn:disabled {
     background-color: #aaa;
     cursor: not-allowed;
     pointer-events: none;
-    text-decoration: none;
+    transform: none;
+}
+html.dark-mode .btn.disabled, html.dark-mode .btn:disabled {
+    background-color: #555;
 }
 
-/* Game Section */
-#game {
-    background: #fff;
-    padding: 60px 20px;
-    margin: 40px 0;
-    border-radius: 10px;
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+/* Remove hover transform specifically for back-btn */
+.back-btn:hover {
+    transform: none !important; /* Override the lift effect */
+}
+
+
+/* Hero Section */
+#hero {
+    background: url('../images/hero-bg.jpg') no-repeat center center/cover; /* Adjusted path assuming css folder */
+    color: #333;
     text-align: center;
-    transition: background-color 0.3s ease, color 0.3s ease;
+    padding: 150px 20px 100px;
+    position: relative;
 }
-
-body.dark-mode #game {
-    background: #2a2a2a;
-    color: #ddd;
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.5);
-}
-
-#game h2 {
-    font-size: 2em;
-    margin-bottom: 20px;
-}
-
-#game p {
-    font-size: 1.2em;
-    margin-bottom: 30px;
-}
-
-#game .btn {
-    background-color: #f39c12;
-    color: #fff;
-    padding: 12px 25px;
-    text-decoration: none;
-    border-radius: 5px;
-    font-size: 1em;
-    font-weight: 500;
-    transition: background-color 0.3s ease;
-}
-
-body.dark-mode #game .btn {
-    background-color: #e67e22;
+html.dark-mode #hero {
+    background: url('../images/hero-bg-dark.jpg') no-repeat center center/cover; /* Adjusted path */
     color: #fff;
 }
+#hero .container { width: 90%; max-width: 1200px; margin: auto; padding: 0; }
+#hero h2 { font-size: 2.5em; margin-bottom: 20px; animation: fadeInDown 1s ease-in-out; }
+#hero p { font-size: 1.2em; margin-bottom: 30px; }
+#hero .btn { padding: 12px 25px; }
 
-#game .btn:hover {
-    background-color: #e67e22;
-}
+/* Sections General */
+section { padding: 60px 0; }
+section .container { padding: 0; }
+section h2 { text-align: center; font-size: 2em; margin-bottom: 40px; font-weight: 700; }
 
-body.dark-mode #game .btn:hover {
-    background-color: #d35400;
-}
+/* About Section */
+#about {}
+.about-content { display: flex; flex-wrap: wrap; gap: 20px; align-items: center; }
+.profile-pic { flex: 1 1 250px; max-width: 250px; border-radius: 10px; box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); }
+html.dark-mode .profile-pic { box-shadow: 0 4px 8px rgba(0, 0, 0, 0.4); }
+.about-text { flex: 2 1 400px; }
+.about-text p { margin-bottom: 20px; line-height: 1.6; }
+.countdown-container { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
+.countdown-container input[type="date"] { padding: 10px; border: 1px solid #ccc; border-radius: 5px; font-size: 1em; background-color: #fff; color: #333; }
+html.dark-mode .countdown-container input[type="date"] { background-color: #333; color: #ccc; border-color: #555; }
+html.dark-mode .countdown-container input[type="date"]::-webkit-calendar-picker-indicator { filter: invert(1); }
+.countdown-container button { /* Inherits .btn */ }
+#countdown { font-size: 1.2em; color: #f39c12; margin-top: 5px; }
+html.dark-mode #countdown { color: #e67e22; }
+
+/* Skills Section */
+#skills {}
+.skills-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px; }
+.skill { background: #fff; padding: 20px; border-radius: 10px; text-align: center; box-shadow: 0 4px 8px rgba(0,0,0,0.1); transition: transform 0.3s ease, background-color 0.3s ease, color 0.3s ease, box-shadow 0.3s ease; }
+html.dark-mode .skill { background: #2a2a2a; box-shadow: 0 4px 8px rgba(0,0,0,0.4); }
+.skill:hover { transform: translateY(-5px); box-shadow: 0 6px 12px rgba(0,0,0,0.15); }
+html.dark-mode .skill:hover { box-shadow: 0 6px 12px rgba(0,0,0,0.5); }
+.skill i { font-size: 2em; margin-bottom: 10px; color: #f39c12; transition: color 0.3s ease; }
+html.dark-mode .skill i { color: #e67e22; }
+.skill h3 { margin-bottom: 10px; font-size: 1.2em; }
+.skill p { font-size: 0.95em; }
+
+/* Projects Section */
+#projects {}
+.projects-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px; }
+.project-card { background: #fff; border-radius: 10px; overflow: hidden; box-shadow: 0 4px 8px rgba(0,0,0,0.1); transition: transform 0.3s ease, box-shadow 0.3s ease; }
+html.dark-mode .project-card { background: #2a2a2a; box-shadow: 0 4px 8px rgba(0,0,0,0.4); }
+.project-card:hover { transform: translateY(-5px); box-shadow: 0 6px 12px rgba(0,0,0,0.15); }
+html.dark-mode .project-card:hover { box-shadow: 0 6px 12px rgba(0,0,0,0.5); }
+.project-card img { width: 100%; height: 200px; object-fit: cover; display: block; }
+.project-info { padding: 15px; }
+.project-info h3 { margin-top: 0; font-size: 1.5em; }
+.project-info p { font-size: 0.95em; margin-bottom: 15px; }
+.project-info .btn { padding: 8px 15px; font-size: 0.95em; }
+
+/* Game Section (Portfolio Link) */
+#game { text-align: center; }
+#game h2 { font-size: 2em; margin-bottom: 20px; }
+#game p { font-size: 1.2em; margin-bottom: 30px; }
+#game .btn { padding: 12px 25px; }
+
+/* Casino Section (Portfolio Link) */
+#casino { text-align: center; padding: 60px 0; }
+#casino h2 { font-size: 2em; margin-bottom: 20px; }
+#casino p { font-size: 1.1em; margin-bottom: 30px; max-width: 600px; margin-left: auto; margin-right: auto; color: inherit; }
+.casino-games { display: flex; justify-content: center; gap: 1.5rem; flex-wrap: wrap; margin-top: 1.5rem; }
+.casino-btn { padding: 12px 25px; min-width: 150px; } /* Base style for casino buttons */
+.casino-btn i { margin-right: 0.75rem; }
 
 /* Wiki Section */
-#wiki {
-    background: #fff;
-    padding: 60px 20px;
-    margin: 40px 0;
-    border-radius: 10px;
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-    transition: background-color 0.3s ease, color 0.3s ease;
-}
-
-body.dark-mode #wiki {
-    background: #2a2a2a;
-    color: #ddd;
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.5);
-}
-
-#wiki h2 {
-    margin-bottom: 20px;
-    font-size: 2em;
-}
-
-#wiki-navigation {
-    margin-bottom: 20px;
-}
-
-#wiki-search {
-    width: 100%;
-    max-width: 400px;
-    padding: 10px;
-    border: 1px solid #ccc;
-    border-radius: 5px;
-    font-size: 1em;
-    background-color: inherit; /* Match the theme */
-    color: inherit; /* Match the theme */
-    transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease;
-}
-
-#wiki-search:focus {
-    border-color: #f39c12;
-    outline: none;
-}
-
-#wiki-content {
-    margin-top: 30px;
-    /* Additional styling as needed */
-}
-
-#graph-container {
-    margin-top: 30px;
-    /* Additional styling for graph visualization */
-}
+#wiki { padding: 60px 0; }
+#wiki h2 { margin-bottom: 20px; font-size: 2em; }
+#wiki-navigation { margin-bottom: 20px; }
+#wiki-search { display: block; width: 90%; max-width: 400px; padding: 10px; border: 1px solid #ccc; border-radius: 5px; font-size: 1em; margin: 0 auto 30px auto; background-color: #fff; color: #333; }
+html.dark-mode #wiki-search { background-color: #333; color: #ccc; border-color: #555; }
+#wiki-search:focus { border-color: #f39c12; outline: none; }
+html.dark-mode #wiki-search:focus { border-color: #e67e22; }
+#wiki-content { margin-top: 30px; }
+html.dark-mode #wiki-content h1, html.dark-mode #wiki-content h2, html.dark-mode #wiki-content h3 { color: #e67e22; }
+#wiki-content h1, #wiki-content h2, #wiki-content h3 { margin-top: 1.2em; margin-bottom: 0.6em; color: #f39c12; }
+#wiki-content p { margin-bottom: 1em; }
+#wiki-content code { background-color: #e9e9e9; padding: 0.2em 0.4em; border-radius: 3px; }
+html.dark-mode #wiki-content code { background-color: #383838; color: #eee; }
+#wiki-content pre { background-color: #e9e9e9; padding: 1em; border-radius: 5px; overflow-x: auto; }
+html.dark-mode #wiki-content pre { background-color: #2c2c2c; }
+html.dark-mode #wiki-content pre code { background-color: transparent; padding: 0; }
+#graph-container { margin-top: 30px; height: 400px; border: 1px solid #ddd; border-radius: 5px; }
+html.dark-mode #graph-container { border-color: #444; }
 
 /* Contact Section */
-#contact {
-    background: #fff;
-    padding: 60px 20px;
-    margin: 40px 0;
-    border-radius: 10px;
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-    transition: background-color 0.3s ease, color 0.3s ease;
-}
-
-body.dark-mode #contact {
-    background: #2a2a2a;
-    color: #ddd;
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.5);
-}
-
-#contact h2 {
-    margin-bottom: 20px;
-    font-size: 2em;
-}
-
-#contact p {
-    margin-bottom: 30px;
-    font-size: 1.2em;
-}
-
-#contact form {
-    display: flex;
-    flex-direction: column;
-    gap: 15px;
-    max-width: 600px;
-    margin: auto;
-}
-
-.form-group {
-    display: flex;
-    flex-direction: column;
-}
-
-.form-group label {
-    margin-bottom: 5px;
-    font-weight: 500;
-}
-
-.form-group input,
-.form-group textarea {
-    padding: 10px;
-    border: 1px solid #ccc;
-    border-radius: 5px;
-    font-size: 1em;
-    background-color: inherit; /* Match the theme */
-    color: inherit; /* Match the theme */
-    transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease;
-}
-
-.form-group input:focus,
-.form-group textarea:focus {
-    border-color: #f39c12;
-    outline: none;
-}
-
-#contact .btn {
-    background-color: #f39c12;
-    color: #fff;
-    padding: 12px 20px;
-    border: none;
-    border-radius: 5px;
-    cursor: pointer;
-    transition: background-color 0.3s ease;
-    font-size: 1em;
-    font-weight: 500;
-    align-self: flex-start;
-}
-
-body.dark-mode #contact .btn {
-    background-color: #e67e22;
-    color: #fff;
-}
-
-#contact .btn:hover {
-    background-color: #e67e22;
-}
-
-body.dark-mode #contact .btn:hover {
-    background-color: #d35400;
-}
-
-.social-links {
-    margin-top: 30px;
-    display: flex;
-    gap: 20px;
-    justify-content: center;
-}
-
-.social-links a {
-    color: #555;
-    font-size: 1.5em;
-    transition: color 0.3s ease, transform 0.3s ease;
-}
-
-body.dark-mode .social-links a {
-    color: #aaa;
-}
-
-.social-links a:hover {
-    color: #f39c12;
-    transform: scale(1.1);
-}
+#contact { padding: 60px 0; }
+#contact h2 { margin-bottom: 20px; font-size: 2em; }
+#contact p { margin-bottom: 30px; font-size: 1.2em; text-align: center; }
+#contact form { display: flex; flex-direction: column; gap: 15px; max-width: 600px; margin: auto; }
+.form-group { display: flex; flex-direction: column; }
+.form-group label { margin-bottom: 5px; font-weight: 500; }
+.form-group input, .form-group textarea { padding: 10px; border: 1px solid #ccc; border-radius: 5px; font-size: 1em; background-color: #fff; color: #333; }
+html.dark-mode .form-group input, html.dark-mode .form-group textarea { background-color: #333; color: #ccc; border-color: #555; }
+.form-group input:focus, .form-group textarea:focus { border-color: #f39c12; outline: none; }
+html.dark-mode .form-group input:focus, html.dark-mode .form-group textarea:focus { border-color: #e67e22; }
+#contact .btn { padding: 12px 20px; align-self: center; margin-top: 10px; }
+.social-links { margin-top: 30px; display: flex; gap: 20px; justify-content: center; }
+.social-links a { color: #555; font-size: 1.5em; transition: color 0.3s ease, transform 0.3s ease; }
+html.dark-mode .social-links a { color: #aaa; }
+.social-links a:hover { color: #f39c12; transform: scale(1.1); }
+html.dark-mode .social-links a:hover { color: #e67e22; }
 
 /* Footer */
-footer {
-    background: #333;
-    color: #fff;
-    padding: 20px 0;
-    text-align: center;
-}
-
-footer nav a {
-    color: #fff;
-    text-decoration: none;
-    margin: 0 10px;
-    transition: color 0.3s ease;
-}
-
-footer nav a:hover {
-    color: #f39c12;
-}
-
-footer p {
-    margin: 10px 0 0;
-    font-size: 0.9em;
-}
+footer { background: #333; color: #fff; padding: 20px 0; text-align: center; margin-top: 40px; }
+html.dark-mode footer { background: #111; }
+footer .container { width: 90%; max-width: 1200px; margin: auto; padding: 0; }
+footer nav { margin-bottom: 10px; }
+footer nav a { color: #fff; text-decoration: none; margin: 0 10px; transition: color 0.3s ease; }
+footer nav a:hover { color: #f39c12; }
+footer p { margin: 0; font-size: 0.9em; color: #aaa; }
+html.dark-mode footer p { color: #888; }
 
 /* Particle Background */
-#particles-js {
-    position: fixed;
-    width: 100%;
-    height: 100%;
-    top: 0;
-    left: 0;
-    z-index: -1; /* Behind content */
+#particles-js { position: fixed; width: 100%; height: 100%; top: 0; left: 0; z-index: -1; }
+
+/* --- START: Shared Game Page Header Styles (Restructured) --- */
+.game-header {
+    padding: 0; /* Remove padding from header itself */
+    text-align: center;
+    background-color: #eee;
+    color: #333;
+    border-bottom: 1px solid #ddd;
 }
+html.dark-mode .game-header {
+    background-color: #252525;
+    color: #ccc;
+    border-bottom-color: #444;
+}
+/* Apply Flexbox to the container inside game header */
+.game-header .container {
+    display: flex;
+    align-items: center; /* Vertically align items */
+    justify-content: space-between; /* Push items apart */
+    padding: 10px 15px; /* Padding inside container */
+    width: 90%; /* Match page container width */
+    max-width: 1200px; /* Match page container max-width */
+    margin: auto; /* Center container */
+}
+.game-header h1 {
+    margin: 0; /* Remove default margins */
+    font-size: 1.8em;
+    color: #f39c12;
+    /* Allow title to take space and center */
+    flex-grow: 1;
+    text-align: center;
+    /* Add padding to prevent text touching button/spacer */
+    padding: 0 15px;
+}
+html.dark-mode .game-header h1 {
+    color: #e67e22;
+}
+.game-header h1 i {
+    margin-right: 10px;
+}
+/* Style the back button */
+.game-header .back-btn {
+    position: static; /* Remove absolute positioning */
+    transform: none;  /* Remove transform */
+    padding: 8px 15px;
+    font-size: 0.9em;
+    flex-shrink: 0; /* Prevent button from shrinking */
+}
+/* Style the spacer div */
+.game-header .header-spacer {
+    /* Make spacer take up same space as button for centering */
+    width: auto; /* Default */
+    min-width: 80px; /* Example: Adjust based on button width */
+    visibility: hidden; /* Keep space but hide */
+    flex-shrink: 0;
+}
+/* Adjust spacer width based on button's actual width if needed */
+.game-header .container .back-btn {
+    /* If button width is known or can be estimated */
+     min-width: 80px; /* Match spacer */
+}
+.game-header .container .header-spacer {
+    min-width: 80px; /* Match button */
+}
+
+
+/* Shared Game Page Footer Styles */
+.game-footer {
+    padding: 15px 0;
+    text-align: center;
+    background-color: #eee;
+    color: #333;
+    margin-top: 40px;
+    font-size: 0.9em;
+    border-top: 1px solid #ddd;
+}
+.game-footer .container {
+    width: 90%;
+    max-width: 1200px;
+    margin: auto;
+    padding: 0;
+}
+html.dark-mode .game-footer {
+    background-color: #252525;
+    color: #ccc;
+    border-top-color: #444;
+}
+/* --- END: Shared Game Page Header/Footer Styles --- */
+
 
 /* Animations */
-@keyframes fadeInDown {
-    from {
-        opacity: 0;
-        transform: translateY(-20px);
-    }
-    to {
-        opacity: 1;
-        transform: translateY(0);
-    }
-}
-
-@keyframes fadeInUp {
-    from {
-        opacity: 0;
-        transform: translateY(20px);
-    }
-    to {
-        opacity: 1;
-        transform: translateY(0);
-    }
-}
+@keyframes fadeInDown { from { opacity: 0; transform: translateY(-20px); } to { opacity: 1; transform: translateY(0); } }
+@keyframes fadeInUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
 
 /* Responsive Design */
 @media (max-width: 768px) {
-    .about-content {
-        flex-direction: column;
-        align-items: center;
+    /* --- START: Mobile Header/Nav Adjustments --- */
+    body {
+        /* Estimate header height: Title line + Button line + padding/margins */
+        /* Adjust this value based on actual measured height in dev tools */
+        padding-top: 60px; /* Reset to default mobile header height */
     }
+    header { padding: 5px 0; }
+    header .container { width: 95%; flex-wrap: wrap; }
+    header h1 { font-size: 1.6em; }
 
-    .profile-pic {
-        max-width: 200px;
-    }
+    nav { order: 3; width: 100%; max-height: 0; overflow: hidden; transition: max-height 0.4s ease-out; background: rgba(255, 255, 255, 0.98); box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
+    html.dark-mode nav { background: rgba(26, 26, 26, 0.98); box-shadow: 0 4px 6px rgba(0,0,0,0.3); }
+    nav.show { max-height: 500px; }
+    nav ul { flex-direction: column; gap: 0; padding: 10px 0; align-items: center; }
+    nav ul li { width: 100%; text-align: center; border-bottom: 1px solid #eee; }
+    html.dark-mode nav ul li { border-bottom-color: #333; }
+    nav ul li:last-child { border-bottom: none; }
+    nav ul li a { padding: 12px 0; display: block; }
 
-    nav ul {
-        flex-direction: column;
-        gap: 10px;
-        background: rgba(255, 255, 255, 0.95);
-        position: absolute;
-        top: 60px;
-        right: 20px;
-        border-radius: 5px;
-        padding: 10px;
-        display: none;
-    }
+    .social-buttons { order: 2; margin-left: auto; }
+    .theme-toggle { order: 2; }
+    .hamburger { display: flex; order: 2; }
+    /* --- END: Mobile Header/Nav Adjustments --- */
 
-    nav ul.show {
-        display: flex;
-    }
 
-    .theme-toggle {
-        margin-right: 0;
+    /* --- START: Mobile Game Header Fix (Restructured) --- */
+    .game-header .container {
+        flex-direction: column; /* Stack items */
+        justify-content: center;
+        padding: 10px 15px; /* Adjust padding */
     }
+    .game-header h1 {
+        order: 1; /* Title first */
+        font-size: 1.5em; /* Slightly smaller title */
+        margin-bottom: 10px; /* Space below title */
+        padding: 0; /* Remove side padding */
+        flex-grow: 0; /* Don't grow */
+    }
+    .game-header .back-btn {
+        order: 2; /* Button second */
+        margin: 0; /* Remove auto margins */
+    }
+    .game-header .header-spacer {
+        display: none; /* Hide spacer on mobile */
+    }
+    /* Adjust body padding for new mobile game header height */
+    body {
+        /* Measure this height! */
+        padding-top: 85px; /* Example: Adjust this value! */
+    }
+     /* --- END: Mobile Game Header Fix --- */
 
-    /* Hamburger Menu */
-    .hamburger {
-        display: flex;
-    }
 
-    /* Adjust social-buttons alignment */
-    .social-buttons {
-        gap: 10px;
-    }
-}
+    /* Other Mobile Styles */
+    .about-content { flex-direction: column; align-items: center; text-align: center; }
+    .profile-pic { max-width: 200px; margin-bottom: 20px; }
+    section h2 { font-size: 1.8em; }
+    #hero { padding: 100px 20px 60px; }
+    #hero h2 { font-size: 2em; }
+    #hero p { font-size: 1.1em; }
+
+} /* End @media (max-width: 768px) */
+
 
 @media (max-width: 480px) {
-    #hero h2 {
-        font-size: 2em;
+    /* Adjust body padding for smallest screens if header height changes again */
+    body {
+        padding-top: 80px; /* Example value, ADJUST AS NEEDED */
+        font-size: 15px;
     }
+    header { padding: 5px 0; }
+    header .container { width: 95%; }
+    #hero h2 { font-size: 1.8em; }
+    #hero p { font-size: 1em; }
+    .skills-grid, .projects-grid { grid-template-columns: 1fr; gap: 20px; }
+    .social-buttons a i { font-size: 1.3em; }
+    .theme-toggle { width: 28px; height: 28px; }
+    .theme-toggle #toggle-icon { font-size: 1.1em; }
+    .hamburger { width: 23px; height: 19px; }
+    #contact form { padding: 20px; }
+    .form-group input, .form-group textarea { padding: 10px; }
+    #contact .btn { padding: 10px 20px; font-size: 1em; }
 
-    #hero p {
-        font-size: 1em;
-    }
+    /* Further adjust mobile game header if needed */
+    .game-header h1 { font-size: 1.4em; }
+    .game-header .back-btn { padding: 6px 12px; font-size: 0.85em; }
 
-    .skills-grid {
-        grid-template-columns: 1fr;
-    }
-
-    .projects-grid {
-        grid-template-columns: 1fr;
-    }
-
-    /* Reduce font size for social icons */
-    .social-buttons a i,
-    .social-buttons button i {
-        font-size: 1.2em;
-    }
-}
-
-/* Additional Styles for Hamburger Menu */
-nav ul.show {
-    display: flex;
-}
-
-.hamburger {
-    z-index: 1001; /* Ensure hamburger is above the nav */
-}
-
-@media (max-width: 768px) {
-    /* Ensure nav and social-buttons don't overlap */
-    header {
-        flex-wrap: wrap;
-    }
-
-    nav ul {
-        width: 100%;
-        top: 50px;
-    }
-
-    .social-buttons {
-        order: 3;
-        width: 100%;
-        justify-content: center;
-        margin-top: 10px;
-    }
-}
+} /* End @media (max-width: 480px) */

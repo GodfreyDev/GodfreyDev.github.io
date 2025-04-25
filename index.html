@@ -4,18 +4,53 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Gavin - Game Developer & Programmer</title>
-    <!-- Google Fonts -->
-    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap">
-    <!-- Font Awesome for Icons -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <!-- Vis Network CSS -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/vis/4.21.0/vis-network.min.css" />
-    <!-- Stylesheet -->
-    <link rel="stylesheet" href="css/style.css">
-    <!-- Particles.js -->
-    <script src="https://cdn.jsdelivr.net/npm/particles.js@2.0.0/particles.min.js"></script>
+        <!-- START: Theme Loading Script (Keep this as is) -->
+        <script>
+            // Function to apply theme by setting the root <html> element's class name
+            function applyInitialTheme(themeName) {
+                // Use 'light-mode' as default if themeName is invalid or null
+                const validTheme = (themeName === 'dark-mode' || themeName === 'light-mode') ? themeName : 'light-mode';
+                console.log('Index: Applying initial theme class to HTML element:', validTheme);
+                // Apply class to the <html> tag instead of <body>
+                document.documentElement.className = validTheme;
+            }
+    
+            // Immediately check localStorage and apply the theme
+            try {
+                const savedTheme = localStorage.getItem('theme');
+                applyInitialTheme(savedTheme); // Apply saved theme or default
+            } catch (e) {
+                console.error("Could not access localStorage for theme", e);
+                // Fallback to light theme if localStorage fails
+                applyInitialTheme('light-mode');
+            }
+        </script>
+        <!-- END: Theme Loading Script -->
+    
+        <!-- START: Inline Critical CSS for Dark Mode (Add this block) -->
+        <style>
+            /* Prevent flash of light background */
+            html.dark-mode body {
+                background-color: #1a1a1a; /* Match dark mode background */
+                color: #ccc;             /* Match dark mode text color */
+            }
+        </style>
+        <!-- END: Inline Critical CSS for Dark Mode -->
+    
+        <!-- Your existing <link> tags for fonts, icons, main CSS etc. follow -->
+        <!-- Google Fonts -->
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap">
+        <!-- Font Awesome for Icons -->
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+        <!-- Vis Network CSS -->
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/vis/4.21.0/vis-network.min.css" />
+        <!-- Stylesheet -->
+        <link rel="stylesheet" href="css/style.css">
+        <!-- Particles.js -->
+        <script src="https://cdn.jsdelivr.net/npm/particles.js@2.0.0/particles.min.js"></script>
 </head>
-<body class="light-mode">
+<!-- Body class will be set by main.js -->
+<body>
     <!-- Header -->
     <header>
         <div class="container">
@@ -26,6 +61,8 @@
                     <li><a href="#skills">Skills</a></li>
                     <li><a href="#projects">Projects</a></li>
                     <li><a href="#game">Game</a></li>
+                    <!-- Added Casino Link -->
+                    <li><a href="#casino">Casino</a></li>
                     <li><a href="#wiki">Wiki</a></li>
                     <li><a href="fluid-simulation.html">Fluid Simulation</a></li>
                     <li><a href="#contact">Contact</a></li>
@@ -42,8 +79,11 @@
                     <i class="fab fa-discord"></i>
                 </a>
             </div>
-            <button class="theme-toggle" onclick="toggleTheme()" aria-label="Toggle dark mode">
-                <span id="toggle-icon"></span>
+            <!-- Ensure toggleTheme() function exists in main.js -->
+            <button class="theme-toggle" onclick="toggleTheme()" aria-label="Toggle theme">
+                <span id="toggle-icon">
+                    <!-- SVG icon will be injected by main.js -->
+                </span>
             </button>
             <div class="hamburger" aria-label="Toggle navigation" aria-expanded="false">
                 <span></span>
@@ -74,10 +114,10 @@
                 <div class="about-text">
                     <p>Hello! I'm Gavin, a dedicated student at Towson University, specializing in game development and programming. I thrive on turning ideas into reality through code and creativity. When I'm not coding, I enjoy playing video games, exploring new technologies, and collaborating on exciting projects.</p>
                     <div class="countdown-container">
-                        <input type="date" id="dateInput" min="2024-01-01" aria-label="Select countdown date">
+                        <input type="date" id="dateInput" aria-label="Select countdown date"> <!-- Removed min attribute, handled by JS -->
                         <button onclick="setCountdownDate()" aria-label="Set countdown date">Set Date</button>
                     </div>
-                    <div id="countdown" aria-live="polite"></div>
+                    <div id="countdown" aria-live="polite">Set a date to count down to!</div> <!-- Default text -->
                 </div>
             </div>
         </div>
@@ -162,9 +202,29 @@
         <div class="container">
             <h2>Explore My World!</h2>
             <p>Check out my game for a full-screen immersive experience.</p>
-            <a href="game.html" target="_blank" class="btn">Play Game</a>
+            <!-- Removed target="_blank" from game link -->
+            <a href="game.html" class="btn">Play Game</a>
         </div>
     </section>
+
+    <!-- START: Casino Section (Links Updated) -->
+    <section id="casino">
+        <div class="container">
+            <h2>Casino Corner</h2>
+            <p>Feeling lucky? Try your hand at some simple casino-style mini-games I've created.</p>
+            <div class="casino-games">
+                <!-- Removed target="_blank" from slots link -->
+                <a href="slots.html" class="btn casino-btn">
+                    <i class="fas fa-dice-three"></i> Play Slots
+                </a>
+                <!-- Removed target="_blank" from cards link -->
+                <a href="cards.html" class="btn casino-btn">
+                    <i class="fas fa-heart"></i> Play Cards
+                </a>
+            </div>
+        </div>
+    </section>
+    <!-- END: Casino Section -->
 
     <!-- Wiki Section -->
     <section id="wiki">
@@ -213,13 +273,14 @@
     <!-- Footer -->
     <footer>
         <div class="container">
-            <p>&copy; 2024 Gavin. All rights reserved.</p>
+            <p>© 2024 Gavin. All rights reserved.</p>
             <nav>
                 <a href="#hero">Home</a> |
                 <a href="#about">About</a> |
                 <a href="#skills">Skills</a> |
                 <a href="#projects">Projects</a> |
                 <a href="#game">Game</a> |
+                <a href="#casino">Casino</a> |
                 <a href="#wiki">Wiki</a> |
                 <a href="#contact">Contact</a>
             </nav>
@@ -229,14 +290,25 @@
     <!-- Scripts -->
     <script src="js/main.js"></script>
     <!-- Initialize Particles.js -->
+    <!-- Ensure particles.json path is correct relative to index.html -->
     <script>
-        particlesJS.load('particles-js', 'js/particles.json', function() {
-            console.log('Particles.js loaded - callback');
-        });
+        if (typeof particlesJS !== 'undefined') {
+            particlesJS.load('particles-js', 'js/particles.json', function() {
+                console.log('Particles.js config loaded');
+                // Call updateParticles here if main.js DOMContentLoaded runs before particlesJS loads
+                if (typeof updateParticles === 'function') {
+                    console.log("Calling updateParticles from particlesJS callback.");
+                    updateParticles();
+                }
+            });
+        } else {
+            console.error("particlesJS is not defined. Check script loading order.");
+        }
     </script>
     <!-- Vis Network JS -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/vis/4.21.0/vis-network.min.js"></script>
     <!-- Additional Scripts for Wiki and Graph Visualization -->
+    <!-- Make sure these files exist and functions are defined -->
     <script src="js/wiki.js"></script>
     <script src="js/graph.js"></script>
 </body>
