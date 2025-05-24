@@ -1,0 +1,39 @@
+body {
+    margin: 0;
+    overflow: hidden;
+    background: #050510;
+    color: white;
+    font-family: Arial, sans-serif;
+}
+
+canvas {
+    display: block;
+}
+
+#infoPanel {
+    position: absolute;
+    bottom: 10px;
+    left: 10px;
+    background: rgba(0, 0, 0, 0.6);
+    padding: 8px 12px;
+    border-radius: 5px;
+    z-index: 100;
+    user-select: none;
+    /* pointer-events: none; Removed this line to make the "Back" link clickable */
+    font-size: 12px;
+    color: rgba(255, 255, 255, 0.8);
+    line-height: 1.5;
+}
+
+#infoPanel span {
+    display: block;
+    font-weight: bold;
+    color: white;
+    margin-bottom: 5px;
+    font-size: 14px;
+}
+
+/* Ensure lil-gui is above info panel if needed */
+.lil-gui {
+    z-index: 101 !important;
+}

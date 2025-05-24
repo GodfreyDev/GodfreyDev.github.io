@@ -5,7 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Blackjack Game</title>
 
-    <!-- Theme Loading Script -->
     <script>
         function applyGameTheme(themeName) {
             const validTheme = (themeName === 'dark-mode' || themeName === 'light-mode') ? themeName : 'light-mode';
@@ -15,46 +14,38 @@
         catch (e) { console.error("Could not access localStorage for theme", e); applyGameTheme('light-mode'); }
     </script>
 
-    <!-- Stylesheets -->
-    <link rel="stylesheet" href="css/style.css"> <!-- Shared styles first -->
-    <link rel="stylesheet" href="css/cards.css"> <!-- Card-specific styles -->
-    <!-- Font Awesome for Icons -->
+    <link rel="stylesheet" href="../../assets/css/style.css">
+    <link rel="stylesheet" href="assets/css/cards.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="icon" href="../../assets/images/favicon.png" type="image/png">
 </head>
-<!-- Class is set by script in head -->
 <body>
-    <!-- Game Header (Restructured) -->
     <header class="game-header">
         <div class="container">
-             <a href="index.html#casino" class="btn back-btn" aria-label="Back to portfolio casino section">← Back</a>
+             <a href="../../index.html#casino" class="btn back-btn" aria-label="Back to portfolio casino section">← Back</a>
              <h1><i class="fas fa-heart" aria-hidden="true"></i> Blackjack</h1>
-             <div class="header-spacer" aria-hidden="true"></div> <!-- Spacer for centering title -->
+             <div class="header-spacer" aria-hidden="true"></div>
         </div>
     </header>
 
-    <!-- Main Game Area -->
     <main id="card-game-container">
-        <div class="container"> <!-- General container, specific layout handled by CSS -->
+        <div class="container">
             <h2>Play Your Cards Right!</h2>
             <p>Classic Blackjack Rules</p>
 
-            <!-- Game Table Area -->
             <div id="card-table" role="region" aria-label="Blackjack table">
                 <div class="hand-area" id="dealer-hand" aria-label="Dealer hand">
                     <h3>Dealer's Hand (<span id="dealer-score" aria-live="polite">0</span>)</h3>
                     <div class="cards" aria-live="polite">
-                        <!-- Cards will be added here by JavaScript -->
                     </div>
                 </div>
                 <div class="hand-area" id="player-hand" aria-label="Player hand">
                     <h3>Your Hand (<span id="player-score" aria-live="polite">0</span>)</h3>
                     <div class="cards" aria-live="polite">
-                        <!-- Cards will be added here by JavaScript -->
                     </div>
                 </div>
             </div>
 
-            <!-- Controls -->
             <div class="controls" role="group" aria-label="Game actions">
                  <span class="bet-info" aria-live="polite">Bet: $<span id="current-bet">10</span></span>
                  <button id="deal-button" class="btn casino-btn">Deal</button>
@@ -62,32 +53,26 @@
                  <button id="stand-button" class="btn casino-btn" disabled>Stand</button>
             </div>
 
-            <!-- Results/Status Display -->
-            <div id="game-status" class="game-status-message" aria-live="assertive"> <!-- Use consistent class -->
+            <div id="game-status" class="game-status-message" aria-live="assertive">
                 <p>Press Deal to start.</p>
             </div>
 
-             <!-- Balance Display -->
-             <div id="balance-display" class="game-balance" aria-live="polite"> <!-- Use consistent class -->
+             <div id="balance-display" class="game-balance" aria-live="polite">
                 <p>Balance: $<span id="balance-amount">100</span></p>
             </div>
-
         </div>
     </main>
 
-    <!-- Simple Footer -->
     <footer class="game-footer">
         <div class="container">
             <p>© 2024 Gavin - Simple Blackjack</p>
         </div>
     </footer>
 
-    <!-- Game Logic Script -->
-    <script src="js/cards.js"></script>
-     <!-- Optional: Initialization check script -->
+    <script src="assets/js/cards.js"></script>
      <script>
         if (typeof initializeCardGame === 'undefined' && document.getElementById('game-status')) {
-             document.getElementById('game-status').innerHTML = '<p>Card game logic (initializeCardGame) not found in js/cards.js</p>';
+             document.getElementById('game-status').innerHTML = '<p>Card game logic (initializeCardGame) not found in assets/js/cards.js</p>';
              if(document.getElementById('deal-button')) document.getElementById('deal-button').disabled = true;
         }
     </script>

@@ -4,52 +4,45 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Gavin - Game Developer & Programmer</title>
-        <!-- START: Theme Loading Script (Keep this as is) -->
-        <script>
-            // Function to apply theme by setting the root <html> element's class name
-            function applyInitialTheme(themeName) {
-                // Use 'light-mode' as default if themeName is invalid or null
-                const validTheme = (themeName === 'dark-mode' || themeName === 'light-mode') ? themeName : 'light-mode';
-                console.log('Index: Applying initial theme class to HTML element:', validTheme);
-                // Apply class to the <html> tag instead of <body>
-                document.documentElement.className = validTheme;
-            }
-    
-            // Immediately check localStorage and apply the theme
-            try {
-                const savedTheme = localStorage.getItem('theme');
-                applyInitialTheme(savedTheme); // Apply saved theme or default
-            } catch (e) {
-                console.error("Could not access localStorage for theme", e);
-                // Fallback to light theme if localStorage fails
-                applyInitialTheme('light-mode');
-            }
-        </script>
-        <!-- END: Theme Loading Script -->
-    
-        <!-- START: Inline Critical CSS for Dark Mode (Add this block) -->
-        <style>
-            /* Prevent flash of light background */
-            html.dark-mode body {
-                background-color: #1a1a1a; /* Match dark mode background */
-                color: #ccc;             /* Match dark mode text color */
-            }
-        </style>
-        <!-- END: Inline Critical CSS for Dark Mode -->
-    
-        <!-- Your existing <link> tags for fonts, icons, main CSS etc. follow -->
-        <!-- Google Fonts -->
-        <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap">
-        <!-- Font Awesome for Icons -->
-        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-        <!-- Vis Network CSS -->
-        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/vis/4.21.0/vis-network.min.css" />
-        <!-- Stylesheet -->
-        <link rel="stylesheet" href="css/style.css">
-        <!-- Particles.js -->
-        <script src="https://cdn.jsdelivr.net/npm/particles.js@2.0.0/particles.min.js"></script>
+    <!-- START: Theme Loading Script -->
+    <script>
+        function applyInitialTheme(themeName) {
+            const validTheme = (themeName === 'dark-mode' || themeName === 'light-mode') ? themeName : 'light-mode';
+            document.documentElement.className = validTheme;
+        }
+        try {
+            const savedTheme = localStorage.getItem('theme');
+            applyInitialTheme(savedTheme);
+        } catch (e) {
+            console.error("Could not access localStorage for theme", e);
+            applyInitialTheme('light-mode');
+        }
+    </script>
+    <!-- END: Theme Loading Script -->
+
+    <!-- START: Inline Critical CSS for Dark Mode -->
+    <style>
+        html.dark-mode body {
+            background-color: #1a1a1a;
+            color: #ccc;
+        }
+    </style>
+    <!-- END: Inline Critical CSS for Dark Mode -->
+
+    <!-- Favicon -->
+    <link rel="icon" href="assets/images/favicon.png" type="image/png">
+
+    <!-- Google Fonts -->
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap">
+    <!-- Font Awesome for Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Vis Network CSS -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/vis/4.21.0/vis-network.min.css" />
+    <!-- Stylesheet -->
+    <link rel="stylesheet" href="assets/css/style.css">
+    <!-- Particles.js -->
+    <script src="https://cdn.jsdelivr.net/npm/particles.js@2.0.0/particles.min.js"></script>
 </head>
-<!-- Body class will be set by main.js -->
 <body>
     <!-- Header -->
     <header>
@@ -61,10 +54,9 @@
                     <li><a href="#skills">Skills</a></li>
                     <li><a href="#projects">Projects</a></li>
                     <li><a href="#game">Game</a></li>
-                    <!-- Added Casino Link -->
                     <li><a href="#casino">Casino</a></li>
                     <li><a href="#wiki">Wiki</a></li>
-                    <li><a href="fluid-simulation.html">Fluid Simulation</a></li>
+                    <li><a href="simulations/fluid-simulation/">Fluid Simulation</a></li>
                     <li><a href="#contact">Contact</a></li>
                 </ul>
             </nav>
@@ -72,31 +64,24 @@
                 <a href="https://github.com/GodfreyDev" target="_blank" rel="noopener noreferrer" aria-label="GitHub">
                     <i class="fab fa-github"></i>
                 </a>
-                <a href="https://linkedin.com/in/futureProfile" target="_blank" rel="noopener noreferrer" aria-label="LinkedIn">
+                <a href="https://linkedin.com/in/YOUR_LINKEDIN_ID_HERE" target="_blank" rel="noopener noreferrer" aria-label="LinkedIn">
                     <i class="fab fa-linkedin"></i>
                 </a>
                 <a href="https://discord.gg/HxTwUcGaPY" target="_blank" rel="noopener noreferrer" aria-label="Discord">
                     <i class="fab fa-discord"></i>
                 </a>
             </div>
-            <!-- Ensure toggleTheme() function exists in main.js -->
             <button class="theme-toggle" onclick="toggleTheme()" aria-label="Toggle theme">
-                <span id="toggle-icon">
-                    <!-- SVG icon will be injected by main.js -->
-                </span>
+                <span id="toggle-icon"></span>
             </button>
             <div class="hamburger" aria-label="Toggle navigation" aria-expanded="false">
-                <span></span>
-                <span></span>
-                <span></span>
+                <span></span><span></span><span></span>
             </div>
         </div>
     </header>
 
-    <!-- Particle Background -->
     <div id="particles-js"></div>
 
-    <!-- Hero Section -->
     <section id="hero">
         <div class="container">
             <h2>Welcome to My World of Code & Creativity</h2>
@@ -105,25 +90,23 @@
         </div>
     </section>
 
-    <!-- About Section -->
     <section id="about">
         <div class="container">
             <h2>About Me</h2>
             <div class="about-content">
-                <img src="images/profile.jpg" alt="Gavin's Profile Picture" class="profile-pic">
+                <img src="assets/images/profile.jpg" alt="Gavin's Profile Picture" class="profile-pic">
                 <div class="about-text">
                     <p>Hello! I'm Gavin, a dedicated student at Towson University, specializing in game development and programming. I thrive on turning ideas into reality through code and creativity. When I'm not coding, I enjoy playing video games, exploring new technologies, and collaborating on exciting projects.</p>
                     <div class="countdown-container">
-                        <input type="date" id="dateInput" aria-label="Select countdown date"> <!-- Removed min attribute, handled by JS -->
+                        <input type="date" id="dateInput" aria-label="Select countdown date">
                         <button onclick="setCountdownDate()" aria-label="Set countdown date">Set Date</button>
                     </div>
-                    <div id="countdown" aria-live="polite">Set a date to count down to!</div> <!-- Default text -->
+                    <div id="countdown" aria-live="polite">Set a date to count down to!</div>
                 </div>
             </div>
         </div>
     </section>
 
-    <!-- Skills Section -->
     <section id="skills">
         <div class="container">
             <h2>Skills & Expertise</h2>
@@ -152,41 +135,36 @@
         </div>
     </section>
 
-    <!-- Projects Section -->
     <section id="projects">
         <div class="container">
             <h2>Featured Projects</h2>
             <div class="projects-grid">
-                <!-- Project 1 -->
                 <div class="project-card">
-                    <img src="images/project1.jpg" alt="Epic Adventure Game Screenshot" loading="lazy">
+                    <img src="assets/images/project1.jpg" alt="Epic Adventure Game Screenshot" loading="lazy">
                     <div class="project-info">
                         <h3>Epic Adventure Game</h3>
                         <p>A fully immersive RPG game developed using Unity, featuring rich storytelling and dynamic gameplay.</p>
                         <a href="https://github.com/GodfreyDev/epic-adventure" target="_blank" rel="noopener noreferrer" class="btn">View on GitHub</a>
                     </div>
                 </div>
-                <!-- Project 2 -->
                 <div class="project-card">
-                    <img src="images/project2.jpg" alt="AI Chatbot Screenshot" loading="lazy">
+                    <img src="assets/images/project2.jpg" alt="AI Chatbot Screenshot" loading="lazy">
                     <div class="project-info">
                         <h3>AI Chatbot</h3>
                         <p>An intelligent chatbot built with Python and machine learning algorithms, capable of engaging in natural conversations.</p>
                         <a href="https://github.com/GodfreyDev/ai-chatbot" target="_blank" rel="noopener noreferrer" class="btn">View on GitHub</a>
                     </div>
                 </div>
-                <!-- Project 3 -->
                 <div class="project-card">
-                    <img src="images/project3.jpg" alt="Mobile Fitness App Screenshot" loading="lazy">
+                    <img src="assets/images/project3.jpg" alt="Mobile Fitness App Screenshot" loading="lazy">
                     <div class="project-info">
                         <h3>Mobile Fitness App</h3>
                         <p>A responsive mobile application designed to help users track their fitness goals and monitor progress.</p>
                         <a href="https://github.com/GodfreyDev/fitness-app" target="_blank" rel="noopener noreferrer" class="btn">View on GitHub</a>
                     </div>
                 </div>
-                <!-- Example Project Placeholder -->
                 <div class="project-card">
-                    <img src="images/example-project.jpg" alt="Example Project Screenshot" loading="lazy">
+                    <img src="assets/images/example-project.jpg" alt="Placeholder for an upcoming project" loading="lazy">
                     <div class="project-info">
                         <h3>Example Project</h3>
                         <p>This is an example project description. Details will be added once the project is completed.</p>
@@ -197,36 +175,29 @@
         </div>
     </section>
 
-    <!-- Game Section -->
     <section id="game">
         <div class="container">
             <h2>Explore My World!</h2>
             <p>Check out my game for a full-screen immersive experience.</p>
-            <!-- Removed target="_blank" from game link -->
-            <a href="game.html" class="btn">Play Game</a>
+            <a href="games/chat-game/" class="btn">Play Game</a>
         </div>
     </section>
 
-    <!-- START: Casino Section (Links Updated) -->
     <section id="casino">
         <div class="container">
             <h2>Casino Corner</h2>
             <p>Feeling lucky? Try your hand at some simple casino-style mini-games I've created.</p>
             <div class="casino-games">
-                <!-- Removed target="_blank" from slots link -->
-                <a href="slots.html" class="btn casino-btn">
+                <a href="games/casino/slots.html" class="btn casino-btn">
                     <i class="fas fa-dice-three"></i> Play Slots
                 </a>
-                <!-- Removed target="_blank" from cards link -->
-                <a href="cards.html" class="btn casino-btn">
+                <a href="games/casino/cards.html" class="btn casino-btn">
                     <i class="fas fa-heart"></i> Play Cards
                 </a>
             </div>
         </div>
     </section>
-    <!-- END: Casino Section -->
 
-    <!-- Wiki Section -->
     <section id="wiki">
         <div class="container">
             <h2>Wiki</h2>
@@ -241,7 +212,6 @@
         </div>
     </section>
 
-    <!-- Contact Section -->
     <section id="contact">
         <div class="container">
             <h2>Get In Touch</h2>
@@ -263,14 +233,12 @@
             </form>
             <div class="social-links">
                 <a href="https://github.com/GodfreyDev" target="_blank" rel="noopener noreferrer" aria-label="GitHub"><i class="fab fa-github"></i></a>
-                <a href="https://linkedin.com/in/yourprofile" target="_blank" rel="noopener noreferrer" aria-label="LinkedIn"><i class="fab fa-linkedin"></i></a>
+                <a href="https://linkedin.com/in/YOUR_LINKEDIN_ID_HERE" target="_blank" rel="noopener noreferrer" aria-label="LinkedIn"><i class="fab fa-linkedin"></i></a>
                 <a href="https://twitter.com/yourprofile" target="_blank" rel="noopener noreferrer" aria-label="Twitter"><i class="fab fa-twitter"></i></a>
-                <!-- Add more social links as needed -->
             </div>
         </div>
     </section>
 
-    <!-- Footer -->
     <footer>
         <div class="container">
             <p>© 2024 Gavin. All rights reserved.</p>
@@ -288,16 +256,12 @@
     </footer>
 
     <!-- Scripts -->
-    <script src="js/main.js"></script>
-    <!-- Initialize Particles.js -->
-    <!-- Ensure particles.json path is correct relative to index.html -->
+    <script src="assets/js/main.js"></script>
     <script>
         if (typeof particlesJS !== 'undefined') {
-            particlesJS.load('particles-js', 'js/particles.json', function() {
+            particlesJS.load('particles-js', 'assets/js/particles.json', function() {
                 console.log('Particles.js config loaded');
-                // Call updateParticles here if main.js DOMContentLoaded runs before particlesJS loads
                 if (typeof updateParticles === 'function') {
-                    console.log("Calling updateParticles from particlesJS callback.");
                     updateParticles();
                 }
             });
@@ -305,11 +269,8 @@
             console.error("particlesJS is not defined. Check script loading order.");
         }
     </script>
-    <!-- Vis Network JS -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/vis/4.21.0/vis-network.min.js"></script>
-    <!-- Additional Scripts for Wiki and Graph Visualization -->
-    <!-- Make sure these files exist and functions are defined -->
-    <script src="js/wiki.js"></script>
-    <script src="js/graph.js"></script>
+    <script src="assets/js/wiki.js"></script>
+    <script src="assets/js/graph.js"></script>
 </body>
 </html>

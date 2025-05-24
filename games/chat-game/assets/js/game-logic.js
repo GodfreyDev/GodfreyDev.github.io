@@ -127,7 +127,7 @@ function loadTileImages(callback) {
 
   tileTypes.forEach(type => {
     tileImages[type] = new Image();
-    tileImages[type].src = `Images/tile_${type}.png`;
+    tileImages[type].src = `assets/images/tile_${type}.png`;
     tileImages[type].onload = () => {
       loadedImages++;
       if (loadedImages === totalImages) {
@@ -135,15 +135,15 @@ function loadTileImages(callback) {
       }
     };
     tileImages[type].onerror = () => {
-      console.error(`Failed to load tile image: Images/tile_${type}.png`);
+      console.error(`Failed to load tile image: assets/images/tile_${type}.png`);
     };
   });
 }
 
 // Load sprite images
 const spritesToLoad = [
-  { key: 'player', src: 'Images/player_sprite_frames.png', frames: 8 },
-  { key: 'enemy', src: 'Images/player_sprite_frames.png', frames: 8 } // Enemies use the same sprite as players
+  { key: 'player', src: 'assets/images/player_sprite_frames.png', frames: 8 },
+  { key: 'enemy', src: 'assets/images/player_sprite_frames.png', frames: 8 } // Enemies use the same sprite as players
 ];
 const spriteImages = {};
 
