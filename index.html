@@ -92,6 +92,8 @@
         </div>
     </header>
 
+    <div id="particles-js"></div>
+
     <section id="hero">
         <div class="container">
             <h2>Welcome to My World of Code & Creativity</h2>
@@ -290,6 +292,19 @@
 
     <!-- Scripts -->
     <script src="assets/js/main.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/particles.js@2.0.0/particles.min.js"></script>
+    <script>
+        if (typeof particlesJS !== 'undefined') {
+            particlesJS.load('particles-js', 'assets/js/particles.json', function() {
+                console.log('Particles.js config loaded');
+                if (typeof updateParticles === 'function') {
+                    updateParticles();
+                }
+            });
+        } else {
+            console.error('particlesJS is not defined. Check script loading order.');
+        }
+    </script>
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/dompurify@3.0.3/dist/purify.min.js"></script>
     <script src="assets/js/wiki.js"></script>

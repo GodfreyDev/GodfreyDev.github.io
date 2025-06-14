@@ -61,6 +61,7 @@ header {
     right: 0;
     z-index: 1000;
     transition: background-color 0.4s ease, box-shadow 0.4s ease;
+    display: block;
 }
 header .container {
     display: flex;
