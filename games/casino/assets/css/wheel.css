@@ -1,0 +1,4 @@
+#wheel-game .container { text-align: center; padding-top: 30px; padding-bottom: 30px; }
+#wheel-result { margin: 15px 0; font-size: 1.2em; }
+#wheel-canvas { margin: 20px auto; display: block; }
+.bet-controls { margin: 10px 0; }
