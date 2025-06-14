@@ -1,23 +1,20 @@
 // # js/wiki.js
 
-// CORS Proxy to bypass CORS restrictions
-const corsProxy = 'https://cors-anywhere.herokuapp.com/';
-
-// Mapping of wiki pages to their Google Drive download URLs
+// Mapping of wiki pages to local markdown files
 const wikiFiles = {
-    "Home": "https://drive.google.com/uc?export=download&id=FILE_ID_1",
-    "Getting Started": "https://drive.google.com/uc?export=download&id=FILE_ID_2",
-    "Project 1": "https://drive.google.com/uc?export=download&id=FILE_ID_3",
+    "Home": "wiki/Home.md",
+    "Getting Started": "wiki/Getting_Started.md",
+    "Project 1": "wiki/Project1.md",
     "Tutorials": {
-        "Tutorial 1": "https://drive.google.com/uc?export=download&id=FILE_ID_4",
-        "Tutorial 2": "https://drive.google.com/uc?export=download&id=FILE_ID_5"
+        "Tutorial 1": "wiki/Tutorials/Tutorial1.md",
+        "Tutorial 2": "wiki/Tutorials/Tutorial2.md"
     }
 };
 
 // Function to fetch and render markdown content
 async function fetchAndRenderMarkdown(url, containerId, linkElement = null) {
     try {
-        const response = await fetch(corsProxy + url);
+        const response = await fetch(url);
         if (!response.ok) {
             throw new Error(`HTTP error! status: ${response.status}`);
         }

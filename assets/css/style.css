@@ -4,12 +4,12 @@
 body {
     margin: 0;
     padding: 0;
+    padding-top: 80px; /* Default padding for fixed header */
     font-family: 'Roboto', sans-serif;
     background-color: #f5f5f5;
     color: #333;
     transition: background-color 0.4s ease, color 0.4s ease;
     line-height: 1.6;
-    padding-top: 80px; /* Default padding for fixed header */
 }
 html.dark-mode body {
     background-color: #1a1a1a;
@@ -230,14 +230,14 @@ html.dark-mode .btn.disabled, html.dark-mode .btn:disabled {
 
 /* Hero Section */
 #hero {
-    background: #2c3e50;
+    background: transparent;
     color: #fff;
     text-align: center;
     padding: 150px 20px 100px;
     position: relative;
 }
 html.dark-mode #hero {
-    background: #111;
+    background: transparent;
     color: #fff;
 }
 #hero .container { width: 90%; max-width: 1200px; margin: auto; padding: 0; }
@@ -307,7 +307,34 @@ html.dark-mode .project-card:hover { box-shadow: 0 6px 12px rgba(0,0,0,0.5); }
 /* Wiki Section */
 #wiki { padding: 60px 0; }
 #wiki h2 { margin-bottom: 20px; font-size: 2em; }
-#wiki-navigation { margin-bottom: 20px; }
+#wiki-navigation {
+    margin-bottom: 20px;
+}
+#wiki-navigation ul {
+    list-style: none;
+    padding-left: 0;
+}
+#wiki-navigation li {
+    margin: 5px 0;
+}
+#wiki-navigation li ul {
+    padding-left: 15px;
+}
+#wiki-navigation a {
+    text-decoration: none;
+    color: #3498db;
+    cursor: pointer;
+}
+#wiki-navigation a.active {
+    font-weight: bold;
+    color: #e67e22;
+}
+html.dark-mode #wiki-navigation a {
+    color: #9acdff;
+}
+html.dark-mode #wiki-navigation a.active {
+    color: #e67e22;
+}
 #wiki-search { display: block; width: 90%; max-width: 400px; padding: 10px; border: 1px solid #ccc; border-radius: 5px; font-size: 1em; margin: 0 auto 30px auto; background-color: #fff; color: #333; }
 html.dark-mode #wiki-search { background-color: #333; color: #ccc; border-color: #555; }
 #wiki-search:focus { border-color: #f39c12; outline: none; }
