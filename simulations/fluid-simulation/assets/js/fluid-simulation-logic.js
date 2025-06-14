@@ -41,6 +41,9 @@ const PRESETS = {
         bloomStrength: 0.4,
         bloomRadius: 0.3,
         bloomThreshold: 0.65,
+        wrapAroundEdges: false,
+        useVerticalGradient: false,
+        gradientHueScale: 0.0,
         enableObstacles: true,
         edgeDamping: 0.6, containerRadius: 55, gravityStrength: 0.04, gravityEnabled: false,
         interactionRadius: 10.0, attractionStrength: 0.15, repellingStrength: 0.30, vortexStrength: 0.15, stirStrength: 0.10, showInteractionRadius: true,
@@ -142,7 +145,7 @@ const PRESETS = {
         ],
         mouseTool: 'moveObstacle',
     },
-     'Galaxy Spin': {
+    'Galaxy Spin': {
         particlesCount: 3000,
         damping: 0.985,
         maxVelocity: 3.0,
@@ -165,6 +168,38 @@ const PRESETS = {
         ],
         forceZones: [],
         mouseTool: 'default', // Default is fine, vortex is primary interaction here
+    },
+    'Aurora': {
+        particlesCount: 8000,
+        damping: 0.96,
+        maxVelocity: 2.5,
+        particleRepulsionRadius: 3.0,
+        repulsionStrength: 0.2,
+        cohesionRadius: 8.0,
+        cohesionStrength: 0.015,
+        particleSize: 1.8,
+        bloomEnabled: true,
+        bloomStrength: 0.7,
+        bloomRadius: 0.6,
+        bloomThreshold: 0.4,
+        wrapAroundEdges: true,
+        useVerticalGradient: true,
+        gradientHueScale: 0.35,
+        enableObstacles: false,
+        edgeDamping: 0.4, containerRadius: 60, gravityStrength: 0.0, gravityEnabled: false,
+        interactionRadius: 12.0, attractionStrength: 0.15, repellingStrength: 0.25, vortexStrength: 0.1, stirStrength: 0.15, showInteractionRadius: true,
+        particleBaseColor: '#90eeff', particleVelocityColorScale: 4.5, bgColor: '#03120d',
+        obstacles: [],
+        emitters: [
+            { id: 'aurora_top', enabled: true, x: 0, y: 40, rate: 10,
+              initialVelocity: { x: 0, y: -1.5 }, velocityVariance: { x: 0.5, y: 0.5 },
+              color: '#aaffcc', lifespan: 0 },
+            { id: 'aurora_bottom', enabled: true, x: 0, y: -40, rate: 10,
+              initialVelocity: { x: 0, y: 1.5 }, velocityVariance: { x: 0.5, y: 0.5 },
+              color: '#cc88ff', lifespan: 0 }
+        ],
+        forceZones: [],
+        mouseTool: 'default',
     },
 };
 
@@ -206,7 +241,6 @@ class FluidSimulation {
         // --- Spatial Grid ---
         this.grid = {};
         this.gridCellSize = 0; // Will be set by setupSpatialGrid
-        // ... other grid properties
 
         // --- Timing & Control ---
         this.lastTime = performance.now();
@@ -232,7 +266,6 @@ class FluidSimulation {
         // Stores accumulator for fractional particle emission
         this.emitterInternals = []; // Will be populated based on this.params.emitters
 
-        // --- BOAT: State object for the boat ---
         this.boat = {
             enabled: false,
             nodes: [],
@@ -246,7 +279,6 @@ class FluidSimulation {
     }
 
     init() {
-        console.log("--- Fluid Simulation Initializing ---");
         this.setupScene();
         this.setupRenderer();
         this.setupCamera();
@@ -256,17 +288,18 @@ class FluidSimulation {
         this.setupGUI();
         this.setupEventListeners();
         this.animate();
-        console.log("--- Fluid Simulation Initialized Successfully ---");
     }
 
-    setupScene() { /* ... no change ... */ this.scene = new THREE.Scene(); }
-    setupRenderer() { /* ... no change ... */
+    setupScene() {  this.scene = new THREE.Scene(); }
+    setupRenderer() { 
         this.renderer = new THREE.WebGLRenderer({ antialias: true });
+        // Lower pixel ratio a bit to improve performance on high DPI screens
+        this.renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 1.5));
         this.renderer.setSize(window.innerWidth, window.innerHeight);
         this.container.appendChild(this.renderer.domElement);
         this.renderer.setClearColor(0x050510, 1);
     }
-    setupCamera() { /* ... no change ... */
+    setupCamera() { 
         const aspect = window.innerWidth / window.innerHeight;
         this.camera = new THREE.OrthographicCamera(
             FRUSTUM_SIZE * aspect / -2, FRUSTUM_SIZE * aspect / 2,
@@ -274,7 +307,7 @@ class FluidSimulation {
         );
         this.camera.position.z = 10;
     }
-    setupComposer() { /* ... no change ... */
+    setupComposer() { 
         if (!window.THREE?.EffectComposer || !window.THREE?.RenderPass || !window.THREE?.UnrealBloomPass) {
              console.error("EffectComposer or required passes not found!");
              this.composer = null; this.bloomPass = null; return;
@@ -283,10 +316,9 @@ class FluidSimulation {
         this.composer.addPass(new THREE.RenderPass(this.scene, this.camera));
         this.bloomPass = new THREE.UnrealBloomPass(new THREE.Vector2(window.innerWidth, window.innerHeight), 1.5, 0.4, 0.85);
         this.composer.addPass(this.bloomPass);
-        console.log("EffectComposer setup.");
     }
 
-    allocateBuffers() { /* ... no change ... */
+    allocateBuffers() { 
          this.positions = new Float32Array(MAX_PARTICLES * 3);
          this.velocities = new Float32Array(MAX_PARTICLES * 3);
          this.colors = new Float32Array(MAX_PARTICLES * 3);
@@ -302,7 +334,6 @@ class FluidSimulation {
 
     initializeParticles(fullReset = true) {
         const count = this.params.particlesCount; // This is the *initial* count for the preset
-        console.log(`Initializing state for ${count} particles...`);
         this.baseColor.set(this.params.particleBaseColor);
         const currentContainerRadius = this.params.containerRadius;
 
@@ -319,7 +350,16 @@ class FluidSimulation {
             }
             this.positions[i3] = px; this.positions[i3 + 1] = py; this.positions[i3 + 2] = 0;
             this.velocities[i3] = (Math.random() - 0.5) * 0.1; this.velocities[i3 + 1] = (Math.random() - 0.5) * 0.1; this.velocities[i3 + 2] = 0;
-            this.colors[i3] = this.baseColor.r; this.colors[i3 + 1] = this.baseColor.g; this.colors[i3 + 2] = this.baseColor.b;
+            if (this.params.useVerticalGradient) {
+                this.tempColor.copy(this.baseColor);
+                const hsl = { h: 0, s: 0, l: 0 };
+                this.tempColor.getHSL(hsl);
+                hsl.h = (hsl.h + ((py + currentContainerRadius) / (2 * currentContainerRadius)) * this.params.gradientHueScale) % 1.0;
+                this.tempColor.setHSL(hsl.h, hsl.s, hsl.l);
+                this.colors[i3] = this.tempColor.r; this.colors[i3 + 1] = this.tempColor.g; this.colors[i3 + 2] = this.tempColor.b;
+            } else {
+                this.colors[i3] = this.baseColor.r; this.colors[i3 + 1] = this.baseColor.g; this.colors[i3 + 2] = this.baseColor.b;
+            }
         }
         // Zero out remaining buffer parts if count < MAX_PARTICLES
         for (let i = count; i < MAX_PARTICLES; i++) {
@@ -334,7 +374,6 @@ class FluidSimulation {
         this.geometry.attributes.position.needsUpdate = true;
         this.geometry.attributes.color.needsUpdate = true;
         this.geometry.setDrawRange(0, count);
-        console.log(`Particles initialized. Active count set to ${count}. Draw range 0-${count}.`);
     }
 
     updateParticleCount(newCount) { // This is now mostly for the GUI slider control
@@ -342,7 +381,6 @@ class FluidSimulation {
         const oldCount = this.params.particlesCount;
         if (newCount === oldCount) return;
 
-        console.log(`GUI: Updating particle count from ${oldCount} to ${newCount}...`);
         this.params.particlesCount = newCount;
 
         if (newCount > oldCount) { // Increasing count
@@ -356,7 +394,16 @@ class FluidSimulation {
                  this.positions[i3] = px; this.positions[i3 + 1] = py; this.positions[i3 + 2] = 0;
                  this.initialPositions[i3] = px; this.initialPositions[i3 + 1] = py; this.initialPositions[i3 + 2] = 0; // Store initial for these new particles
                  this.velocities[i3] = (Math.random() - 0.5) * 0.1; this.velocities[i3 + 1] = (Math.random() - 0.5) * 0.1;
-                 this.colors[i3] = this.baseColor.r; this.colors[i3 + 1] = this.baseColor.g; this.colors[i3 + 2] = this.baseColor.b;
+                 if (this.params.useVerticalGradient) {
+                     this.tempColor.copy(this.baseColor);
+                     const hsl = { h: 0, s: 0, l: 0 };
+                     this.tempColor.getHSL(hsl);
+                     hsl.h = (hsl.h + ((py + currentContainerRadius) / (2 * currentContainerRadius)) * this.params.gradientHueScale) % 1.0;
+                     this.tempColor.setHSL(hsl.h, hsl.s, hsl.l);
+                     this.colors[i3] = this.tempColor.r; this.colors[i3+1] = this.tempColor.g; this.colors[i3+2] = this.tempColor.b;
+                 } else {
+                     this.colors[i3] = this.baseColor.r; this.colors[i3 + 1] = this.baseColor.g; this.colors[i3 + 2] = this.baseColor.b;
+                 }
             }
             this.geometry.attributes.position.needsUpdate = true;
             this.geometry.attributes.color.needsUpdate = true;
@@ -366,12 +413,10 @@ class FluidSimulation {
         this.geometry.setDrawRange(0, newCount);
 
         if (this.gui) { this.gui.controllersRecursive().find(c => c.property === 'particlesCount')?.updateDisplay(); }
-        console.log(`Particle count updated by GUI. Draw range set to ${newCount}.`);
     }
 
 
     resetSimulation() {
-        console.log("--- Resetting Simulation ---");
         if (!this.geometry || !this.initialPositions) { console.error("Cannot reset, buffers not initialized."); return; }
 
         // Reset to the *preset's* defined particlesCount, not necessarily MAX_PARTICLES or current dynamic count
@@ -380,7 +425,6 @@ class FluidSimulation {
 
         this.initializeParticles(true); // Full reset of particle positions, velocities, colors based on initialPositions
 
-        // --- BOAT: Reset the boat's position by recreating it ---
         this.createBoat();
 
         // Reset emitter accumulators
@@ -393,7 +437,6 @@ class FluidSimulation {
 
         this.params.paused = false;
         if (this.gui) { this.gui.controllersRecursive().forEach(controller => controller.updateDisplay()); }
-        console.log("Simulation Reset Complete. Active particles set to:", this.params.particlesCount);
     }
 
     setupGUI() {
@@ -413,13 +456,11 @@ class FluidSimulation {
         coreFolder.add(this, 'resetSimulation').name('Reset (R)');
         coreFolder.open();
 
-        // --- BOAT: GUI Controls for the boat ---
         const boatFolder = this.gui.addFolder('Boat');
         boatFolder.add(this.boat, 'enabled').name('Enable Boat').onChange(() => {
             this.createBoat(); // Recreate the boat when toggled
         });
         boatFolder.add(this.boat, 'damping', 0.9, 1.0, 0.001).name('Boat Damping');
-        // --- FIX: Renamed for clarity ---
         boatFolder.add(this.boat, 'interactionRadius', 1, 10, 0.1).name('Boat Node Radius');
         boatFolder.add(this.boat, 'impulseFactor', 0, 0.2, 0.005).name('Impulse Factor');
         boatFolder.open();
@@ -452,6 +493,7 @@ class FluidSimulation {
         physicsFolder.add(this.params, 'gravityStrength', 0.0, 2.0, 0.005).name('Gravity Strength');
         physicsFolder.add(this.params, 'containerRadius', 20, Math.max(100, FRUSTUM_SIZE/1.5), 1).name('Container Radius')
             .onFinishChange(() => this.setupSpatialGrid());
+        physicsFolder.add(this.params, 'wrapAroundEdges').name('Wrap Around');
         physicsFolder.close();
 
         // --- Particle Interactions ---
@@ -467,6 +509,8 @@ class FluidSimulation {
         vizFolder.addColor(this.params, 'particleBaseColor').name('Base Color').onChange(value => this.baseColor.set(value));
         vizFolder.add(this.params, 'particleVelocityColorScale', 0, 15, 0.1).name('Velocity Color Scale');
         vizFolder.add(this.params, 'particleSize', 0.1, 10.0, 0.1).name('Particle Size').onChange(value => { if (this.material) this.material.size = value; });
+        vizFolder.add(this.params, 'useVerticalGradient').name('Vertical Gradient');
+        vizFolder.add(this.params, 'gradientHueScale', 0.0, 1.0, 0.01).name('Gradient Scale');
         vizFolder.addColor(this.params, 'bgColor').name('Background Color').onChange(() => this.updateBackgroundColor());
         vizFolder.close();
 
@@ -533,7 +577,6 @@ class FluidSimulation {
     }
 
     applyPreset(name, isInitial = false) {
-        console.log(`Applying preset: ${name}`);
         const preset = PRESETS[name];
         if (!preset) { console.warn(`Preset "${name}" not found.`); return; }
 
@@ -597,11 +640,11 @@ class FluidSimulation {
         }
     }
 
-    updateBackgroundColor() { /* ... no change ... */
+    updateBackgroundColor() { 
         if (this.renderer) this.renderer.setClearColor(this.params.bgColor, 1);
         document.body.style.backgroundColor = this.params.bgColor;
     }
-    getSimulationCoords(clientX, clientY) { /* ... no change ... */
+    getSimulationCoords(clientX, clientY) { 
         if (!this.renderer || !this.camera) return { x: 0, y: 0 };
         const rect = this.renderer.domElement.getBoundingClientRect();
         const x = ((clientX - rect.left) / rect.width) * 2 - 1;
@@ -610,7 +653,7 @@ class FluidSimulation {
         vec.unproject(this.camera);
         return { x: vec.x, y: vec.y };
     }
-    createInteractionRing() { /* ... no change ... */
+    createInteractionRing() { 
         if (this.interactionRing) {
             if (this.interactionRing.geometry) this.interactionRing.geometry.dispose();
             if (this.interactionRing.material) this.interactionRing.material.dispose();
@@ -624,7 +667,7 @@ class FluidSimulation {
         this.scene.add(this.interactionRing);
     }
 
-    createObstacleMeshes() { /* ... no change ... */
+    createObstacleMeshes() { 
         this.obstacleMeshes.forEach(mesh => {
             if(mesh.geometry) mesh.geometry.dispose(); if(mesh.material) mesh.material.dispose();
             this.scene.remove(mesh);
@@ -701,7 +744,7 @@ class FluidSimulation {
     }
 
 
-    setupSpatialGrid() { /* ... no change from original logic based on repulsion/cohesion ... */
+    setupSpatialGrid() { 
         this.gridCellSize = Math.max(this.params.particleRepulsionRadius, this.params.cohesionRadius, 1.0);
         const worldSize = this.params.containerRadius * 2.2;
         this.gridWidth = Math.ceil(worldSize / this.gridCellSize);
@@ -709,9 +752,9 @@ class FluidSimulation {
         this.gridOriginX = -worldSize / 2; this.gridOriginY = -worldSize / 2;
         this.grid = {};
     }
-    getCellCoords(x, y) { /* ... no change ... */ const cellX = Math.floor((x - this.gridOriginX) / this.gridCellSize); const cellY = Math.floor((y - this.gridOriginY) / this.gridCellSize); return { cellX, cellY }; }
-    getCellKey(cellX, cellY) { /* ... no change ... */ return `${cellX}_${cellY}`; }
-    updateGrid() { /* ... no change, iterates up to this.params.particlesCount ... */
+    getCellCoords(x, y) {  const cellX = Math.floor((x - this.gridOriginX) / this.gridCellSize); const cellY = Math.floor((y - this.gridOriginY) / this.gridCellSize); return { cellX, cellY }; }
+    getCellKey(cellX, cellY) {  return `${cellX}_${cellY}`; }
+    updateGrid() { 
         this.grid = {};
         if (!this.geometry?.attributes?.position) return;
         const posArray = this.geometry.attributes.position.array;
@@ -724,7 +767,7 @@ class FluidSimulation {
             this.grid[key].push(i);
         }
     }
-    getNeighbors(particleIndex) { /* ... no change ... */
+    getNeighbors(particleIndex) { 
         const neighbors = []; if (!this.geometry?.attributes?.position) return neighbors;
         const posArray = this.geometry.attributes.position.array;
         const i3 = particleIndex * 3; const { cellX, cellY } = this.getCellCoords(posArray[i3], posArray[i3 + 1]);
@@ -734,7 +777,7 @@ class FluidSimulation {
         }} return neighbors;
     }
 
-    setupEventListeners() { /* ... no change ... */
+    setupEventListeners() { 
         window.addEventListener('mousemove', this.onMouseMove.bind(this));
         window.addEventListener('mousedown', this.onMouseDown.bind(this));
         window.addEventListener('mouseup', this.onMouseUp.bind(this));
@@ -806,7 +849,7 @@ class FluidSimulation {
         this.draggedObstacleIndex = -1; // Stop dragging any obstacle
     }
 
-    onKeyDown(event) { /* ... no change from original for G, P, R keys ... */
+    onKeyDown(event) { 
         if (document.activeElement && ['INPUT', 'TEXTAREA', 'SELECT'].includes(document.activeElement.tagName)) return;
         switch (event.key.toUpperCase()) {
             case 'G': this.params.gravityEnabled = !this.params.gravityEnabled; break;
@@ -848,7 +891,7 @@ class FluidSimulation {
             event.preventDefault();
          }
     }
-    onTouchMove(event) { /* ... no change in core logic, but respects draggedObstacleIndex ... */
+    onTouchMove(event) { 
        if (this.touchIdentifier !== null) {
              for (let i = 0; i < event.changedTouches.length; i++) {
                  const touch = event.changedTouches[i];
@@ -870,7 +913,7 @@ class FluidSimulation {
              }
          }
     }
-    onTouchEndCancel(event) { /* ... no change, also clears draggedObstacleIndex ... */
+    onTouchEndCancel(event) { 
         if (this.touchIdentifier !== null) {
              for (let i = 0; i < event.changedTouches.length; i++) {
                  if (event.changedTouches[i].identifier === this.touchIdentifier) {
@@ -881,7 +924,7 @@ class FluidSimulation {
              }
          }
     }
-    onWindowResize() { /* ... no change ... */
+    onWindowResize() { 
         if (!this.camera || !this.renderer) return;
         const newAspect = window.innerWidth / window.innerHeight;
         this.camera.left = FRUSTUM_SIZE * newAspect / -2; this.camera.right = FRUSTUM_SIZE * newAspect / 2;
@@ -891,7 +934,6 @@ class FluidSimulation {
         if (this.composer) this.composer.setSize(window.innerWidth, window.innerHeight);
     }
 
-    // --- BOAT: Method to define and create the boat object ---
     createBoat() {
         // Clean up previous boat meshes if they exist
         if (this.boatStickMesh) {
@@ -972,7 +1014,6 @@ class FluidSimulation {
         this.scene.add(this.boatStickMesh);
     }
 
-    // --- BOAT: Physics update for the boat ---
     updateBoat() {
         if (!this.boat.enabled || this.boat.nodes.length === 0) return;
 
@@ -991,7 +1032,6 @@ class FluidSimulation {
         }
 
         // 2. Solve constraints (multiple iterations for stability)
-        // --- IMPROVEMENT: Increased iterations for a more rigid boat structure ---
         const iterations = 8;
         for (let i = 0; i < iterations; i++) {
             // Solve stick constraints
@@ -1024,7 +1064,6 @@ class FluidSimulation {
         }
     }
 
-    // --- BOAT: Update the boat's visual representation ---
     updateBoatMesh() {
         if (!this.boat.enabled || !this.boatNodeMesh || !this.boatStickMesh) return;
 
@@ -1060,7 +1099,6 @@ class FluidSimulation {
              return;
         }
 
-        // --- BOAT: Update boat physics before fluid particles ---
         this.updateBoat();
 
         // --- 1. Process Emitters ---
@@ -1091,9 +1129,18 @@ class FluidSimulation {
                 this.velocities[i3+1] = emitter.initialVelocity.y + (Math.random() - 0.5) * 2 * emitter.velocityVariance.y;
                 this.velocities[i3+2] = 0;
 
-                this.colors[i3]   = internal.particleColor.r;
-                this.colors[i3+1] = internal.particleColor.g;
-                this.colors[i3+2] = internal.particleColor.b;
+                if (this.params.useVerticalGradient) {
+                    this.tempColor.copy(internal.particleColor);
+                    const hsl = { h: 0, s: 0, l: 0 };
+                    this.tempColor.getHSL(hsl);
+                    hsl.h = (hsl.h + ((emitter.y + this.params.containerRadius) / (2 * this.params.containerRadius)) * this.params.gradientHueScale) % 1.0;
+                    this.tempColor.setHSL(hsl.h, hsl.s, hsl.l);
+                    this.colors[i3] = this.tempColor.r; this.colors[i3+1] = this.tempColor.g; this.colors[i3+2] = this.tempColor.b;
+                } else {
+                    this.colors[i3]   = internal.particleColor.r;
+                    this.colors[i3+1] = internal.particleColor.g;
+                    this.colors[i3+2] = internal.particleColor.b;
+                }
 
                 // Also store as initial position if needed for reset behavior, though emitters override
                 this.initialPositions[i3] = emitter.x;
@@ -1121,7 +1168,6 @@ class FluidSimulation {
         const currentActiveParticles = this.params.particlesCount; // Use the dynamic count
 
         // Pre-calculate constants
-        // --- FIX: Use an alias for interactionRadius to avoid name collision and fix the bug ---
         const { interactionRadius: mouseInteractionRadius, particleRepulsionRadius, cohesionRadius, maxVelocity, damping, edgeDamping, containerRadius, gravityStrength, attractionStrength, repellingStrength, vortexStrength, stirStrength } = this.params;
         const mouseInteractionRadiusSq = mouseInteractionRadius * mouseInteractionRadius;
         const particleRepulsionRadiusSq = particleRepulsionRadius * particleRepulsionRadius;
@@ -1201,7 +1247,6 @@ class FluidSimulation {
             let nextX = px + vx; let nextY = py + vy;
 
             // Collision Detection & Response
-            // --- BOAT: Fluid-Boat Collision ---
             if (this.boat.enabled) {
                 const boatInteractionRadiusSq = this.boat.interactionRadius * this.boat.interactionRadius;
                 for (const boatNode of this.boat.nodes) {
@@ -1214,7 +1259,6 @@ class FluidSimulation {
                         const normX = dxBoat / distBoat;
                         const normY = dyBoat / distBoat;
 
-                        // --- IMPROVEMENT: Use velocity reflection instead of a hard position push ---
                         const dot = vx * normX + vy * normY;
                         if (dot < 0) { // Only if particle is moving towards the boat node
                             // Reflect the particle's velocity
@@ -1231,13 +1275,24 @@ class FluidSimulation {
                 }
             }
 
-            // Boundary Collision
-            const distFromCenterSq = nextX * nextX + nextY * nextY;
-            if (distFromCenterSq > containerRadiusSq) {
-                const distFromCenter = Math.sqrt(distFromCenterSq); const normX = nextX / distFromCenter; const normY = nextY / distFromCenter;
-                const dot = vx * normX + vy * normY;
-                vx -= (1 + edgeDamping) * dot * normX; vy -= (1 + edgeDamping) * dot * normY;
-                nextX = normX * containerRadius; nextY = normY * containerRadius;
+            // Boundary Handling
+            if (this.params.wrapAroundEdges) {
+                if (nextX < -containerRadius) nextX += 2 * containerRadius;
+                else if (nextX > containerRadius) nextX -= 2 * containerRadius;
+                if (nextY < -containerRadius) nextY += 2 * containerRadius;
+                else if (nextY > containerRadius) nextY -= 2 * containerRadius;
+            } else {
+                const distFromCenterSq = nextX * nextX + nextY * nextY;
+                if (distFromCenterSq > containerRadiusSq) {
+                    const distFromCenter = Math.sqrt(distFromCenterSq);
+                    const normX = nextX / distFromCenter;
+                    const normY = nextY / distFromCenter;
+                    const dot = vx * normX + vy * normY;
+                    vx -= (1 + edgeDamping) * dot * normX;
+                    vy -= (1 + edgeDamping) * dot * normY;
+                    nextX = normX * containerRadius;
+                    nextY = normY * containerRadius;
+                }
             }
             // Obstacle Collision
             for (const obs of obstacles) { // obstacles array from params
@@ -1265,7 +1320,11 @@ class FluidSimulation {
             this.tempColor.getHSL(particleBaseHSL);
 
             const hueShift = Math.min(speed * velColorScale, 0.7);
-            const finalHue = (particleBaseHSL.h + hueShift) % 1.0;
+            let gradientHue = 0;
+            if (this.params.useVerticalGradient) {
+                gradientHue = ((nextY + containerRadius) / (2 * containerRadius)) * this.params.gradientHueScale;
+            }
+            const finalHue = (particleBaseHSL.h + hueShift + gradientHue) % 1.0;
             const finalSaturation = Math.min(1.0, particleBaseHSL.s * 1.05 + 0.05);
             const finalLightness = Math.min(0.9, particleBaseHSL.l * 1.0 + 0.1);
             this.tempColor.setHSL(finalHue, finalSaturation, finalLightness);
@@ -1288,7 +1347,6 @@ class FluidSimulation {
         }
         this.update(deltaTime);
 
-        // --- BOAT: Update the boat's visual mesh after its physics are calculated ---
         this.updateBoatMesh();
 
         if (this.composer && this.bloomPass?.enabled) { this.composer.render(deltaTime); }
@@ -1296,34 +1354,43 @@ class FluidSimulation {
     }
 
     dispose() {
-         console.log("Disposing Fluid Simulation resources...");
-         // Remove event listeners... (as before)
-         if(this.gui) this.gui.destroy();
+        if (this.gui) this.gui.destroy();
 
-         this.obstacleMeshes.forEach(mesh => { /* ... */ }); this.obstacleMeshes.length = 0;
-         this.forceZoneMeshes.forEach(mesh => { // New
-            if(mesh.geometry) mesh.geometry.dispose(); if(mesh.material) mesh.material.dispose();
-            if(this.scene) this.scene.remove(mesh);
-         });
-         this.forceZoneMeshes.length = 0;
+        this.obstacleMeshes.forEach(mesh => {
+            if (mesh.geometry) mesh.geometry.dispose();
+            if (mesh.material) mesh.material.dispose();
+            if (this.scene) this.scene.remove(mesh);
+        });
+        this.obstacleMeshes.length = 0;
 
-         // --- BOAT: Dispose of boat resources ---
-         if (this.boatStickMesh) {
+        this.forceZoneMeshes.forEach(mesh => {
+            if (mesh.geometry) mesh.geometry.dispose();
+            if (mesh.material) mesh.material.dispose();
+            if (this.scene) this.scene.remove(mesh);
+        });
+        this.forceZoneMeshes.length = 0;
+
+        if (this.boatStickMesh) {
             this.boatStickMesh.geometry.dispose();
             this.boatStickMesh.material.dispose();
-            if(this.scene) this.scene.remove(this.boatStickMesh);
-         }
-         if (this.boatNodeMesh) {
+            if (this.scene) this.scene.remove(this.boatStickMesh);
+        }
+        if (this.boatNodeMesh) {
             this.boatNodeMesh.geometry.dispose();
             this.boatNodeMesh.material.dispose();
-            if(this.scene) this.scene.remove(this.boatNodeMesh);
-         }
+            if (this.scene) this.scene.remove(this.boatNodeMesh);
+        }
 
-         if(this.interactionRing) { /* ... */ }
-         if(this.particleSystem && this.scene) this.scene.remove(this.particleSystem);
-         if(this.material) this.material.dispose(); if(this.geometry) this.geometry.dispose();
-         if(this.renderer) { /* ... */ }
-         console.log("Fluid Simulation disposed.");
+        if (this.interactionRing) {
+            if (this.interactionRing.geometry) this.interactionRing.geometry.dispose();
+            if (this.interactionRing.material) this.interactionRing.material.dispose();
+            if (this.scene) this.scene.remove(this.interactionRing);
+        }
+
+        if (this.particleSystem && this.scene) this.scene.remove(this.particleSystem);
+        if (this.material) this.material.dispose();
+        if (this.geometry) this.geometry.dispose();
+        if (this.renderer) this.renderer.dispose();
     }
 }
 
@@ -1337,7 +1404,7 @@ document.addEventListener('DOMContentLoaded', () => {
             window.fluidSim = simulation; // For debugging
         } catch (error) {
             console.error("Error initializing simulation:", error);
-            const errorDiv = document.createElement('div'); /* ... error display ... */
+            const errorDiv = document.createElement('div'); 
             errorDiv.style.position = 'absolute'; errorDiv.style.top = '10px'; errorDiv.style.left = '10px';
             errorDiv.style.padding = '10px'; errorDiv.style.backgroundColor = 'rgba(255,0,0,0.8)';
             errorDiv.style.color = 'white'; errorDiv.style.zIndex = '2000'; // Ensure above GUI
