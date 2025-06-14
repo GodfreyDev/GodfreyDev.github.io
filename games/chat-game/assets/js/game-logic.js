@@ -44,6 +44,25 @@ const serverUrl = window.location.hostname === 'godfreydev.github.io'
   : 'http://localhost:3000';
 
 const socket = io.connect(serverUrl);
+const connectionStatus = document.getElementById('connectionStatus');
+
+socket.on('connect', () => {
+  if (connectionStatus) {
+    connectionStatus.textContent = 'Connected';
+    connectionStatus.classList.add('connected');
+    connectionStatus.classList.remove('disconnected');
+  }
+  showMessage('Connected to server');
+});
+
+socket.on('disconnect', () => {
+  if (connectionStatus) {
+    connectionStatus.textContent = 'Disconnected';
+    connectionStatus.classList.remove('connected');
+    connectionStatus.classList.add('disconnected');
+  }
+  showMessage('Disconnected from server');
+});
 
 // Directions based on sprite sheet layout
 const DIRECTIONS = {
