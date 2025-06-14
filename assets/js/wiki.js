@@ -2,12 +2,12 @@
 
 // Mapping of wiki pages to local markdown files
 const wikiFiles = {
-    "Home": "wiki/Home.md",
-    "Getting Started": "wiki/Getting_Started.md",
-    "Project 1": "wiki/Project1.md",
+    "Home": "Home.md",
+    "Getting Started": "Getting_Started.md",
+    "Project 1": "Project1.md",
     "Tutorials": {
-        "Tutorial 1": "wiki/Tutorials/Tutorial1.md",
-        "Tutorial 2": "wiki/Tutorials/Tutorial2.md"
+        "Tutorial 1": "Tutorials/Tutorial1.md",
+        "Tutorial 2": "Tutorials/Tutorial2.md"
     }
 };
 
