@@ -21,6 +21,10 @@ html.dark-mode #card-table {
      background-color: #004d00; /* Darker green */
      border-color: #5a2d0c; /* Darker brown */
 }
+html.light-mode #card-table {
+     background-color: #006400;
+     border-color: #8b4513;
+}
 
 /* Hand Areas */
 .hand-area {
