@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Roulette</title>
+    <script>
+        function applyGameTheme(themeName){
+            const validTheme=(themeName==='dark-mode'||themeName==='light-mode')?themeName:'light-mode';
+            document.documentElement.className=validTheme;
+        }
+        try{const savedTheme=localStorage.getItem('theme');applyGameTheme(savedTheme);}catch(e){applyGameTheme('light-mode');}
+    </script>
+    <link rel="stylesheet" href="../../assets/css/style.css">
+    <link rel="stylesheet" href="assets/css/roulette.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="icon" href="../../assets/images/favicon.png" type="image/png">
+</head>
+<body>
+    <header class="game-header">
+        <div class="container">
+            <a href="../../index.html#casino" class="btn back-btn">← Back</a>
+            <h1><i class="fas fa-sync" aria-hidden="true"></i> Roulette</h1>
+            <div class="header-spacer" aria-hidden="true"></div>
+        </div>
+    </header>
+    <main id="roulette">
+        <div class="container">
+            <h2>Place Your Bets</h2>
+            <div class="table-select">
+                <label for="table-select">Table:</label>
+                <select id="table-select">
+                    <option value="low">Low Stakes ($1 min)</option>
+                    <option value="high">High Stakes ($10 min)</option>
+                    <option value="vip">VIP ($25 min)</option>
+                </select>
+            </div>
+            <div class="bet-controls">
+                <label for="bet-type">Bet On:</label>
+                <select id="bet-type">
+                    <option value="red">Red</option>
+                    <option value="black">Black</option>
+                    <option value="number">Number</option>
+                </select>
+                <input type="number" id="number-input" min="0" max="36" value="0" aria-label="Number to bet on">
+                <input type="number" id="bet-amount" placeholder="$1" min="1" step="1" aria-label="Bet amount">
+                <button id="spin-button" class="btn casino-btn">Spin</button>
+            </div>
+            <div id="result" class="result"></div>
+            <p>Balance: $<span id="balance-amount">0</span></p>
+        </div>
+    </main>
+    <footer class="game-footer">
+        <div class="container">
+            <p>© 2024 Gavin - Roulette</p>
+        </div>
+    </footer>
+    <script src="assets/js/storage.js"></script>
+    <script src="assets/js/roulette.js"></script>
+</body>
+</html>
