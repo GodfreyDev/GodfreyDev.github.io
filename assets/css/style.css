@@ -469,6 +469,44 @@ html.dark-mode .game-header h1 {
     min-width: 80px; /* Match button */
 }
 
+/* Casino Game Navigation Bar */
+.casino-nav {
+    background-color: #125f3b;
+    border-bottom: 2px solid #0d4b2e;
+}
+.casino-nav ul {
+    list-style: none;
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 10px;
+    margin: 0;
+    padding: 10px;
+}
+.casino-nav ul li a {
+    color: #fff;
+    text-decoration: none;
+    padding: 6px 12px;
+    border-radius: 4px;
+    background-color: rgba(255,255,255,0.1);
+    transition: background-color 0.3s;
+}
+.casino-nav ul li a:hover,
+.casino-nav ul li a.active {
+    background-color: rgba(0,0,0,0.2);
+}
+html.dark-mode .casino-nav {
+    background-color: #0d4b2e;
+    border-bottom-color: #08341f;
+}
+html.dark-mode .casino-nav ul li a {
+    background-color: rgba(255,255,255,0.1);
+}
+html.dark-mode .casino-nav ul li a:hover,
+html.dark-mode .casino-nav ul li a.active {
+    background-color: rgba(255,255,255,0.25);
+}
+
 
 /* Shared Game Page Footer Styles */
 .game-footer {
