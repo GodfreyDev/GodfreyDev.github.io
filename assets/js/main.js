@@ -171,6 +171,23 @@ function updateParticles() {
 }
 
 
+// Loading overlay for first visit
+function showLoadingOverlay() {
+    const overlay = document.getElementById('loading-overlay');
+    if (!overlay) return;
+
+    if (!localStorage.getItem('visited')) {
+        overlay.style.display = 'flex';
+        setTimeout(() => {
+            overlay.classList.add('fade-out');
+            localStorage.setItem('visited', 'true');
+        }, 1500);
+        overlay.addEventListener('transitionend', () => overlay.remove());
+    } else {
+        overlay.remove();
+    }
+}
+
 // Countdown timer functions
 let countdownInterval = null;
 
@@ -349,6 +366,7 @@ function initializeSmoothScroll() {
 document.addEventListener('DOMContentLoaded', () => {
     console.log("DOM fully loaded and parsed");
     loadTheme(); // Load theme and update UI elements like icon
+    showLoadingOverlay();
 
     // Initialize other components
     initializeHamburgerMenu();

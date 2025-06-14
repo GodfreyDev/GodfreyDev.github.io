@@ -15,6 +15,34 @@ html.dark-mode body {
     background-color: #1a1a1a;
     color: #ccc;
 }
+
+/* Loading Overlay */
+#loading-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(17, 17, 17, 0.95);
+    display: none;
+    align-items: center;
+    justify-content: center;
+    z-index: 2000;
+    transition: opacity 1s ease;
+}
+#loading-overlay.fade-out {
+    opacity: 0;
+    pointer-events: none;
+}
+#geometry-symbol {
+    width: 150px;
+    height: 150px;
+    animation: geometry-spin 8s linear infinite;
+}
+@keyframes geometry-spin {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+}
 .container {
     width: 90%;
     max-width: 1200px;
@@ -202,14 +230,14 @@ html.dark-mode .btn.disabled, html.dark-mode .btn:disabled {
 
 /* Hero Section */
 #hero {
-    background: url('../images/hero-bg.jpg') no-repeat center center/cover; /* Adjusted path assuming css folder */
-    color: #333;
+    background: linear-gradient(135deg, #0f2027 0%, #203a43 50%, #2c5364 100%);
+    color: #fff;
     text-align: center;
     padding: 150px 20px 100px;
     position: relative;
 }
 html.dark-mode #hero {
-    background: url('../images/hero-bg-dark.jpg') no-repeat center center/cover; /* Adjusted path */
+    background: linear-gradient(135deg, #000000 0%, #111111 50%, #222222 100%);
     color: #fff;
 }
 #hero .container { width: 90%; max-width: 1200px; margin: auto; padding: 0; }
