@@ -5,7 +5,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const balanceSpan = document.getElementById('balance-amount');
   const betInput = document.getElementById('bet-amount');
 
-  let balance = 100;
+  let balance = loadCasinoBalance();
   let point = null;
 
   function updateBalance() {
@@ -43,6 +43,7 @@ document.addEventListener('DOMContentLoaded', () => {
         point = sum;
         messageDiv.textContent = `Point is ${point}. Roll again.`;
         updateBalance();
+        saveCasinoBalance(balance);
         return;
       }
     } else {
@@ -57,11 +58,13 @@ document.addEventListener('DOMContentLoaded', () => {
       } else {
         messageDiv.textContent = `You rolled ${sum}. Roll again for ${point}.`;
         updateBalance();
+        saveCasinoBalance(balance);
         return;
       }
     }
 
     updateBalance();
+    saveCasinoBalance(balance);
   }
 
   rollButton.addEventListener('click', playRound);

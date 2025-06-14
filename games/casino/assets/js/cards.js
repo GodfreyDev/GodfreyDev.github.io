@@ -17,10 +17,11 @@ document.addEventListener('DOMContentLoaded', () => {
     let dealerHand = [];
     let playerScore = 0;
     let dealerScore = 0;
-    let balance = 100; // Starting balance
+    let balance = loadCasinoBalance();
     let playerBet = 10; // Example fixed bet - you might want an input for this
     let gameInProgress = false;
     let dealerHiddenCard = null; // To store the dealer's face-down card
+
 
     // --- Constants ---
     const suits = ['Hearts', 'Diamonds', 'Clubs', 'Spades'];
@@ -29,6 +30,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // --- Initialization ---
     function initializeCardGame() {
         updateBalanceDisplay();
+        saveCasinoBalance(balance);
         setupButtonListeners();
         resetUI();
         console.log("Card game initialized (Blackjack structure).");
@@ -182,6 +184,7 @@ document.addEventListener('DOMContentLoaded', () => {
             gameStatusDiv.textContent = "Blackjack! You win!";
             balance += playerBet * 2.5; // Blackjack typically pays 3:2
              updateBalanceDisplay();
+            saveCasinoBalance(balance);
             endRound();
         }
     }
@@ -233,8 +236,9 @@ document.addEventListener('DOMContentLoaded', () => {
                  clearInterval(dealerTurn);
                  gameStatusDiv.textContent = `Dealer busts! Dealer score: ${dealerScore}. You win $${playerBet}!`;
                  balance += playerBet * 2; // Win original bet + winnings
-                 updateBalanceDisplay();
-                 endRound();
+                updateBalanceDisplay();
+                saveCasinoBalance(balance);
+                endRound();
              }
         }, 1000); // Delay between dealer hits for visibility
     }
@@ -264,6 +268,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         gameStatusDiv.textContent = finalMessage;
         updateBalanceDisplay();
+        saveCasinoBalance(balance);
     }
 
 
