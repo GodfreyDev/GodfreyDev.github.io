@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Classic Slots</title>
+    <script>
+        function applyGameTheme(themeName){
+            const validTheme=(themeName==='dark-mode'||themeName==='light-mode')?themeName:'light-mode';
+            document.documentElement.className=validTheme;
+        }
+        try{const savedTheme=localStorage.getItem('theme');applyGameTheme(savedTheme);}catch(e){applyGameTheme('light-mode');}
+    </script>
+    <link rel="stylesheet" href="../../assets/css/style.css">
+    <link rel="stylesheet" href="assets/css/slots-classic.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="icon" href="../../assets/images/favicon.png" type="image/png">
+</head>
+<body>
+    <header class="game-header">
+        <div class="container">
+            <a href="index.html" class="btn back-btn">← Back</a>
+            <h1><i class="fas fa-dice" aria-hidden="true"></i> Classic Slots</h1>
+            <div class="header-spacer" aria-hidden="true"></div>
+        </div>
+    </header>
+    <main id="classic-slot-container">
+        <div class="container">
+            <h2>Spin the Reels!</h2>
+            <div id="classic-slot-machine" aria-label="Classic slot machine">
+                <div class="classic-cell" id="cell0"></div>
+                <div class="classic-cell" id="cell1"></div>
+                <div class="classic-cell" id="cell2"></div>
+                <div class="classic-cell" id="cell3"></div>
+                <div class="classic-cell" id="cell4"></div>
+                <div class="classic-cell" id="cell5"></div>
+                <div class="classic-cell" id="cell6"></div>
+                <div class="classic-cell" id="cell7"></div>
+                <div class="classic-cell" id="cell8"></div>
+            </div>
+            <button id="classic-spin-button" class="btn casino-btn">Spin ($1)</button>
+            <div id="classic-result" class="game-status-message"></div>
+            <div id="balance-display" class="game-balance" aria-live="polite">
+                Balance: $<span id="balance-amount">100</span>
+            </div>
+        </div>
+    </main>
+    <footer class="game-footer">
+        <div class="container">
+            <p>© 2024 Gavin - Classic Slots</p>
+        </div>
+    </footer>
+    <script src="assets/js/storage.js"></script>
+    <script src="assets/js/slots-classic.js"></script>
+</body>
+</html>
