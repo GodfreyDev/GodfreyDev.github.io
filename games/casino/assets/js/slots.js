@@ -18,6 +18,8 @@ document.addEventListener('DOMContentLoaded', () => {
     const stopButtons = [];
     for (let i = 0; i < 5; i++) { stopButtons.push(document.getElementById(`stop-reel-${i}`)); }
 
+    // Persist balance locally so players can come back later
+
     const ROWS = 3; const COLS = 5;
     const IMAGE_BASE_PATH = 'assets/images/'; // Base path for casino game images
 
@@ -94,7 +96,7 @@ document.addEventListener('DOMContentLoaded', () => {
         [2, 1, 1, 1, 2], [1, 0, 1, 2, 1], [1, 2, 1, 0, 1], [0, 1, 0, 1, 0], [2, 1, 2, 1, 2]
     ];
 
-    let balance = 100;
+    let balance = loadCasinoBalance();
     let currentBetLevelIndex = 0;
     let currentCoinValueIndex = 2;
     let isSpinning = false;
@@ -252,6 +254,7 @@ document.addEventListener('DOMContentLoaded', () => {
         } else {
             balance -= currentCost;
             updateBalanceDisplay();
+            saveCasinoBalance(balance);
             resultMessage.textContent = 'Starting Spin...';
         }
 
@@ -544,6 +547,7 @@ document.addEventListener('DOMContentLoaded', () => {
             resultMessage.textContent = freeSpinsRemaining > 0 && !bonusTriggeredThisSpin ? `Free Spin! ${freeSpinsRemaining} left.` : (bonusTriggeredThisSpin ? resultMessage.textContent : `Try Again!`);
         }
         updateBalanceDisplay();
+        saveCasinoBalance(balance);
 
         if (freeSpinsRemaining > 0 && !bonusTriggeredThisSpin) {
             // console.log(`Scheduling next free spin. Remaining: ${freeSpinsRemaining}`);

@@ -2,5 +2,8 @@
   "dependencies": {
     "express": "^4.21.1",
     "socket.io": "^4.7.5"
+  },
+  "scripts": {
+    "test": "node test/testLocalBalance.js"
   }
 }
