@@ -51,17 +51,8 @@ html.dark-mode body {
 
 /* Header (Main Portfolio) */
 header {
-    padding: 10px 0;
-    width: 100%;
-    background: rgba(255, 255, 255, 0.9);
-    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
-    position: fixed;
-    top: 0;
-    left: 0;
-    right: 0;
-    z-index: 1000;
-    transition: background-color 0.4s ease, box-shadow 0.4s ease;
-    display: block;
+
+  
 }
 header .container {
     display: flex;
@@ -70,10 +61,6 @@ header .container {
     padding: 0;
     width: 90%;
     max-width: 1200px;
-}
-html.dark-mode header {
-    background: rgba(26, 26, 26, 0.9);
-    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.5);
 }
 header h1 {
     font-size: 1.8em;
@@ -478,9 +465,7 @@ html.dark-mode .game-footer {
 @media (max-width: 768px) {
     /* --- START: Mobile Header/Nav Adjustments --- */
     body {
-        /* Estimate header height: Title line + Button line + padding/margins */
-        /* Adjust this value based on actual measured height in dev tools */
-        padding-top: 60px; /* Reset to default mobile header height */
+        padding-top: 0;
     }
     header { padding: 5px 0; }
     header .container { width: 95%; flex-wrap: wrap; }
@@ -523,8 +508,7 @@ html.dark-mode .game-footer {
     }
     /* Adjust body padding for new mobile game header height */
     body {
-        /* Measure this height! */
-        padding-top: 85px; /* Example: Adjust this value! */
+        padding-top: 0;
     }
      /* --- END: Mobile Game Header Fix --- */
 
@@ -543,7 +527,7 @@ html.dark-mode .game-footer {
 @media (max-width: 480px) {
     /* Adjust body padding for smallest screens if header height changes again */
     body {
-        padding-top: 80px; /* Example value, ADJUST AS NEEDED */
+        padding-top: 0;
         font-size: 15px;
     }
     header { padding: 5px 0; }
