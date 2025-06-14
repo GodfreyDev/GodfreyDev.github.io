@@ -51,7 +51,8 @@ html.dark-mode body {
 
 /* Header (Main Portfolio) */
 header {
-    display: none;
+
+  
 }
 header .container {
     display: flex;
