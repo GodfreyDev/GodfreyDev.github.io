@@ -233,6 +233,16 @@ html.dark-mode .btn.disabled, html.dark-mode .btn:disabled {
     padding: 40px 20px 40px;
     position: relative;
 }
+/* Particles canvas container as fixed background */
+#particles-js {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: -1;
+    pointer-events: none;
+}
 html.dark-mode #hero {
     background: transparent;
     color: #fff;
