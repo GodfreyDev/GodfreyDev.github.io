@@ -230,14 +230,14 @@ html.dark-mode .btn.disabled, html.dark-mode .btn:disabled {
 
 /* Hero Section */
 #hero {
-    background: linear-gradient(135deg, #0f2027 0%, #203a43 50%, #2c5364 100%);
+    background: #2c3e50;
     color: #fff;
     text-align: center;
     padding: 150px 20px 100px;
     position: relative;
 }
 html.dark-mode #hero {
-    background: linear-gradient(135deg, #000000 0%, #111111 50%, #222222 100%);
+    background: #111;
     color: #fff;
 }
 #hero .container { width: 90%; max-width: 1200px; margin: auto; padding: 0; }
@@ -352,8 +352,6 @@ footer nav a:hover { color: #f39c12; }
 footer p { margin: 0; font-size: 0.9em; color: #aaa; }
 html.dark-mode footer p { color: #888; }
 
-/* Particle Background */
-#particles-js { position: fixed; width: 100%; height: 100%; top: 0; left: 0; z-index: -1; }
 
 /* --- START: Shared Game Page Header Styles (Restructured) --- */
 .game-header {

@@ -176,16 +176,11 @@ function showLoadingOverlay() {
     const overlay = document.getElementById('loading-overlay');
     if (!overlay) return;
 
-    if (!localStorage.getItem('visited')) {
-        overlay.style.display = 'flex';
-        setTimeout(() => {
-            overlay.classList.add('fade-out');
-            localStorage.setItem('visited', 'true');
-        }, 1500);
-        overlay.addEventListener('transitionend', () => overlay.remove());
-    } else {
-        overlay.remove();
-    }
+    overlay.style.display = 'flex';
+    setTimeout(() => {
+        overlay.classList.add('fade-out');
+    }, 1500);
+    overlay.addEventListener('transitionend', () => overlay.remove());
 }
 
 // Countdown timer functions
