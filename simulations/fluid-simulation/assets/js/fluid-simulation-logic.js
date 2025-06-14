@@ -23,6 +23,7 @@ const PRESETS = {
         interactionRadius: 10.0, attractionStrength: 0.15, repellingStrength: 0.30, vortexStrength: 0.15, stirStrength: 0.10, showInteractionRadius: true,
         particleBaseColor: '#40E0D0', particleVelocityColorScale: 3.0, bgColor: '#050510',
         bloomStrength: 0.4, bloomRadius: 0.3, bloomThreshold: 0.65,
+        wrapScreenEdges: false,
         obstacles: [ { x: -25, y: 20, radius: 10 }, { x: 30, y: -15, radius: 14 }, { x: 0, y: -35, radius: 6 }],
         emitters: [],
         forceZones: [],
@@ -42,6 +43,7 @@ const PRESETS = {
         bloomRadius: 0.3,
         bloomThreshold: 0.65,
         wrapAroundEdges: false,
+        wrapScreenEdges: false,
         useVerticalGradient: false,
         gradientHueScale: 0.0,
         enableObstacles: true,
@@ -66,6 +68,7 @@ const PRESETS = {
         bloomStrength: 0.5,
         bloomRadius: 0.4,
         bloomThreshold: 0.6,
+        wrapScreenEdges: false,
         enableObstacles: true,
         edgeDamping: 0.6, containerRadius: 55, gravityStrength: 0.04, gravityEnabled: false,
         interactionRadius: 10.0, attractionStrength: 0.15, repellingStrength: 0.30, vortexStrength: 0.15, stirStrength: 0.10, showInteractionRadius: true,
@@ -88,6 +91,7 @@ const PRESETS = {
         bloomStrength: 0.6,
         bloomRadius: 0.5,
         bloomThreshold: 0.55,
+        wrapScreenEdges: false,
         enableObstacles: true,
         edgeDamping: 0.6, containerRadius: 55, gravityStrength: 0.04, gravityEnabled: false,
         interactionRadius: 10.0, attractionStrength: 0.15, repellingStrength: 0.30, vortexStrength: 0.15, stirStrength: 0.10, showInteractionRadius: true,
@@ -108,6 +112,7 @@ const PRESETS = {
         particleSize: 1.2,
         bloomEnabled: true, bloomStrength: 0.35, bloomRadius: 0.25, bloomThreshold: 0.7,
         enableObstacles: false,
+        wrapScreenEdges: false,
         edgeDamping: 0.5, containerRadius: 60, gravityStrength: 0.09, gravityEnabled: true,
         interactionRadius: 12.0, attractionStrength: 0.2, repellingStrength: 0.35, vortexStrength: 0.2, stirStrength: 0.15, showInteractionRadius: true,
         particleBaseColor: '#2299FF', particleVelocityColorScale: 2.0, bgColor: '#080818',
@@ -132,6 +137,7 @@ const PRESETS = {
         bloomEnabled: true, bloomStrength: 0.2, bloomRadius: 0.1, bloomThreshold: 0.8,
         enableObstacles: true,
         obstacles: [ { x: 0, y: 0, radius: 12 } ],
+        wrapScreenEdges: false,
         edgeDamping: 0.1, containerRadius: 60, gravityStrength: 0.0, gravityEnabled: false, // No gravity
         interactionRadius: 8.0, attractionStrength: 0.1, repellingStrength: 0.2, vortexStrength: 0.1, stirStrength: 0.05, showInteractionRadius: false,
         particleBaseColor: '#CCCCCC', particleVelocityColorScale: 4.0, bgColor: '#101010',
@@ -156,6 +162,7 @@ const PRESETS = {
         particleSize: 1.3,
         bloomEnabled: true, bloomStrength: 0.6, bloomRadius: 0.5, bloomThreshold: 0.5,
         enableObstacles: false,
+        wrapScreenEdges: false,
         edgeDamping: 0.0, containerRadius: 70, // Larger, no edge damp to keep particles in
         gravityStrength: 0.0, gravityEnabled: false,
         interactionRadius: 25.0, attractionStrength: 0.05, repellingStrength: 0.0, vortexStrength: 0.25, stirStrength: 0.0, showInteractionRadius: true,
@@ -183,6 +190,7 @@ const PRESETS = {
         bloomRadius: 0.6,
         bloomThreshold: 0.4,
         wrapAroundEdges: true,
+        wrapScreenEdges: false,
         useVerticalGradient: true,
         gradientHueScale: 0.35,
         enableObstacles: false,
@@ -198,6 +206,29 @@ const PRESETS = {
               initialVelocity: { x: 0, y: 1.5 }, velocityVariance: { x: 0.5, y: 0.5 },
               color: '#cc88ff', lifespan: 0 }
         ],
+        forceZones: [],
+        mouseTool: 'default',
+    },
+    'Water Flow': {
+        particlesCount: 6000,
+        damping: 0.97,
+        maxVelocity: 2.0,
+        particleRepulsionRadius: 2.5,
+        repulsionStrength: 0.15,
+        cohesionRadius: 6.0,
+        cohesionStrength: 0.01,
+        particleSize: 2.0,
+        bloomEnabled: false,
+        wrapAroundEdges: true,
+        wrapScreenEdges: true,
+        useVerticalGradient: false,
+        gradientHueScale: 0.0,
+        enableObstacles: false,
+        edgeDamping: 0.3, containerRadius: 60, gravityStrength: 0.0, gravityEnabled: false,
+        interactionRadius: 10.0, attractionStrength: 0.15, repellingStrength: 0.3, vortexStrength: 0.15, stirStrength: 0.1, showInteractionRadius: true,
+        particleBaseColor: '#3399ff', particleVelocityColorScale: 2.5, bgColor: '#050510',
+        obstacles: [],
+        emitters: [],
         forceZones: [],
         mouseTool: 'default',
     },
@@ -494,6 +525,7 @@ class FluidSimulation {
         physicsFolder.add(this.params, 'containerRadius', 20, Math.max(100, FRUSTUM_SIZE/1.5), 1).name('Container Radius')
             .onFinishChange(() => this.setupSpatialGrid());
         physicsFolder.add(this.params, 'wrapAroundEdges').name('Wrap Around');
+        physicsFolder.add(this.params, 'wrapScreenEdges').name('Screen Wrap');
         physicsFolder.close();
 
         // --- Particle Interactions ---
@@ -1182,6 +1214,9 @@ class FluidSimulation {
         this.baseColor.getHSL(baseHSL); // Ensure baseColor is current
         const velColorScale = this.params.particleVelocityColorScale * 0.1;
 
+        const halfWidth = (this.camera.right - this.camera.left) / 2;
+        const halfHeight = (this.camera.top - this.camera.bottom) / 2;
+
 
         // --- 3. Particle Update Loop (Iterate only over active particles) ---
         for (let i = 0; i < currentActiveParticles; i++) {
@@ -1277,10 +1312,17 @@ class FluidSimulation {
 
             // Boundary Handling
             if (this.params.wrapAroundEdges) {
-                if (nextX < -containerRadius) nextX += 2 * containerRadius;
-                else if (nextX > containerRadius) nextX -= 2 * containerRadius;
-                if (nextY < -containerRadius) nextY += 2 * containerRadius;
-                else if (nextY > containerRadius) nextY -= 2 * containerRadius;
+                if (this.params.wrapScreenEdges) {
+                    if (nextX < -halfWidth) nextX += 2 * halfWidth;
+                    else if (nextX > halfWidth) nextX -= 2 * halfWidth;
+                    if (nextY < -halfHeight) nextY += 2 * halfHeight;
+                    else if (nextY > halfHeight) nextY -= 2 * halfHeight;
+                } else {
+                    if (nextX < -containerRadius) nextX += 2 * containerRadius;
+                    else if (nextX > containerRadius) nextX -= 2 * containerRadius;
+                    if (nextY < -containerRadius) nextY += 2 * containerRadius;
+                    else if (nextY > containerRadius) nextY -= 2 * containerRadius;
+                }
             } else {
                 const distFromCenterSq = nextX * nextX + nextY * nextY;
                 if (distFromCenterSq > containerRadiusSq) {
