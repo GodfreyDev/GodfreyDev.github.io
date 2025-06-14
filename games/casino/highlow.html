@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>High Low</title>
+    <script>
+        function applyGameTheme(themeName){
+            const validTheme = (themeName==='dark-mode'||themeName==='light-mode')?themeName:'light-mode';
+            document.documentElement.className = validTheme;
+        }
+        try{const savedTheme = localStorage.getItem('theme');applyGameTheme(savedTheme);}catch(e){applyGameTheme('light-mode');}
+    </script>
+    <link rel="stylesheet" href="../../assets/css/style.css">
+    <link rel="stylesheet" href="assets/css/highlow.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="icon" href="../../assets/images/favicon.png" type="image/png">
+</head>
+<body>
+    <header class="game-header">
+        <div class="container">
+            <a href="index.html" class="btn back-btn">← Back</a>
+            <h1><i class="fas fa-sort" aria-hidden="true"></i> High Low</h1>
+            <button class="theme-toggle" onclick="toggleTheme()" aria-label="Toggle theme">
+                <span id="toggle-icon"></span>
+            </button>
+        </div>
+    </header>
+    <main id="highlow-container">
+        <div class="container">
+            <h2>Will the next card be higher or lower?</h2>
+            <div id="current-card" aria-live="polite">?</div>
+            <div class="bet-controls">
+                <label>Bet: $<input id="bet-amount" type="number" value="10" min="1"></label>
+                <button id="higher-button" class="btn casino-btn">Higher</button>
+                <button id="lower-button" class="btn casino-btn">Lower</button>
+            </div>
+            <div id="result" class="game-status-message" aria-live="polite"></div>
+            <div id="balance-display" class="game-balance" aria-live="polite">
+                Balance: $<span id="balance-amount">100</span>
+            </div>
+        </div>
+    </main>
+    <footer class="game-footer">
+        <div class="container">
+            <p>© 2024 Gavin - High Low</p>
+        </div>
+    </footer>
+    <script src="assets/js/storage.js"></script>
+    <script src="assets/js/highlow.js"></script>
+    <script src="../../assets/js/main.js"></script>
+</body>
+</html>
