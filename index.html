@@ -36,12 +36,8 @@
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap">
     <!-- Font Awesome for Icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <!-- Vis Network CSS -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/vis/4.21.0/vis-network.min.css" />
     <!-- Stylesheet -->
     <link rel="stylesheet" href="assets/css/style.css">
-    <!-- Particles.js -->
-    <script src="https://cdn.jsdelivr.net/npm/particles.js@2.0.0/particles.min.js"></script>
 </head>
 <body>
     <div id="loading-overlay" aria-hidden="true">
@@ -64,7 +60,9 @@
             <nav>
                 <ul>
                     <li><a href="#about">About</a></li>
+                    <li><a href="#resume">Resume</a></li>
                     <li><a href="#skills">Skills</a></li>
+                    <li><a href="#experience">Experience</a></li>
                     <li><a href="#projects">Projects</a></li>
                     <li><a href="#game">Game</a></li>
                     <li><a href="#casino">Casino</a></li>
@@ -94,8 +92,6 @@
         </div>
     </header>
 
-    <div id="particles-js"></div>
-
     <section id="hero">
         <div class="container">
             <h2>Welcome to My World of Code & Creativity</h2>
@@ -118,6 +114,14 @@
                     <div id="countdown" aria-live="polite">Set a date to count down to!</div>
                 </div>
             </div>
+        </div>
+    </section>
+
+    <section id="resume">
+        <div class="container">
+            <h2>Resume</h2>
+            <p>You can download my full resume as a PDF.</p>
+            <a href="resume.pdf" class="btn" download>Download Resume</a>
         </div>
     </section>
 
@@ -146,6 +150,17 @@
                     <p>Developing responsive and user-friendly mobile applications for both Android and iOS platforms.</p>
                 </div>
             </div>
+        </div>
+    </section>
+
+    <section id="experience">
+        <div class="container">
+            <h2>Professional Experience</h2>
+            <ul>
+                <li>Game Development Intern - Created game prototypes using Unity.</li>
+                <li>Freelance Web Developer - Built responsive websites for local clients.</li>
+                <li>Teaching Assistant - Assisted in introductory programming courses.</li>
+            </ul>
         </div>
     </section>
 
@@ -217,9 +232,6 @@
             <div id="wiki-content">
                 <!-- Markdown content will be loaded here -->
             </div>
-            <div id="graph-container">
-                <!-- Graph visualization will be rendered here -->
-            </div>
         </div>
     </section>
 
@@ -278,20 +290,8 @@
 
     <!-- Scripts -->
     <script src="assets/js/main.js"></script>
-    <script>
-        if (typeof particlesJS !== 'undefined') {
-            particlesJS.load('particles-js', 'assets/js/particles.json', function() {
-                console.log('Particles.js config loaded');
-                if (typeof updateParticles === 'function') {
-                    updateParticles();
-                }
-            });
-        } else {
-            console.error("particlesJS is not defined. Check script loading order.");
-        }
-    </script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/vis/4.21.0/vis-network.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/dompurify@3.0.3/dist/purify.min.js"></script>
     <script src="assets/js/wiki.js"></script>
-    <script src="assets/js/graph.js"></script>
 </body>
 </html>
