@@ -71,7 +71,8 @@
 
     <script src="assets/js/storage.js"></script>
     <script src="assets/js/cards.js"></script>
-     <script>
+    <script src="../../assets/js/main.js"></script>
+    <script>
         if (typeof initializeCardGame === 'undefined' && document.getElementById('game-status')) {
              document.getElementById('game-status').innerHTML = '<p>Card game logic (initializeCardGame) not found in assets/js/cards.js</p>';
              if(document.getElementById('deal-button')) document.getElementById('deal-button').disabled = true;

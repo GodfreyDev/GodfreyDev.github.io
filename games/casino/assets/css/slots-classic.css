@@ -22,6 +22,10 @@ html.dark-mode #classic-slot-machine {
   background-color: #3a3a3a;
   border-color: #111;
 }
+html.light-mode #classic-slot-machine {
+  background-color: #eee;
+  border-color: #bbb;
+}
 
 .classic-cell {
   background: #fff;
@@ -35,6 +39,10 @@ html.dark-mode #classic-slot-machine {
 html.dark-mode .classic-cell {
   background: #ddd;
   border-color: #aaa;
+}
+html.light-mode .classic-cell {
+  background: #fff;
+  border-color: #999;
 }
 
 .classic-win {
