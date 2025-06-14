@@ -3,16 +3,16 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Craps Game</title>
+    <title>Lucky Wheel</title>
     <script>
         function applyGameTheme(themeName){
-            const validTheme = (themeName==='dark-mode'||themeName==='light-mode')?themeName:'light-mode';
-            document.documentElement.className = validTheme;
+            const validTheme=(themeName==='dark-mode'||themeName==='light-mode')?themeName:'light-mode';
+            document.documentElement.className=validTheme;
         }
-        try{const savedTheme = localStorage.getItem('theme');applyGameTheme(savedTheme);}catch(e){applyGameTheme('light-mode');}
+        try{const savedTheme=localStorage.getItem('theme');applyGameTheme(savedTheme);}catch(e){applyGameTheme('light-mode');}
     </script>
     <link rel="stylesheet" href="../../assets/css/style.css">
-    <link rel="stylesheet" href="assets/css/craps.css">
+    <link rel="stylesheet" href="assets/css/wheel.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="icon" href="../../assets/images/favicon.png" type="image/png">
 </head>
@@ -20,7 +20,7 @@
     <header class="game-header">
         <div class="container">
             <a href="index.html" class="btn back-btn">← Back</a>
-            <h1><i class="fas fa-dice" aria-hidden="true"></i> Simple Craps</h1>
+            <h1><i class="fas fa-circle-notch" aria-hidden="true"></i> Lucky Wheel</h1>
             <button class="theme-toggle" onclick="toggleTheme()" aria-label="Toggle theme">
                 <span id="toggle-icon"></span>
             </button>
@@ -32,39 +32,33 @@
             <li><a href="slots.html">Slots</a></li>
             <li><a href="slots-classic.html">Classic Slots</a></li>
             <li><a href="cards.html">Blackjack</a></li>
-            <li><a href="craps.html" class="active">Craps</a></li>
+            <li><a href="craps.html">Craps</a></li>
             <li><a href="roulette.html">Roulette</a></li>
             <li><a href="poker.html">Video Poker</a></li>
             <li><a href="highlow.html">High Low</a></li>
             <li><a href="coinflip.html">Coin Flip</a></li>
-            <li><a href="wheel.html">Lucky Wheel</a></li>
+            <li><a href="wheel.html" class="active">Lucky Wheel</a></li>
         </ul>
     </nav>
-
-    <main id="craps-container">
+    <main id="wheel-game">
         <div class="container">
-            <h2>Roll the Dice!</h2>
-            <p class="craps-rules">7 or 11 on the first roll wins. 2, 3, or 12 loses. Any other number becomes your point &mdash; roll it again before a 7 to win.</p>
+            <h2>Spin the Wheel</h2>
+            <canvas id="wheel-canvas" width="300" height="300"></canvas>
             <div class="bet-controls">
-                <label>Bet: $<input id="bet-amount" type="number" value="10" min="1"></label>
-                <button id="roll-button" class="btn casino-btn">Roll</button>
+                <input type="number" id="bet-amount" placeholder="$1" min="1">
+                <button id="spin-button" class="btn casino-btn">Spin</button>
             </div>
-            <div id="dice" aria-live="polite"></div>
-            <div id="craps-message" class="game-status-message" aria-live="polite"></div>
-            <div id="balance-display" class="game-balance" aria-live="polite">
-                Balance: $<span id="balance-amount">100</span>
-            </div>
+            <div id="wheel-result"></div>
+            <p>Balance: $<span id="balance-amount">0</span></p>
         </div>
     </main>
-
     <footer class="game-footer">
         <div class="container">
-            <p>© 2024 Gavin - Simple Craps</p>
+            <p>© 2024 Gavin - Lucky Wheel</p>
         </div>
     </footer>
-
     <script src="assets/js/storage.js"></script>
-    <script src="assets/js/craps.js"></script>
+    <script src="assets/js/wheel.js"></script>
     <script src="../../assets/js/main.js"></script>
 </body>
 </html>
