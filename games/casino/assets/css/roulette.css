@@ -1,0 +1,15 @@
+#roulette .container {
+  text-align: center;
+  padding-top: 30px;
+  padding-bottom: 30px;
+}
+
+.table-select,
+.bet-controls {
+  margin: 10px 0;
+}
+
+.result {
+  margin-top: 15px;
+  font-weight: bold;
+}
