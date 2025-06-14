@@ -44,3 +44,31 @@ html.light-mode .casino-card {
   transform: translateY(-5px);
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
 }
+
+/* New lobby layout */
+.lobby-hero {
+  margin-bottom: 40px;
+}
+.lobby-hero h2 {
+  font-size: 2.5em;
+  margin-bottom: 10px;
+}
+.lobby-subtitle {
+  font-size: 1.1em;
+  color: #f39c12;
+}
+.game-category {
+  margin-bottom: 40px;
+}
+.game-category h3 {
+  font-size: 1.6em;
+  margin-bottom: 20px;
+}
+.game-category .casino-games {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 1.5rem;
+}
+.game-category .casino-card {
+  width: auto;
+}
