@@ -231,6 +231,18 @@ class FluidSimulation {
         // --- Emitter internal data ---
         // Stores accumulator for fractional particle emission
         this.emitterInternals = []; // Will be populated based on this.params.emitters
+
+        // --- BOAT: State object for the boat ---
+        this.boat = {
+            enabled: false,
+            nodes: [],
+            sticks: [],
+            damping: 0.99,
+            interactionRadius: 4.0, // How close fluid particles need to be to affect the boat
+            impulseFactor: 0.05, // How much a fluid particle pushes a boat node
+        };
+        this.boatStickMesh = null; // For rendering the boat's frame
+        this.boatNodeMesh = null;  // For rendering the boat's vertices
     }
 
     init() {
@@ -368,6 +380,9 @@ class FluidSimulation {
 
         this.initializeParticles(true); // Full reset of particle positions, velocities, colors based on initialPositions
 
+        // --- BOAT: Reset the boat's position by recreating it ---
+        this.createBoat();
+
         // Reset emitter accumulators
         this.emitterInternals = (this.params.emitters || []).map(emitter => ({
             id: emitter.id,
@@ -397,6 +412,18 @@ class FluidSimulation {
         coreFolder.add(this.params, 'paused').name('Pause (P)').listen();
         coreFolder.add(this, 'resetSimulation').name('Reset (R)');
         coreFolder.open();
+
+        // --- BOAT: GUI Controls for the boat ---
+        const boatFolder = this.gui.addFolder('Boat');
+        boatFolder.add(this.boat, 'enabled').name('Enable Boat').onChange(() => {
+            this.createBoat(); // Recreate the boat when toggled
+        });
+        boatFolder.add(this.boat, 'damping', 0.9, 1.0, 0.001).name('Boat Damping');
+        // --- FIX: Renamed for clarity ---
+        boatFolder.add(this.boat, 'interactionRadius', 1, 10, 0.1).name('Boat Node Radius');
+        boatFolder.add(this.boat, 'impulseFactor', 0, 0.2, 0.005).name('Impulse Factor');
+        boatFolder.open();
+
 
         // --- Mouse Tools ---
         const toolsFolder = this.gui.addFolder('Mouse Tools');
@@ -864,11 +891,177 @@ class FluidSimulation {
         if (this.composer) this.composer.setSize(window.innerWidth, window.innerHeight);
     }
 
+    // --- BOAT: Method to define and create the boat object ---
+    createBoat() {
+        // Clean up previous boat meshes if they exist
+        if (this.boatStickMesh) {
+            this.boatStickMesh.geometry.dispose();
+            this.boatStickMesh.material.dispose();
+            this.scene.remove(this.boatStickMesh);
+            this.boatStickMesh = null;
+        }
+        if (this.boatNodeMesh) {
+            this.boatNodeMesh.geometry.dispose();
+            this.boatNodeMesh.material.dispose();
+            this.scene.remove(this.boatNodeMesh);
+            this.boatNodeMesh = null;
+        }
+
+        this.boat.nodes = [];
+        this.boat.sticks = [];
+
+        if (!this.boat.enabled) {
+            return; // Don't create if not enabled
+        }
+
+        // Define the boat shape (a simple hull)
+        const boatShape = [
+            { x: 0, y: 15 },   // 0: Tip
+            { x: -7, y: 0 },   // 1: Left corner
+            { x: 7, y: 0 },    // 2: Right corner
+            { x: -6, y: -12 }, // 3: Left rear
+            { x: 6, y: -12 },  // 4: Right rear
+        ];
+
+        // Create nodes from the shape definition
+        boatShape.forEach(p => {
+            this.boat.nodes.push({
+                x: p.x, y: p.y, z: 0,
+                old_x: p.x, old_y: p.y, // For Verlet integration
+            });
+        });
+
+        // Helper to add a stick between two node indices
+        const addStick = (p1, p2) => {
+            const node1 = this.boat.nodes[p1];
+            const node2 = this.boat.nodes[p2];
+            const dx = node2.x - node1.x;
+            const dy = node2.y - node1.y;
+            this.boat.sticks.push({
+                p1: p1,
+                p2: p2,
+                length: Math.sqrt(dx * dx + dy * dy)
+            });
+        };
+
+        // Create sticks to form the rigid structure
+        addStick(0, 1); addStick(0, 2); // Front V
+        addStick(1, 2); // Cross-beam
+        addStick(1, 3); addStick(2, 4); // Sides
+        addStick(3, 4); // Rear
+        addStick(0, 3); addStick(0, 4); // Extra rigidity from tip to rear
+        addStick(1, 4); addStick(2, 3); // X-brace for stability
+
+        // --- Setup Three.js objects for rendering the boat ---
+        // Nodes (vertices)
+        const nodeGeometry = new THREE.BufferGeometry();
+        const nodePositions = new Float32Array(this.boat.nodes.length * 3);
+        nodeGeometry.setAttribute('position', new THREE.BufferAttribute(nodePositions, 3).setUsage(THREE.DynamicDrawUsage));
+        const nodeMaterial = new THREE.PointsMaterial({ color: 0xffaa00, size: 6.0, depthWrite: false, transparent: true });
+        this.boatNodeMesh = new THREE.Points(nodeGeometry, nodeMaterial);
+        this.boatNodeMesh.position.z = 0.5; // Render in front of particles
+        this.scene.add(this.boatNodeMesh);
+
+        // Sticks (lines)
+        const stickGeometry = new THREE.BufferGeometry();
+        const stickPositions = new Float32Array(this.boat.sticks.length * 2 * 3); // 2 points per stick
+        stickGeometry.setAttribute('position', new THREE.BufferAttribute(stickPositions, 3).setUsage(THREE.DynamicDrawUsage));
+        const stickMaterial = new THREE.LineBasicMaterial({ color: 0xffaa00, transparent: true, opacity: 0.8 });
+        this.boatStickMesh = new THREE.LineSegments(stickGeometry, stickMaterial);
+        this.boatStickMesh.position.z = 0.5; // Render in front of particles
+        this.scene.add(this.boatStickMesh);
+    }
+
+    // --- BOAT: Physics update for the boat ---
+    updateBoat() {
+        if (!this.boat.enabled || this.boat.nodes.length === 0) return;
+
+        const gravity = this.params.gravityEnabled ? this.params.gravityStrength : 0;
+
+        // 1. Verlet integration: Update positions based on previous positions
+        for (const node of this.boat.nodes) {
+            const vx = (node.x - node.old_x) * this.boat.damping;
+            const vy = (node.y - node.old_y) * this.boat.damping;
+
+            node.old_x = node.x;
+            node.old_y = node.y;
+
+            node.x += vx;
+            node.y += vy - gravity;
+        }
+
+        // 2. Solve constraints (multiple iterations for stability)
+        // --- IMPROVEMENT: Increased iterations for a more rigid boat structure ---
+        const iterations = 8;
+        for (let i = 0; i < iterations; i++) {
+            // Solve stick constraints
+            for (const stick of this.boat.sticks) {
+                const n1 = this.boat.nodes[stick.p1];
+                const n2 = this.boat.nodes[stick.p2];
+                const dx = n2.x - n1.x;
+                const dy = n2.y - n1.y;
+                const dist = Math.sqrt(dx * dx + dy * dy);
+                if (dist === 0) continue;
+                const diff = stick.length - dist;
+                const percent = diff / dist / 2; // Each node moves half the way
+                const offsetX = dx * percent;
+                const offsetY = dy * percent;
+
+                n1.x -= offsetX; n1.y -= offsetY;
+                n2.x += offsetX; n2.y += offsetY;
+            }
+
+            // Boundary constraints
+            for (const node of this.boat.nodes) {
+                const distSq = node.x * node.x + node.y * node.y;
+                if (distSq > this.params.containerRadius * this.params.containerRadius) {
+                    const dist = Math.sqrt(distSq);
+                    const factor = this.params.containerRadius / dist;
+                    node.x *= factor;
+                    node.y *= factor;
+                }
+            }
+        }
+    }
+
+    // --- BOAT: Update the boat's visual representation ---
+    updateBoatMesh() {
+        if (!this.boat.enabled || !this.boatNodeMesh || !this.boatStickMesh) return;
+
+        // Update node positions
+        const nodePositions = this.boatNodeMesh.geometry.attributes.position.array;
+        this.boat.nodes.forEach((node, i) => {
+            nodePositions[i * 3] = node.x;
+            nodePositions[i * 3 + 1] = node.y;
+            nodePositions[i * 3 + 2] = 0;
+        });
+        this.boatNodeMesh.geometry.attributes.position.needsUpdate = true;
+
+        // Update stick positions
+        const stickPositions = this.boatStickMesh.geometry.attributes.position.array;
+        this.boat.sticks.forEach((stick, i) => {
+            const n1 = this.boat.nodes[stick.p1];
+            const n2 = this.boat.nodes[stick.p2];
+            const i6 = i * 6;
+            stickPositions[i6] = n1.x;
+            stickPositions[i6 + 1] = n1.y;
+            stickPositions[i6 + 2] = 0;
+            stickPositions[i6 + 3] = n2.x;
+            stickPositions[i6 + 4] = n2.y;
+            stickPositions[i6 + 5] = 0;
+        });
+        this.boatStickMesh.geometry.attributes.position.needsUpdate = true;
+    }
+
+
     // --- Main Update and Animation Loop ---
     update(deltaTime) { // deltaTime is passed but physics is per-frame for now
         if (this.params.paused || !this.particleSystem || !this.geometry?.attributes?.position || !this.velocities || !this.geometry?.attributes?.color) {
              return;
         }
+
+        // --- BOAT: Update boat physics before fluid particles ---
+        this.updateBoat();
 
         // --- 1. Process Emitters ---
         (this.params.emitters || []).forEach(emitter => {
@@ -928,7 +1121,8 @@ class FluidSimulation {
         const currentActiveParticles = this.params.particlesCount; // Use the dynamic count
 
         // Pre-calculate constants
-        const { mouseInteractionRadius, particleRepulsionRadius, cohesionRadius, maxVelocity, damping, edgeDamping, containerRadius, gravityStrength, attractionStrength, repellingStrength, vortexStrength, stirStrength } = this.params;
+        // --- FIX: Use an alias for interactionRadius to avoid name collision and fix the bug ---
+        const { interactionRadius: mouseInteractionRadius, particleRepulsionRadius, cohesionRadius, maxVelocity, damping, edgeDamping, containerRadius, gravityStrength, attractionStrength, repellingStrength, vortexStrength, stirStrength } = this.params;
         const mouseInteractionRadiusSq = mouseInteractionRadius * mouseInteractionRadius;
         const particleRepulsionRadiusSq = particleRepulsionRadius * particleRepulsionRadius;
         const cohesionRadiusSq = cohesionRadius * cohesionRadius;
@@ -1007,6 +1201,36 @@ class FluidSimulation {
             let nextX = px + vx; let nextY = py + vy;
 
             // Collision Detection & Response
+            // --- BOAT: Fluid-Boat Collision ---
+            if (this.boat.enabled) {
+                const boatInteractionRadiusSq = this.boat.interactionRadius * this.boat.interactionRadius;
+                for (const boatNode of this.boat.nodes) {
+                    const dxBoat = nextX - boatNode.x;
+                    const dyBoat = nextY - boatNode.y;
+                    const distBoatSq = dxBoat * dxBoat + dyBoat * dyBoat;
+
+                    if (distBoatSq < boatInteractionRadiusSq && distBoatSq > 0.0001) {
+                        const distBoat = Math.sqrt(distBoatSq);
+                        const normX = dxBoat / distBoat;
+                        const normY = dyBoat / distBoat;
+
+                        // --- IMPROVEMENT: Use velocity reflection instead of a hard position push ---
+                        const dot = vx * normX + vy * normY;
+                        if (dot < 0) { // Only if particle is moving towards the boat node
+                            // Reflect the particle's velocity
+                            const collisionDamping = 0.1; // How much energy is lost in the collision
+                            vx -= (1 + collisionDamping) * dot * normX;
+                            vy -= (1 + collisionDamping) * dot * normY;
+
+                            // Apply an impulse to the boat node based on the fluid particle's velocity
+                            const impulse = -dot * this.boat.impulseFactor;
+                            boatNode.x -= normX * impulse;
+                            boatNode.y -= normY * impulse;
+                        }
+                    }
+                }
+            }
+
             // Boundary Collision
             const distFromCenterSq = nextX * nextX + nextY * nextY;
             if (distFromCenterSq > containerRadiusSq) {
@@ -1052,7 +1276,7 @@ class FluidSimulation {
         this.geometry.attributes.color.needsUpdate = true;
     }
 
-    animate() { /* ... no change ... */
+    animate() {
         requestAnimationFrame(this.animate.bind(this));
         const currentTime = performance.now();
         const deltaTime = Math.min(0.05, (currentTime - this.lastTime) / 1000);
@@ -1063,11 +1287,15 @@ class FluidSimulation {
             if (this.fpsCounter) { this.fpsCounter.textContent = `FPS: ${fps} | Particles: ${this.params.particlesCount}/${MAX_PARTICLES}`; }
         }
         this.update(deltaTime);
+
+        // --- BOAT: Update the boat's visual mesh after its physics are calculated ---
+        this.updateBoatMesh();
+
         if (this.composer && this.bloomPass?.enabled) { this.composer.render(deltaTime); }
         else if (this.renderer && this.scene && this.camera) { this.renderer.render(this.scene, this.camera); }
     }
 
-    dispose() { /* ... no change from original logic, ensure new meshes (forceZoneMeshes) are disposed ... */
+    dispose() {
          console.log("Disposing Fluid Simulation resources...");
          // Remove event listeners... (as before)
          if(this.gui) this.gui.destroy();
@@ -1078,6 +1306,18 @@ class FluidSimulation {
             if(this.scene) this.scene.remove(mesh);
          });
          this.forceZoneMeshes.length = 0;
+
+         // --- BOAT: Dispose of boat resources ---
+         if (this.boatStickMesh) {
+            this.boatStickMesh.geometry.dispose();
+            this.boatStickMesh.material.dispose();
+            if(this.scene) this.scene.remove(this.boatStickMesh);
+         }
+         if (this.boatNodeMesh) {
+            this.boatNodeMesh.geometry.dispose();
+            this.boatNodeMesh.material.dispose();
+            if(this.scene) this.scene.remove(this.boatNodeMesh);
+         }
 
          if(this.interactionRing) { /* ... */ }
          if(this.particleSystem && this.scene) this.scene.remove(this.particleSystem);

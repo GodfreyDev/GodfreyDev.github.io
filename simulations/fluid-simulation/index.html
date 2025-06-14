@@ -3,30 +3,24 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <title>Fluid Simulation Benchmark</title>
-
-    <!-- Link to the extracted CSS file -->
+    <title>Advanced Particle Engine</title>
     <link rel="stylesheet" href="assets/css/fluid-simulation.css">
-
-    <!-- Link to the lil-gui CSS (CDN) -->
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/lil-gui@0.18/dist/lil-gui.min.css">
-    <!-- Favicon -->
-    <link rel="icon" href="../../assets/images/favicon.png" type="image/png">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/lil-gui@0.19/dist/lil-gui.min.css">
 </head>
 <body>
-    <!-- Combined Info Panel -->
-    <div id="infoPanel">
-        <span id="fpsCounter">FPS: ...</span>
-        <b>Mouse:</b> Attract (L), Repel (R), Vortex (M/Shift+L), Stir (Ctrl+L)<br/>
-        <b>Keys:</b> G: Gravity | P: Pause | R: Reset
-        <!-- Back to Portfolio Link -->
-        <a href="../../index.html" style="color: white; text-decoration: none; display: block; margin-top: 10px; pointer-events: auto;">← Back to Portfolio</a>
+    <!-- Container for the text input, controlled by JS -->
+    <div id="text-input-container">
+        <input type="text" id="text-input" placeholder="Type here..." maxlength="10" spellcheck="false" />
     </div>
 
-    <!-- Core Three.js (CDN) -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <div id="infoPanel">
+        <span id="fpsCounter">FPS: ...</span>
+        <b>Mouse:</b> Attract (L), Repel (R), Vortex (M/Shift+L)<br/>
+        <b>Tool Mode:</b> Varies by preset. Try the GUI!<br/>
+        <b>Keys:</b> P: Pause | R: Reset
+    </div>
 
-    <!-- Addons for EffectComposer & Bloom (CDN) -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/postprocessing/EffectComposer.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/postprocessing/RenderPass.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/postprocessing/ShaderPass.js"></script>
@@ -34,8 +28,6 @@
     <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/postprocessing/UnrealBloomPass.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/shaders/LuminosityHighPassShader.js"></script>
 
-    <!-- Your Simulation Script (Module) -->
     <script type="module" src="assets/js/fluid-simulation-logic.js"></script>
-
 </body>
 </html>
