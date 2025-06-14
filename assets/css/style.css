@@ -228,7 +228,7 @@ html.dark-mode .btn.disabled, html.dark-mode .btn:disabled {
 /* Hero Section */
 #hero {
     background: transparent;
-    color: #fff;
+    color: #333;
     text-align: center;
     padding: 40px 20px 40px;
     position: relative;
