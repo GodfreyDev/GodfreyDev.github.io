@@ -16,8 +16,12 @@ document.addEventListener('DOMContentLoaded', () => {
     return Math.floor(Math.random() * 6) + 1;
   }
 
+  const diceNames = ['one','two','three','four','five','six'];
+
   function renderDice(d1, d2) {
-    diceDiv.textContent = `${d1} + ${d2} = ${d1 + d2}`;
+    const icon1 = `<i class="fas fa-dice-${diceNames[d1-1]} dice-icon" aria-hidden="true"></i>`;
+    const icon2 = `<i class="fas fa-dice-${diceNames[d2-1]} dice-icon" aria-hidden="true"></i>`;
+    diceDiv.innerHTML = icon1 + icon2;
   }
 
   function playRound() {

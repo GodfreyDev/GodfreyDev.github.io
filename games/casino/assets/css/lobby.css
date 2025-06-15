@@ -1,18 +1,18 @@
-/* Modernized Casino Lobby Styles */
+/* AAA Casino Lobby Styles */
 #casino-lobby {
-  background: linear-gradient(135deg, #111, #444);
+  background: radial-gradient(circle at top, #1f0c2c, #0e0716 80%);
   color: #fff;
   min-height: 100vh;
 }
 html.light-mode #casino-lobby {
-  background: linear-gradient(135deg, #fff, #eee);
+  background: radial-gradient(circle at top, #ffffff, #e7e7e7 80%);
   color: #333;
 }
 
 #casino-lobby .container {
   text-align: center;
-  padding-top: 40px;
-  padding-bottom: 40px;
+  padding-top: 60px;
+  padding-bottom: 60px;
 }
 
 .casino-games {
@@ -25,15 +25,22 @@ html.light-mode #casino-lobby {
 .casino-card {
   background: rgba(255, 255, 255, 0.1);
   border: 1px solid rgba(255, 255, 255, 0.2);
-  border-radius: 8px;
-  padding: 20px;
-  width: 160px;
+  border-radius: 12px;
+  padding: 30px 20px;
+  width: 200px;
   color: inherit;
   text-decoration: none;
   display: flex;
   flex-direction: column;
   align-items: center;
-  transition: transform 0.2s, box-shadow 0.2s;
+  transition: transform 0.3s, box-shadow 0.3s;
+}
+.casino-card i {
+  margin-bottom: 12px;
+}
+.casino-card span {
+  font-weight: 600;
+  letter-spacing: 0.5px;
 }
 html.light-mode .casino-card {
   background: rgba(0, 0, 0, 0.05);
@@ -41,24 +48,23 @@ html.light-mode .casino-card {
 }
 
 .casino-card:hover {
-  transform: translateY(-5px);
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+  transform: translateY(-8px);
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.4);
 }
 
-/* New lobby layout */
 .lobby-hero {
-  margin-bottom: 40px;
+  margin-bottom: 50px;
 }
 .lobby-hero h2 {
-  font-size: 2.5em;
+  font-size: 2.8em;
   margin-bottom: 10px;
 }
 .lobby-subtitle {
-  font-size: 1.1em;
+  font-size: 1.2em;
   color: #f39c12;
 }
 .game-category {
-  margin-bottom: 40px;
+  margin-bottom: 50px;
 }
 .game-category h3 {
   font-size: 1.6em;
@@ -66,8 +72,8 @@ html.light-mode .casino-card {
 }
 .game-category .casino-games {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-  gap: 1.5rem;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 2rem;
 }
 .game-category .casino-card {
   width: auto;

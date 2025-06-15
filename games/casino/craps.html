@@ -12,6 +12,7 @@
         try{const savedTheme = localStorage.getItem('theme');applyGameTheme(savedTheme);}catch(e){applyGameTheme('light-mode');}
     </script>
     <link rel="stylesheet" href="../../assets/css/style.css">
+    <link rel="stylesheet" href="assets/css/casino-base.css">
     <link rel="stylesheet" href="assets/css/craps.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="icon" href="../../assets/images/favicon.png" type="image/png">
@@ -49,7 +50,7 @@
                 <label>Bet: $<input id="bet-amount" type="number" value="10" min="1"></label>
                 <button id="roll-button" class="btn casino-btn">Roll</button>
             </div>
-            <div id="dice" aria-live="polite"></div>
+            <div id="dice" class="dice-container" aria-live="polite"></div>
             <div id="craps-message" class="game-status-message" aria-live="polite"></div>
             <div id="balance-display" class="game-balance" aria-live="polite">
                 Balance: $<span id="balance-amount">100</span>

@@ -1,20 +1,37 @@
-/* Basic styling for Craps Game */
+/* Styling for Craps Game */
 #craps-container .container {
   text-align: center;
   padding-top: 30px;
   padding-bottom: 30px;
 }
 
-#dice {
-  font-size: 2em;
-  margin: 15px 0;
+#dice,
+.dice-container {
+  display: flex;
+  justify-content: center;
+  gap: 20px;
+  font-size: 3em;
+  margin: 20px 0;
+}
+#dice .dice-icon,
+.dice-container .dice-icon {
+  color: #f39c12;
+  text-shadow: 0 0 6px rgba(0,0,0,0.4);
+}
+html.dark-mode #dice .dice-icon,
+html.dark-mode .dice-container .dice-icon {
+  color: #e67e22;
 }
 
 #craps-message {
-  margin: 10px 0;
+  margin: 15px 0;
+  font-weight: 500;
 }
 
 .bet-controls {
-  margin: 10px 0;
+  margin: 15px 0;
 }
-.craps-rules { margin-bottom: 10px; font-style: italic; }
+.craps-rules {
+  margin-bottom: 15px;
+  font-style: italic;
+}
