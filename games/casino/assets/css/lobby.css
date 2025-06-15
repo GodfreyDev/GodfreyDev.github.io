@@ -3,10 +3,12 @@
   background: radial-gradient(circle at top, #1f0c2c, #0e0716 80%);
   color: #fff;
   min-height: 100vh;
+  background-image: repeating-linear-gradient(45deg, rgba(255,255,255,0.05) 0, rgba(255,255,255,0.05) 2px, transparent 2px, transparent 4px);
 }
 html.light-mode #casino-lobby {
   background: radial-gradient(circle at top, #ffffff, #e7e7e7 80%);
   color: #333;
+  background-image: repeating-linear-gradient(45deg, rgba(0,0,0,0.03) 0, rgba(0,0,0,0.03) 2px, transparent 2px, transparent 4px);
 }
 
 #casino-lobby .container {
@@ -20,6 +22,7 @@ html.light-mode #casino-lobby {
   flex-wrap: wrap;
   justify-content: center;
   gap: 2rem;
+  perspective: 1000px;
 }
 
 .casino-card {
@@ -33,7 +36,12 @@ html.light-mode #casino-lobby {
   display: flex;
   flex-direction: column;
   align-items: center;
+  cursor: pointer;
+  transform: scale(1) rotateX(0deg);
+  opacity: 0;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
   transition: transform 0.3s, box-shadow 0.3s;
+  animation: cardEntrance 0.6s ease forwards;
 }
 .casino-card i {
   margin-bottom: 12px;
@@ -48,8 +56,8 @@ html.light-mode .casino-card {
 }
 
 .casino-card:hover {
-  transform: translateY(-8px);
-  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.4);
+  transform: translateY(-8px) scale(1.05) rotateX(4deg);
+  box-shadow: 0 12px 24px rgba(0, 0, 0, 0.5);
 }
 
 .lobby-hero {
@@ -77,4 +85,15 @@ html.light-mode .casino-card {
 }
 .game-category .casino-card {
   width: auto;
+}
+
+@keyframes cardEntrance {
+  from {
+    opacity: 0;
+    transform: rotateX(-30deg) translateY(20px) scale(0.9);
+  }
+  to {
+    opacity: 1;
+    transform: rotateX(0deg) translateY(0) scale(1);
+  }
 }

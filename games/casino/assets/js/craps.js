@@ -34,6 +34,9 @@ document.addEventListener('DOMContentLoaded', () => {
     const d1 = rollDie();
     const d2 = rollDie();
     const sum = d1 + d2;
+
+    diceDiv.classList.add('rolling');
+    setTimeout(() => diceDiv.classList.remove('rolling'), 700);
     renderDice(d1, d2);
 
     if (point === null) {
