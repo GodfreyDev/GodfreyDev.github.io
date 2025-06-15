@@ -302,6 +302,8 @@ class FluidSimulation {
         pInteractionsFolder.add(this.params, 'repulsionStrength', 0.0, 5.0, 0.01).name('Repulsion Str.');
         pInteractionsFolder.add(this.params, 'cohesionRadius', 1.0, 30.0, 0.1).name('Cohesion Radius').onFinishChange(() => this.setupSpatialGrid());
         pInteractionsFolder.add(this.params, 'cohesionStrength', 0.0, 1.0, 0.001).name('Cohesion Str.');
+        pInteractionsFolder.add(this.params, 'viscosityRadius', 1.0, 10.0, 0.1).name('Viscosity Radius').onFinishChange(() => this.setupSpatialGrid());
+        pInteractionsFolder.add(this.params, 'viscosityStrength', 0.0, 1.0, 0.01).name('Viscosity');
         pInteractionsFolder.close();
 
         // --- Visualization ---
@@ -545,7 +547,7 @@ class FluidSimulation {
 
 
     setupSpatialGrid() { 
-        this.gridCellSize = Math.max(this.params.particleRepulsionRadius, this.params.cohesionRadius, 1.0);
+        this.gridCellSize = Math.max(this.params.particleRepulsionRadius, this.params.cohesionRadius, this.params.viscosityRadius || 0, 1.0);
         const worldSize = this.params.containerRadius * 2.2;
         this.gridWidth = Math.ceil(worldSize / this.gridCellSize);
         this.gridHeight = Math.ceil(worldSize / this.gridCellSize);
@@ -968,10 +970,11 @@ class FluidSimulation {
         const currentActiveParticles = this.params.particlesCount; // Use the dynamic count
 
         // Pre-calculate constants
-        const { interactionRadius: mouseInteractionRadius, particleRepulsionRadius, cohesionRadius, maxVelocity, damping, edgeDamping, containerRadius, gravityStrength, attractionStrength, repellingStrength, vortexStrength, stirStrength } = this.params;
+        const { interactionRadius: mouseInteractionRadius, particleRepulsionRadius, cohesionRadius, maxVelocity, damping, edgeDamping, containerRadius, gravityStrength, attractionStrength, repellingStrength, vortexStrength, stirStrength, viscosityStrength, viscosityRadius } = this.params;
         const mouseInteractionRadiusSq = mouseInteractionRadius * mouseInteractionRadius;
         const particleRepulsionRadiusSq = particleRepulsionRadius * particleRepulsionRadius;
         const cohesionRadiusSq = cohesionRadius * cohesionRadius;
+        const viscosityRadiusSq = viscosityRadius * viscosityRadius;
         const maxVelSq = maxVelocity * maxVelocity;
         const containerRadiusSq = containerRadius * containerRadius;
         const gravity = this.params.gravityEnabled ? gravityStrength : 0;
@@ -1020,26 +1023,36 @@ class FluidSimulation {
                 }
             }
 
-             // Particle-Particle Interaction (Using Spatial Grid)
-             if (this.params.repulsionStrength > 0 || this.params.cohesionStrength > 0) {
-                 const neighbors = this.getNeighbors(i);
-                 for (const j of neighbors) {
-                     if (i === j) continue;
-                     const j3 = j * 3; const dx = posArray[j3] - px; const dy = posArray[j3 + 1] - py;
-                     const distSq = dx * dx + dy * dy;
-                     if (this.params.repulsionStrength > 0 && distSq < particleRepulsionRadiusSq && distSq > 0.0001) {
-                         const distance = Math.sqrt(distSq); const invDist = 1.0 / distance;
-                         const forceMagnitude = (1.0 - distance / particleRepulsionRadius) * this.params.repulsionStrength * invDist;
-                         vx -= dx * forceMagnitude; vy -= dy * forceMagnitude;
-                     }
-                     else if (this.params.cohesionStrength > 0 && distSq < cohesionRadiusSq && distSq > particleRepulsionRadiusSq) { // Ensure cohesion outside repulsion
-                         const distance = Math.sqrt(distSq);
-                         const forceMagnitude = this.params.cohesionStrength * (1.0 - distance / cohesionRadius);
-                         const invDist = 1.0 / (distance + 0.001);
-                         vx += dx * forceMagnitude * invDist; vy += dy * forceMagnitude * invDist;
-                     }
-                 }
-             }
+            // Particle-Particle Interaction (Using Spatial Grid)
+            if (this.params.repulsionStrength > 0 || this.params.cohesionStrength > 0 || viscosityStrength > 0) {
+                const neighbors = this.getNeighbors(i);
+                let avgVx = 0, avgVy = 0, neighborCount = 0;
+                for (const j of neighbors) {
+                    if (i === j) continue;
+                    const j3 = j * 3; const dx = posArray[j3] - px; const dy = posArray[j3 + 1] - py;
+                    const distSq = dx * dx + dy * dy;
+                    if (this.params.repulsionStrength > 0 && distSq < particleRepulsionRadiusSq && distSq > 0.0001) {
+                        const distance = Math.sqrt(distSq); const invDist = 1.0 / distance;
+                        const forceMagnitude = (1.0 - distance / particleRepulsionRadius) * this.params.repulsionStrength * invDist;
+                        vx -= dx * forceMagnitude; vy -= dy * forceMagnitude;
+                    } else if (this.params.cohesionStrength > 0 && distSq < cohesionRadiusSq && distSq > particleRepulsionRadiusSq) {
+                        const distance = Math.sqrt(distSq);
+                        const forceMagnitude = this.params.cohesionStrength * (1.0 - distance / cohesionRadius);
+                        const invDist = 1.0 / (distance + 0.001);
+                        vx += dx * forceMagnitude * invDist; vy += dy * forceMagnitude * invDist;
+                    }
+                    if (viscosityStrength > 0 && distSq < viscosityRadiusSq) {
+                        avgVx += velArray[j3];
+                        avgVy += velArray[j3 + 1];
+                        neighborCount++;
+                    }
+                }
+                if (viscosityStrength > 0 && neighborCount > 0) {
+                    avgVx /= neighborCount; avgVy /= neighborCount;
+                    vx += (avgVx - vx) * viscosityStrength;
+                    vy += (avgVy - vy) * viscosityStrength;
+                }
+            }
 
             // Velocity Limiting & Damping
             const velMagSq = vx * vx + vy * vy;
