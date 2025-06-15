@@ -380,8 +380,11 @@ body, html {
   padding: 10px 14px;
   border-radius: 8px;
   color: #fff;
-  z-index: 20;
+  z-index: 5;
   min-width: 200px;
+  max-height: 30vh;
+  overflow-y: auto;
+  pointer-events: none;
   font-family: 'Orbitron', sans-serif;
 }
 
