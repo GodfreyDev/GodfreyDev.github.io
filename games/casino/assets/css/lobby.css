@@ -25,6 +25,16 @@ html.light-mode #casino-lobby {
   perspective: 1000px;
 }
 
+/* Grid layout when showing all games together */
+.all-games {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 2rem;
+}
+.all-games .casino-card {
+  width: auto;
+}
+
 .casino-card {
   background: rgba(255, 255, 255, 0.1);
   border: 1px solid rgba(255, 255, 255, 0.2);
