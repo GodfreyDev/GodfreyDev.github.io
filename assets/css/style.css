@@ -297,21 +297,8 @@ html.dark-mode .project-card:hover { box-shadow: 0 6px 12px rgba(0,0,0,0.5); }
 .project-info p { font-size: 0.95em; margin-bottom: 15px; }
 .project-info .btn { padding: 8px 15px; font-size: 0.95em; }
 
-/* Game Section (Portfolio Link) */
-#game { text-align: center; }
-#game h2 { font-size: 2em; margin-bottom: 20px; }
-#game p { font-size: 1.2em; margin-bottom: 30px; }
-#game .btn { padding: 12px 25px; }
 
-/* Casino Section (Portfolio Link) */
-#casino { text-align: center; padding: 60px 0; }
-#casino h2 { font-size: 2em; margin-bottom: 20px; }
-#casino p { font-size: 1.1em; margin-bottom: 30px; max-width: 600px; margin-left: auto; margin-right: auto; color: inherit; }
 .casino-games { display: flex; justify-content: center; gap: 1.5rem; flex-wrap: wrap; margin-top: 1.5rem; }
-.casino-btn { padding: 12px 25px; min-width: 150px; } /* Base style for casino buttons */
-.casino-btn i { margin-right: 0.75rem; }
-
-
 /* Contact Section */
 #contact { padding: 60px 0; }
 #contact h2 { margin-bottom: 20px; font-size: 2em; }
