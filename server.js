@@ -69,6 +69,7 @@
 const express = require('express');
 const http = require('http');
 const socketIo = require('socket.io');
+const fs = require('fs');
 
 // Initialize Express app and HTTP server
 const app = express();
@@ -87,6 +88,32 @@ const io = socketIo(server, {
 app.use((req, res, next) => {
   res.setHeader('Access-Control-Allow-Origin', '*');
   next();
+});
+
+// Body parsers for JSON and urlencoded forms
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
+
+// Endpoint to store contact form submissions
+app.post('/api/contact', (req, res) => {
+  const { name, contact, message } = req.body;
+  if (!name || !contact || !message) {
+    return res.status(400).json({ error: 'Missing fields' });
+  }
+  const entry = { name, contact, message, date: new Date().toISOString() };
+  const file = 'contact_messages.json';
+  let data = [];
+  if (fs.existsSync(file)) {
+    try {
+      data = JSON.parse(fs.readFileSync(file, 'utf8'));
+      if (!Array.isArray(data)) data = [];
+    } catch (err) {
+      data = [];
+    }
+  }
+  data.push(entry);
+  fs.writeFileSync(file, JSON.stringify(data, null, 2));
+  res.json({ success: true });
 });
 
 // Directions based on sprite sheet layout
