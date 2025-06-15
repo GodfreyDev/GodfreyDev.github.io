@@ -79,3 +79,22 @@ html.light-mode .game-footer {
   background: #eee;
   color: #333;
 }
+
+/* Generic table layout used by casino games */
+.game-table {
+  background-color: #006400;
+  border: 10px solid #8b4513;
+  border-radius: 15px;
+  padding: 20px;
+  margin: 30px auto;
+  max-width: 700px;
+  box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+}
+html.dark-mode .game-table {
+  background-color: #004d00;
+  border-color: #5a2d0c;
+}
+html.light-mode .game-table {
+  background-color: #006400;
+  border-color: #8b4513;
+}

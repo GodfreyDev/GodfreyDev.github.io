@@ -50,7 +50,7 @@
             <h2>Play Your Cards Right!</h2>
             <p>Classic Blackjack Rules</p>
 
-            <div id="card-table" role="region" aria-label="Blackjack table">
+            <div id="card-table" role="region" aria-label="Blackjack table" class="game-table">
                 <div class="hand-area" id="dealer-hand" aria-label="Dealer hand">
                     <h3>Dealer's Hand (<span id="dealer-score" aria-live="polite">0</span>)</h3>
                     <div class="cards" aria-live="polite">
@@ -61,6 +61,10 @@
                     <div class="cards" aria-live="polite">
                     </div>
                 </div>
+                <div class="hand-area" id="split-hand" aria-label="Split hand" style="display:none;">
+                    <h3>Split Hand (<span id="split-score" aria-live="polite">0</span>)</h3>
+                    <div class="cards" aria-live="polite"></div>
+                </div>
             </div>
 
             <div class="controls" role="group" aria-label="Game actions">
@@ -68,6 +72,7 @@
                  <button id="deal-button" class="btn casino-btn">Deal</button>
                  <button id="hit-button" class="btn casino-btn" disabled>Hit</button>
                  <button id="stand-button" class="btn casino-btn" disabled>Stand</button>
+                 <button id="split-button" class="btn casino-btn" disabled>Split</button>
             </div>
 
             <div id="game-status" class="game-status-message" aria-live="assertive">

@@ -5,22 +5,30 @@ document.addEventListener('DOMContentLoaded', () => {
     // --- Get References to HTML Elements ---
     const dealButton = document.getElementById('deal-button');
     const hitButton = document.getElementById('hit-button');
-    const standButton = document.getElementById('stand-button');
-    const dealerHandDiv = document.querySelector('#dealer-hand .cards');
-    const playerHandDiv = document.querySelector('#player-hand .cards');
+   const standButton = document.getElementById('stand-button');
+    const splitButton = document.getElementById('split-button');
+   const dealerHandDiv = document.querySelector('#dealer-hand .cards');
+   const playerHandDiv = document.querySelector('#player-hand .cards');
+    const splitHandDiv = document.querySelector('#split-hand .cards');
+    const playerScoreSpan = document.getElementById('player-score');
+    const splitScoreSpan = document.getElementById('split-score');
     const gameStatusDiv = document.getElementById('game-status');
     const balanceAmountSpan = document.getElementById('balance-amount');
 
     // --- Game State Variables ---
     let deck = [];
     let playerHand = [];
+    let splitHand = [];
     let dealerHand = [];
     let playerScore = 0;
+    let splitScore = 0;
     let dealerScore = 0;
     let balance = loadCasinoBalance();
     let playerBet = 10; // Example fixed bet - you might want an input for this
     let gameInProgress = false;
     let dealerHiddenCard = null; // To store the dealer's face-down card
+    let isSplit = false;
+    let currentHandIndex = 0; // 0 for playerHand, 1 for splitHand
 
 
     // --- Constants ---
@@ -45,15 +53,21 @@ document.addEventListener('DOMContentLoaded', () => {
         dealButton.addEventListener('click', handleDeal);
         hitButton.addEventListener('click', handleHit);
         standButton.addEventListener('click', handleStand);
+        if (splitButton) splitButton.addEventListener('click', handleSplit);
     }
 
     function resetUI() {
         gameStatusDiv.textContent = 'Place your bet (fixed $10) and press Deal.';
-        dealerHandDiv.innerHTML = ''; // Clear hands visually
+        dealerHandDiv.innerHTML = '';
         playerHandDiv.innerHTML = '';
+        splitHandDiv.innerHTML = '';
+        document.getElementById('split-hand').style.display = 'none';
         hitButton.disabled = true;
         standButton.disabled = true;
+        splitButton.disabled = true;
         dealButton.disabled = false;
+        isSplit = false;
+        currentHandIndex = 0;
         gameInProgress = false;
     }
 
@@ -141,13 +155,12 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-    function handleDeal() {
+function handleDeal() {
         if (gameInProgress) return;
         if (balance < playerBet) {
             gameStatusDiv.textContent = "Not enough balance to bet!";
             return;
         }
-
         gameInProgress = true;
         balance -= playerBet; // Deduct bet
         updateBalanceDisplay();
@@ -156,7 +169,10 @@ document.addEventListener('DOMContentLoaded', () => {
         shuffleDeck();
 
         playerHand = [];
+        splitHand = [];
         dealerHand = [];
+        splitScore = 0;
+        splitScoreSpan.textContent = '0';
 
         // Deal initial hands
         dealCard(playerHand);
@@ -171,8 +187,15 @@ document.addEventListener('DOMContentLoaded', () => {
         // Render hands (hide dealer's first card)
         renderHand(playerHand, playerHandDiv);
         renderHand(dealerHand, dealerHandDiv, true); // Pass true to hide first card
+        document.getElementById('split-hand').style.display = 'none';
 
         gameStatusDiv.textContent = `Your score: ${playerScore}. Dealer showing: ${getCardValue(dealerHand[1])}. Hit or Stand?`;
+
+        if (playerHand.length === 2 && getCardValue(playerHand[0]) === getCardValue(playerHand[1]) && balance >= playerBet) {
+            splitButton.disabled = false;
+        } else {
+            splitButton.disabled = true;
+        }
 
         // Update button states
         dealButton.disabled = true;
@@ -189,37 +212,83 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
+    function handleSplit() {
+        if (!gameInProgress || isSplit) return;
+        if (playerHand.length !== 2 || getCardValue(playerHand[0]) !== getCardValue(playerHand[1])) return;
+        if (balance < playerBet) {
+            gameStatusDiv.textContent = 'Not enough balance to split.';
+            return;
+        }
+
+        balance -= playerBet; // second bet for split
+        updateBalanceDisplay();
+        saveCasinoBalance(balance);
+
+        splitHand = [playerHand.pop()];
+        dealCard(playerHand);
+        dealCard(splitHand);
+
+        playerScore = calculateScore(playerHand);
+        splitScore = calculateScore(splitHand);
+        playerScoreSpan.textContent = playerScore;
+        splitScoreSpan.textContent = splitScore;
+
+        renderHand(playerHand, playerHandDiv);
+        renderHand(splitHand, splitHandDiv);
+
+        document.getElementById('split-hand').style.display = 'block';
+        splitButton.disabled = true;
+        isSplit = true;
+        currentHandIndex = 0;
+        gameStatusDiv.textContent = `Playing first hand. Score: ${playerScore}. Hit or Stand?`;
+    }
+
     function handleHit() {
         if (!gameInProgress) return;
 
-        dealCard(playerHand);
-        playerScore = calculateScore(playerHand);
-        renderHand(playerHand, playerHandDiv);
+        const hand = (isSplit && currentHandIndex === 1) ? splitHand : playerHand;
+        const div = (isSplit && currentHandIndex === 1) ? splitHandDiv : playerHandDiv;
+        const span = (isSplit && currentHandIndex === 1) ? splitScoreSpan : playerScoreSpan;
 
-        gameStatusDiv.textContent = `Your score: ${playerScore}. Hit or Stand?`;
+        dealCard(hand);
+        const score = calculateScore(hand);
+        span.textContent = score;
+        if (isSplit && currentHandIndex === 1) {
+            splitScore = score;
+        } else {
+            playerScore = score;
+        }
+        renderHand(hand, div);
 
-        if (playerScore > 21) {
-            gameStatusDiv.textContent = `Busted! Your score: ${playerScore}. You lose $${playerBet}.`;
-            // Balance already deducted, no win.
-            endRound();
-        } else if (playerScore === 21) {
-            // Player reached 21, automatically stand
+        if (score > 21) {
+            gameStatusDiv.textContent = `Busted with ${score}.`;
             handleStand();
+        } else if (score === 21) {
+            handleStand();
+        } else {
+            gameStatusDiv.textContent = `Your score: ${score}. Hit or Stand?`;
         }
     }
 
     function handleStand() {
         if (!gameInProgress) return;
 
-        hitButton.disabled = true; // Disable buttons during dealer's turn
-        standButton.disabled = true;
+        if (isSplit && currentHandIndex === 0) {
+            currentHandIndex = 1;
+            gameStatusDiv.textContent = `First hand stands at ${playerScore}. Now play your split hand.`;
+            hitButton.disabled = false;
+            standButton.disabled = false;
+            return;
+        }
 
-        // Reveal dealer's hidden card
-        renderHand(dealerHand, dealerHandDiv, false); // Show all dealer cards
+        hitButton.disabled = true;
+        standButton.disabled = true;
+        splitButton.disabled = true;
+
+        renderHand(dealerHand, dealerHandDiv, false);
         dealerScore = calculateScore(dealerHand);
         gameStatusDiv.textContent = `Dealer's turn. Dealer score: ${dealerScore}.`;
 
-        // Dealer hits until score is 17 or higher (standard rule)
         const dealerTurn = setInterval(() => {
             if (dealerScore < 17) {
                 dealCard(dealerHand);
@@ -227,46 +296,46 @@ document.addEventListener('DOMContentLoaded', () => {
                 renderHand(dealerHand, dealerHandDiv);
                 gameStatusDiv.textContent = `Dealer hits. Dealer score: ${dealerScore}.`;
             } else {
-                clearInterval(dealerTurn); // Stop dealer's turn
+                clearInterval(dealerTurn);
                 determineWinner();
                 endRound();
             }
-             // Check if dealer busts during their turn
-             if(dealerScore > 21) {
-                 clearInterval(dealerTurn);
-                 gameStatusDiv.textContent = `Dealer busts! Dealer score: ${dealerScore}. You win $${playerBet}!`;
-                 balance += playerBet * 2; // Win original bet + winnings
-                updateBalanceDisplay();
-                saveCasinoBalance(balance);
+            if (dealerScore > 21) {
+                clearInterval(dealerTurn);
+                gameStatusDiv.textContent = `Dealer busts! Dealer score: ${dealerScore}.`;
+                determineWinner();
                 endRound();
-             }
-        }, 1000); // Delay between dealer hits for visibility
+            }
+        }, 1000);
     }
 
     function determineWinner() {
-         // This is called if neither player nor dealer busted immediately
-        renderHand(dealerHand, dealerHandDiv, false); // Ensure dealer hand is fully visible
-        dealerScore = calculateScore(dealerHand); // Recalculate final score just in case
-        playerScore = calculateScore(playerHand); // Recalculate final score just in case
+        renderHand(dealerHand, dealerHandDiv, false);
+        dealerScore = calculateScore(dealerHand);
 
+        const hands = isSplit ? [playerHand, splitHand] : [playerHand];
+        const scores = isSplit ? [playerScore, splitScore] : [playerScore];
+        let messages = [];
 
-        let finalMessage = `Your score: ${playerScore}. Dealer score: ${dealerScore}. `;
+        hands.forEach((hand, idx) => {
+            const score = scores[idx];
+            let msg = isSplit ? `Hand ${idx + 1}: ` : '';
 
-        if (dealerScore > 21) { // Should have been caught earlier, but double check
-            finalMessage += `Dealer busted! You win $${playerBet}!`;
-            balance += playerBet * 2;
-        } else if (playerScore > dealerScore) {
-            finalMessage += `You win $${playerBet}!`;
-            balance += playerBet * 2;
-        } else if (dealerScore > playerScore) {
-            finalMessage += `Dealer wins. You lose $${playerBet}.`;
-            // Balance already deducted
-        } else { // Scores are equal
-            finalMessage += `Push (Tie). Bet returned.`;
-            balance += playerBet; // Return the bet
-        }
+            if (score > 21) {
+                msg += `Bust.`;
+            } else if (dealerScore > 21 || score > dealerScore) {
+                msg += `Win $${playerBet}!`;
+                balance += playerBet * 2;
+            } else if (dealerScore > score) {
+                msg += `Lose.`;
+            } else {
+                msg += `Push.`;
+                balance += playerBet;
+            }
+            messages.push(msg);
+        });
 
-        gameStatusDiv.textContent = finalMessage;
+        gameStatusDiv.textContent = `Dealer score: ${dealerScore}. ` + messages.join(' ');
         updateBalanceDisplay();
         saveCasinoBalance(balance);
     }
@@ -278,6 +347,10 @@ document.addEventListener('DOMContentLoaded', () => {
         dealButton.disabled = false; // Allow starting a new game
         gameInProgress = false;
         dealerHiddenCard = null;
+        splitButton.disabled = true;
+        isSplit = false;
+        currentHandIndex = 0;
+        document.getElementById('split-hand').style.display = 'none';
         console.log("Round ended. Final Balance:", balance);
     }
 
