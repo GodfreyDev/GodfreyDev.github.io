@@ -290,8 +290,8 @@ html.dark-mode .skill i { color: #e67e22; }
 .project-card { background: #fff; border-radius: 10px; overflow: hidden; box-shadow: 0 4px 8px rgba(0,0,0,0.1); transition: transform 0.3s ease, box-shadow 0.3s ease; }
 html.dark-mode .project-card { background: #2a2a2a; box-shadow: 0 4px 8px rgba(0,0,0,0.4); }
 .project-card:hover { transform: translateY(-5px); box-shadow: 0 6px 12px rgba(0,0,0,0.15); }
-html.dark-mode .project-card:hover { box-shadow: 0 6px 12px rgba(0,0,0,0.5); }
 .project-card img { width: 100%; height: 200px; object-fit: cover; display: block; }
+html.dark-mode .project-card:hover { box-shadow: 0 6px 12px rgba(0,0,0,0.5); }
 .project-info { padding: 15px; }
 .project-info h3 { margin-top: 0; font-size: 1.5em; }
 .project-info p { font-size: 0.95em; margin-bottom: 15px; }

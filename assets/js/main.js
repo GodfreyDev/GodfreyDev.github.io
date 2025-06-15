@@ -392,7 +392,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     const contactForm = document.getElementById('contactForm');
-    if (contactForm) {
+    if (contactForm && contactForm.getAttribute('action') === '/api/contact') {
         contactForm.addEventListener('submit', async (e) => {
             e.preventDefault();
             const formData = new FormData(contactForm);
