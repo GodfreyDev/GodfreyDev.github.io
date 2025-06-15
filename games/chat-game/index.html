@@ -24,11 +24,29 @@
 <head>
   <meta charset="UTF-8">
   <title>Game - Fullscreen Experience</title>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="assets/css/game.css">
 </head>
 <body>
+  <div id="mainMenu" class="overlay">
+    <h1>Chat Game</h1>
+    <button id="startButton" disabled>Start Game</button>
+  </div>
   <div id="gameContainer">
     <canvas id="gameCanvas"></canvas>
+
+    <div id="scoreboard">
+      <h2>Scoreboard</h2>
+      <ul id="scoreList"></ul>
+    </div>
+
+    <div id="pauseMenu" class="overlay">
+      <h1>Paused</h1>
+      <button id="resumeButton">Resume</button>
+    </div>
+
+    <canvas id="miniMap" width="200" height="200"></canvas>
 
     <div id="connectionStatus" class="disconnected" aria-live="polite">Connecting...</div>
     
@@ -76,8 +94,14 @@
         <input type="number" id="offerCopper" min="0" value="0" />
         
         <button id="sendTradeRequest">Send Trade Request</button>
-        <button id="closeTradeModal">Cancel</button>
+      <button id="closeTradeModal">Cancel</button>
       </div>
+    </div>
+
+    <div id="hud">
+      <span id="hud-health"></span>
+      <span id="hud-equipped"></span>
+      <span id="hud-copper"></span>
     </div>
   </div>
 
