@@ -172,14 +172,25 @@ function updateParticles() {
 
 
 // Loading overlay for first visit
-function showLoadingOverlay() {
+function showLoadingOverlayIfNeeded() {
     const overlay = document.getElementById('loading-overlay');
     if (!overlay) return;
 
+    const images = Array.from(document.images);
+    const imagesPending = images.some(img => !img.complete);
+
+    if (!imagesPending) {
+        overlay.remove();
+        return;
+    }
+
     overlay.style.display = 'flex';
-    setTimeout(() => {
+
+    const hideOverlay = () => {
         overlay.classList.add('fade-out');
-    }, 1500);
+    };
+
+    window.addEventListener('load', hideOverlay);
     overlay.addEventListener('transitionend', () => overlay.remove());
 }
 
@@ -361,7 +372,7 @@ function initializeSmoothScroll() {
 document.addEventListener('DOMContentLoaded', () => {
     console.log("DOM fully loaded and parsed");
     loadTheme(); // Load theme and update UI elements like icon
-    showLoadingOverlay();
+    showLoadingOverlayIfNeeded();
 
     // Initialize other components
     initializeHamburgerMenu();
