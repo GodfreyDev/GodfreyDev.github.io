@@ -194,66 +194,6 @@ function showLoadingOverlayIfNeeded() {
     overlay.addEventListener('transitionend', () => overlay.remove());
 }
 
-// Countdown timer functions
-let countdownInterval = null;
-
-function setCountdownDate() {
-    const dateInputElement = document.getElementById('dateInput');
-    if (dateInputElement) {
-        const dateInput = dateInputElement.value;
-        if (dateInput) {
-            localStorage.setItem('countdownDate', dateInput);
-            startCountdown(dateInput);
-        }
-    } else {
-         console.warn("dateInput element not found for countdown.");
-    }
-}
-
-function startCountdown(date) {
-    const countdownElement = document.getElementById('countdown');
-    if (!countdownElement) {
-        // console.warn("countdown element not found."); // Less noisy log
-        return;
-    }
-
-    // Ensure date string includes time part for accurate parsing, assume start of day
-    const targetDate = new Date(date + "T00:00:00").getTime();
-
-    if (isNaN(targetDate)) {
-        countdownElement.innerText = "Invalid Date Format";
-        clearInterval(countdownInterval); // Stop timer if date is invalid
-        return;
-    }
-
-    if (countdownInterval) {
-        clearInterval(countdownInterval);
-    }
-
-    const updateTimer = () => {
-        const now = new Date().getTime();
-        const distance = targetDate - now;
-
-        if (distance < 0) {
-            clearInterval(countdownInterval);
-            countdownElement.innerText = "The date has passed!";
-            return;
-        }
-
-        const days = Math.floor(distance / (1000 * 60 * 60 * 24));
-        const hours = Math.floor((distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
-        const minutes = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
-        const seconds = Math.floor((distance % (1000 * 60)) / 1000);
-
-        const targetDateObj = new Date(targetDate); // Create date object for formatting
-        countdownElement.innerText = `${days}d ${hours}h ${minutes}m ${seconds}s until ${targetDateObj.toLocaleDateString()}`;
-    };
-
-    updateTimer();
-    countdownInterval = setInterval(updateTimer, 1000);
-}
-
-
 // Hamburger Menu for Mobile Navigation
 function initializeHamburgerMenu() {
     const hamburger = document.querySelector('.hamburger');
@@ -284,40 +224,6 @@ function initializeHamburgerMenu() {
 }
 
 
-// Initialize Countdown Timer on Load
-function initializeCountdown() {
-    const dateInputElement = document.getElementById('dateInput');
-    const countdownElement = document.getElementById('countdown');
-
-    if (dateInputElement && countdownElement) {
-        const savedDate = localStorage.getItem('countdownDate');
-        if (savedDate) {
-            dateInputElement.value = savedDate;
-            startCountdown(savedDate);
-        } else {
-             countdownElement.innerText = "Set a date to count down to!";
-        }
-
-        const setDateButton = dateInputElement.nextElementSibling;
-        if (setDateButton && setDateButton.tagName === 'BUTTON') {
-            // Ensure listener isn't added multiple times if script re-runs
-            if (!setDateButton.hasAttribute('data-listener-added')) {
-                 setDateButton.addEventListener('click', setCountdownDate);
-                 setDateButton.setAttribute('data-listener-added', 'true');
-            }
-        } else {
-             console.warn("Could not find button next to date input to attach listener.");
-        }
-
-        try {
-            const todayStr = new Date().toISOString().split('T')[0];
-            dateInputElement.min = todayStr;
-        } catch (e) { console.error("Error setting min date:", e)}
-
-    } else {
-        // console.log("Countdown elements not found on this page."); // Less noisy
-    }
-}
 
 
 // Smooth Scrolling
@@ -376,7 +282,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Initialize other components
     initializeHamburgerMenu();
-    initializeCountdown();
     initializeSmoothScroll();
 
     // Wiki/Graph initialization (if they exist)

@@ -247,9 +247,9 @@ html.dark-mode #hero {
     background: transparent;
     color: #fff;
 }
-#hero .container { width: 90%; max-width: 1200px; margin: auto; padding: 0; }
-#hero h2 { font-size: 2.5em; margin-bottom: 20px; animation: fadeInDown 1s ease-in-out; }
-#hero p { font-size: 1.2em; margin-bottom: 30px; }
+#hero .container { width: 90%; max-width: 800px; margin: auto; padding: 0; }
+#hero h2 { font-size: 2.2em; margin-bottom: 20px; animation: fadeInDown 1s ease-in-out; }
+#hero p { font-size: 1.1em; margin-bottom: 30px; }
 #hero .btn { padding: 12px 25px; }
 
 /* Sections General */
@@ -262,15 +262,8 @@ section h2 { text-align: center; font-size: 2em; margin-bottom: 40px; font-weigh
 .about-content { display: flex; flex-wrap: wrap; gap: 20px; align-items: center; }
 .profile-pic { flex: 1 1 250px; max-width: 250px; border-radius: 10px; box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); }
 html.dark-mode .profile-pic { box-shadow: 0 4px 8px rgba(0, 0, 0, 0.4); }
-.about-text { flex: 2 1 400px; }
+.about-text { flex: 2 1 400px; max-width: 600px; margin: 0 auto; }
 .about-text p { margin-bottom: 20px; line-height: 1.6; }
-.countdown-container { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
-.countdown-container input[type="date"] { padding: 10px; border: 1px solid #ccc; border-radius: 5px; font-size: 1em; background-color: #fff; color: #333; }
-html.dark-mode .countdown-container input[type="date"] { background-color: #333; color: #ccc; border-color: #555; }
-html.dark-mode .countdown-container input[type="date"]::-webkit-calendar-picker-indicator { filter: invert(1); }
-.countdown-container button { /* Inherits .btn */ }
-#countdown { font-size: 1.2em; color: #f39c12; margin-top: 5px; }
-html.dark-mode #countdown { color: #e67e22; }
 
 /* Skills Section */
 #skills {}
