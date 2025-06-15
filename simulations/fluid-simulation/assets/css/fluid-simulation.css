@@ -67,3 +67,16 @@ canvas {
 #text-input:focus {
     border-color: #40E0D0;
 }
+
+.back-button {
+    position: absolute;
+    top: 10px;
+    left: 10px;
+    z-index: 103;
+    color: white;
+    background: rgba(0, 0, 0, 0.5);
+    padding: 8px 12px;
+    border-radius: 4px;
+    text-decoration: none;
+    font-family: Arial, sans-serif;
+}
