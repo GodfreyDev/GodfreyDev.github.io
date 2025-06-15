@@ -392,7 +392,24 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     const contactForm = document.getElementById('contactForm');
-    if (contactForm && contactForm.getAttribute('action') === '/api/contact') {
+    const modal = document.getElementById('contactModal');
+    const modalClose = document.getElementById('contactModalClose');
+
+    function showContactModal(message) {
+        if (modal) {
+            const msgEl = document.getElementById('contactModalMessage');
+            if (msgEl) msgEl.textContent = message;
+            modal.classList.add('show');
+            setTimeout(() => modal.classList.remove('show'), 3000);
+        }
+    }
+    if (modalClose) {
+        modalClose.addEventListener('click', () => {
+            modal.classList.remove('show');
+        });
+    }
+
+    if (contactForm) {
         contactForm.addEventListener('submit', async (e) => {
             e.preventDefault();
             const formData = new FormData(contactForm);
@@ -403,19 +420,25 @@ document.addEventListener('DOMContentLoaded', () => {
             };
             const statusEl = document.getElementById('contactStatus');
             try {
-                const res = await fetch('/api/contact', {
+                const res = await fetch(contactForm.action, {
                     method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/json'
+                    },
                     body: JSON.stringify(data)
                 });
                 if (res.ok) {
                     contactForm.reset();
                     if (statusEl) statusEl.textContent = 'Message sent!';
+                    showContactModal('Message sent!');
                 } else {
                     if (statusEl) statusEl.textContent = 'Error sending message';
+                    showContactModal('Error sending message');
                 }
             } catch (err) {
                 if (statusEl) statusEl.textContent = 'Error sending message';
+                showContactModal('Error sending message');
             }
         });
     }
