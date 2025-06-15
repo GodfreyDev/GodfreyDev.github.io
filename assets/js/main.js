@@ -391,6 +391,35 @@ document.addEventListener('DOMContentLoaded', () => {
          // console.log("initializeGraph function not found.");
     }
 
+    const contactForm = document.getElementById('contactForm');
+    if (contactForm) {
+        contactForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const formData = new FormData(contactForm);
+            const data = {
+                name: formData.get('name'),
+                contact: formData.get('contact'),
+                message: formData.get('message')
+            };
+            const statusEl = document.getElementById('contactStatus');
+            try {
+                const res = await fetch('/api/contact', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(data)
+                });
+                if (res.ok) {
+                    contactForm.reset();
+                    if (statusEl) statusEl.textContent = 'Message sent!';
+                } else {
+                    if (statusEl) statusEl.textContent = 'Error sending message';
+                }
+            } catch (err) {
+                if (statusEl) statusEl.textContent = 'Error sending message';
+            }
+        });
+    }
+
     // Particles.js initialization is handled by its own script tag and callback
     // which should call updateParticles() if needed after loadTheme runs.
     // If particlesJS loads *after* DOMContentLoaded, loadTheme might call updateParticles too early.

@@ -316,6 +316,7 @@ html.dark-mode .form-group input:focus, html.dark-mode .form-group textarea:focu
 html.dark-mode .social-links a { color: #aaa; }
 .social-links a:hover { color: #f39c12; transform: scale(1.1); }
 html.dark-mode .social-links a:hover { color: #e67e22; }
+#contactStatus { text-align: center; margin-top: 10px; }
 
 /* Footer */
 footer { background: #333; color: #fff; padding: 20px 0; text-align: center; margin-top: 40px; }
