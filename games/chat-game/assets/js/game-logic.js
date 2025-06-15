@@ -45,6 +45,9 @@ const serverUrl = window.location.hostname === 'godfreydev.github.io'
 
 const socket = io.connect(serverUrl);
 const connectionStatus = document.getElementById('connectionStatus');
+const scoreList = document.getElementById('scoreList');
+const pauseMenu = document.getElementById('pauseMenu');
+const resumeButton = document.getElementById('resumeButton');
 
 socket.on('connect', () => {
   if (connectionStatus) {
@@ -515,7 +518,8 @@ socket.on('updateEnemies', serverEnemies => {
 socket.on('updateCopper', (copper) => {
   player.copper = copper;
   updateInventoryDisplay(); // Update inventory display to show new copper amount
-}); 
+  updateScoreboard();
+});
 
 // Handle enemy killed
 socket.on('enemyKilled', enemyId => {
@@ -990,6 +994,35 @@ function openTradeModal() {
   tradeModal.style.display = 'flex';
 }
 
+// Update the scoreboard list
+function updateScoreboard() {
+  if (!scoreList) return;
+  scoreList.innerHTML = '';
+  const all = { ...players, [player.id]: player };
+  Object.values(all).forEach(p => {
+    const li = document.createElement('li');
+    li.textContent = `${p.name}: ${p.copper || 0}c`;
+    scoreList.appendChild(li);
+  });
+}
+
+// Toggle pause menu visibility
+function togglePauseMenu() {
+  if (!pauseMenu) return;
+  const showing = pauseMenu.style.display === 'flex';
+  pauseMenu.style.display = showing ? 'none' : 'flex';
+}
+
+if (resumeButton) {
+  resumeButton.addEventListener('click', togglePauseMenu);
+}
+
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape') {
+    togglePauseMenu();
+  }
+});
+
 // Event listener to open trade modal
 document.getElementById('tradeButton').addEventListener('click', openTradeModal);
 
@@ -1115,6 +1148,7 @@ socket.on('tradeSuccess', data => {
   player.inventory = data.newInventory;
   player.copper = data.copper || player.copper;
   updateInventoryDisplay();
+  updateScoreboard();
   alert('Trade successful!');
 });
 
@@ -1154,11 +1188,13 @@ socket.on('currentPlayers', playersData => {
       players[p.id] = p;
     }
   });
+  updateScoreboard();
 });
 
 socket.on('newPlayer', playerData => {
   playerData.sprite = spriteImages.player;
   players[playerData.id] = playerData;
+  updateScoreboard();
 });
 
 socket.on('playerMoved', data => {
@@ -1172,7 +1208,10 @@ socket.on('playerMoved', data => {
   }
 });
 
-socket.on('playerDisconnected', id => delete players[id]);
+socket.on('playerDisconnected', id => {
+  delete players[id];
+  updateScoreboard();
+});
 
 // Handle incoming chat messages and update chat log
 socket.on('chatMessage', data => {
@@ -1208,17 +1247,25 @@ socket.on('privateMessage', data => {
 });
 
 // Initialize the game after all assets are loaded
+const startButton = document.getElementById('startButton');
+
 function startGame() {
+  document.getElementById('mainMenu').style.display = 'none';
   initializeGameWorld();
   requestAnimationFrame(gameLoop);
+  updateScoreboard();
 }
 
-// Load all assets and then start the game
+// Load all assets then enable the start button
 loadTileImages(() => {
   loadSpriteImages(() => {
-    startGame();
+    if (startButton) startButton.disabled = false;
   });
 });
+
+if (startButton) {
+  startButton.addEventListener('click', startGame);
+}
 
 // Update inventory display
 function updateInventoryDisplay() {
@@ -1266,28 +1313,15 @@ function useItem() {
 
 // Draw Heads-Up Display (HUD) for the player
 function drawHUD() {
-  ctx.save();
-  ctx.fillStyle = 'white';
-  ctx.font = '20px Arial';
-  ctx.textAlign = 'left';
-  ctx.textBaseline = 'top';
+  const healthEl = document.getElementById('hud-health');
+  const equipEl = document.getElementById('hud-equipped');
+  const copperEl = document.getElementById('hud-copper');
 
-  let hudX = 10;
-  let hudY = 10;
-
-  ctx.fillText(`Health: ${player.health}/${player.maxHealth}`, hudX, hudY);
-  hudY += 30;
-
-  if (player.equippedItem) {
-    ctx.fillText(`Equipped: ${player.equippedItem.type}`, hudX, hudY);
-    hudY += 30;
+  if (healthEl) healthEl.textContent = `Health: ${player.health}/${player.maxHealth}`;
+  if (equipEl) {
+    equipEl.textContent = player.equippedItem ? `Equipped: ${player.equippedItem.type}` : '';
   }
-
-  // Display copper
-  ctx.fillText(`Copper: ${player.copper || 0}`, hudX, hudY);
-  hudY += 30;
-
-  ctx.restore();
+  if (copperEl) copperEl.textContent = `Copper: ${player.copper || 0}`;
 }
 
 function updateEnemyAnimations(deltaTime) {
