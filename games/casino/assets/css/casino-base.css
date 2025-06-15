@@ -1,0 +1,73 @@
+/* Shared base styles for casino pages */
+body {
+  background-color: #0e0e0e;
+  color: #eee;
+  font-family: 'Roboto', sans-serif;
+  min-height: 100vh;
+}
+html.light-mode body {
+  background-color: #fafafa;
+  color: #222;
+}
+
+.game-header {
+  background: linear-gradient(180deg, #2e1a47, #1c0f2d);
+  color: #fff;
+  border-bottom: 2px solid #412464;
+}
+html.light-mode .game-header {
+  background: linear-gradient(180deg, #f0e0ff, #d5c6e6);
+  color: #222;
+  border-bottom-color: #b39acb;
+}
+
+.casino-nav {
+  background: linear-gradient(90deg, #b88900, #6b4b00);
+  border-bottom: 2px solid #483100;
+}
+html.light-mode .casino-nav {
+  background: linear-gradient(90deg, #f9d76d, #d2a840);
+  border-bottom-color: #b5872e;
+}
+.casino-nav ul {
+  list-style: none;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 10px;
+  margin: 0;
+  padding: 10px;
+}
+.casino-nav ul li a {
+  color: #fff;
+  text-decoration: none;
+  padding: 8px 14px;
+  border-radius: 4px;
+  background-color: rgba(0,0,0,0.3);
+  transition: background-color 0.3s;
+  font-weight: 500;
+}
+.casino-nav ul li a:hover,
+.casino-nav ul li a.active {
+  background-color: rgba(0,0,0,0.5);
+}
+html.light-mode .casino-nav ul li a {
+  background-color: rgba(255,255,255,0.4);
+  color: #222;
+}
+html.light-mode .casino-nav ul li a:hover,
+html.light-mode .casino-nav ul li a.active {
+  background-color: rgba(255,255,255,0.7);
+}
+
+.game-footer {
+  padding: 20px 0;
+  background: #222;
+  color: #aaa;
+  text-align: center;
+  margin-top: 40px;
+}
+html.light-mode .game-footer {
+  background: #eee;
+  color: #333;
+}
