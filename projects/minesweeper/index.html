@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Minesweeper - Discord Activity</title>
+    <script>
+        function applyGameTheme(themeName) {
+            const validTheme = (themeName === 'dark-mode' || themeName === 'light-mode') ? themeName : 'light-mode';
+            document.documentElement.className = validTheme;
+        }
+        try {
+            const savedTheme = localStorage.getItem('theme');
+            applyGameTheme(savedTheme);
+        } catch (e) {
+            applyGameTheme('light-mode');
+        }
+    </script>
+    <style>
+        html.dark-mode body {
+            background-color: #1a1a1a;
+            color: #ccc;
+        }
+    </style>
+    <link rel="icon" href="../../assets/images/favicon.png" type="image/png">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap">
+    <link rel="stylesheet" href="../../assets/css/style.css">
+</head>
+<body>
+    <header class="game-header">
+        <div class="container">
+            <a href="../../index.html#projects" class="btn back-btn">Back to Home</a>
+            <h1>Minesweeper</h1>
+            <button class="theme-toggle" onclick="toggleTheme()" aria-label="Toggle theme">
+                <span id="toggle-icon"></span>
+            </button>
+        </div>
+    </header>
+
+    <main class="container project-detail">
+        <section class="project-hero">
+            <h2>Discord Activity for quick puzzle rounds</h2>
+            <p>A fast, Discord-native Minesweeper experience built for solo sessions or friendly races in voice.</p>
+            <div class="project-meta">
+                <span class="status-pill discord-pill">Discord Activity</span>
+                <span class="tag">Puzzle</span>
+                <span class="tag">Multiplayer</span>
+                <span class="tag">Web</span>
+            </div>
+            <div class="project-hero-media">
+                <img src="../../assets/images/projects/minesweeper/MinesweeperBoard.png" alt="Minesweeper Discord Activity board preview" class="project-hero-image" loading="lazy">
+            </div>
+        </section>
+
+        <section class="project-section" id="overview">
+            <h2>Overview</h2>
+            <p>Classic Minesweeper rules with a crisp, Discord-friendly UI, designed to keep turns fast and the board readable at a glance.</p>
+        </section>
+
+        <section class="project-section" id="features">
+            <h2>Key Features</h2>
+            <ul class="project-list">
+                <li>Quick start flow with visible status for flags, clears, and remaining tiles.</li>
+                <li>Clear visual hierarchy for numbers, flags, and safe reveals.</li>
+                <li>Snappy round resets for replayability.</li>
+            </ul>
+        </section>
+
+        <section class="project-section" id="design-notes">
+            <h2>Design Notes</h2>
+            <ul class="project-list">
+                <li>Explain how difficulty or board size is selected.</li>
+                <li>Note any anti-misclick safeguards or hint systems.</li>
+                <li>Document any multiplayer or race-style mechanics.</li>
+            </ul>
+        </section>
+
+        <section class="project-section" id="tech-stack">
+            <h2>Tech Stack</h2>
+            <ul class="project-list">
+                <li>Add the rendering tech and UI framework used.</li>
+                <li>Note how game state syncs between players, if applicable.</li>
+                <li>List hosting, analytics, or build tooling highlights.</li>
+            </ul>
+        </section>
+
+        <section class="project-section" id="links">
+            <h2>Links</h2>
+            <div class="project-actions">
+                <a href="https://discord.com/oauth2/authorize?client_id=1451279898558730310" class="btn" target="_blank" rel="noopener noreferrer">Open in Discord</a>
+                <a href="../../index.html#projects" class="btn secondary">Back to Projects</a>
+            </div>
+        </section>
+    </main>
+
+    <footer class="game-footer">
+        <div class="container">
+            <p>c 2024 Gavin - Minesweeper</p>
+        </div>
+    </footer>
+
+    <script src="../../assets/js/main.js"></script>
+</body>
+</html>

@@ -1,7 +1,7 @@
-// Import lil-gui
-import GUI from 'https://cdn.jsdelivr.net/npm/lil-gui@0.18/dist/lil-gui.esm.min.js';
-import { FRUSTUM_SIZE, MAX_PARTICLES, DEFAULT_PRESET_NAME } from './simulationConstants.js';
-import PRESETS from './presets.js';
+(function() {
+const GUI = (window.lil && window.lil.GUI) ? window.lil.GUI : window.GUI;
+const { FRUSTUM_SIZE = 120, MAX_PARTICLES = 20000, DEFAULT_PRESET_NAME = 'Medium' } = window.SIM_CONSTANTS || {};
+const PRESETS = window.FLUID_PRESETS || {};
 
 class FluidSimulation {
     constructor(container) {
@@ -35,7 +35,9 @@ class FluidSimulation {
         this.positions = null;
         this.velocities = null;
         this.colors = null;
+        this.baseColors = null;
         this.initialPositions = null; // Stores start positions for reset
+        this.isEmitter = null;
 
         // --- Spatial Grid ---
         this.grid = {};
@@ -121,7 +123,9 @@ class FluidSimulation {
          this.positions = new Float32Array(MAX_PARTICLES * 3);
          this.velocities = new Float32Array(MAX_PARTICLES * 3);
          this.colors = new Float32Array(MAX_PARTICLES * 3);
+         this.baseColors = new Float32Array(MAX_PARTICLES * 3);
          this.initialPositions = new Float32Array(MAX_PARTICLES * 3);
+         this.isEmitter = new Uint8Array(MAX_PARTICLES);
          this.geometry = new THREE.BufferGeometry();
          this.geometry.setAttribute('position', new THREE.BufferAttribute(this.positions, 3).setUsage(THREE.DynamicDrawUsage));
          this.geometry.setAttribute('color', new THREE.BufferAttribute(this.colors, 3).setUsage(THREE.DynamicDrawUsage));
@@ -149,6 +153,8 @@ class FluidSimulation {
             }
             this.positions[i3] = px; this.positions[i3 + 1] = py; this.positions[i3 + 2] = 0;
             this.velocities[i3] = (Math.random() - 0.5) * 0.1; this.velocities[i3 + 1] = (Math.random() - 0.5) * 0.1; this.velocities[i3 + 2] = 0;
+            this.isEmitter[i] = 0;
+            this.baseColors[i3] = this.baseColor.r; this.baseColors[i3 + 1] = this.baseColor.g; this.baseColors[i3 + 2] = this.baseColor.b;
             if (this.params.useVerticalGradient) {
                 this.tempColor.copy(this.baseColor);
                 const hsl = { h: 0, s: 0, l: 0 };
@@ -166,6 +172,8 @@ class FluidSimulation {
             this.positions[i3] = 0; this.positions[i3+1] = 0; this.positions[i3+2] = 0;
             this.velocities[i3] = 0; this.velocities[i3+1] = 0; this.velocities[i3+2] = 0;
             this.colors[i3] = 0; this.colors[i3+1] = 0; this.colors[i3+2] = 0;
+            this.baseColors[i3] = 0; this.baseColors[i3+1] = 0; this.baseColors[i3+2] = 0;
+            this.isEmitter[i] = 0;
             if (fullReset) { // Only clear initial positions on a full reset
                  this.initialPositions[i3] = 0; this.initialPositions[i3+1] = 0; this.initialPositions[i3+2] = 0;
             }
@@ -173,6 +181,29 @@ class FluidSimulation {
         this.geometry.attributes.position.needsUpdate = true;
         this.geometry.attributes.color.needsUpdate = true;
         this.geometry.setDrawRange(0, count);
+    }
+
+    updateBaseColors() {
+        const count = this.params.particlesCount;
+        this.baseColor.set(this.params.particleBaseColor);
+        const currentContainerRadius = this.params.containerRadius;
+        for (let i = 0; i < count; i++) {
+            if (this.isEmitter[i]) continue;
+            const i3 = i * 3;
+            this.baseColors[i3] = this.baseColor.r; this.baseColors[i3 + 1] = this.baseColor.g; this.baseColors[i3 + 2] = this.baseColor.b;
+            if (this.params.useVerticalGradient) {
+                const py = this.positions[i3 + 1];
+                this.tempColor.copy(this.baseColor);
+                const hsl = { h: 0, s: 0, l: 0 };
+                this.tempColor.getHSL(hsl);
+                hsl.h = (hsl.h + ((py + currentContainerRadius) / (2 * currentContainerRadius)) * this.params.gradientHueScale) % 1.0;
+                this.tempColor.setHSL(hsl.h, hsl.s, hsl.l);
+                this.colors[i3] = this.tempColor.r; this.colors[i3 + 1] = this.tempColor.g; this.colors[i3 + 2] = this.tempColor.b;
+            } else {
+                this.colors[i3] = this.baseColor.r; this.colors[i3 + 1] = this.baseColor.g; this.colors[i3 + 2] = this.baseColor.b;
+            }
+        }
+        this.geometry.attributes.color.needsUpdate = true;
     }
 
     updateParticleCount(newCount) { // This is now mostly for the GUI slider control
@@ -193,6 +224,8 @@ class FluidSimulation {
                  this.positions[i3] = px; this.positions[i3 + 1] = py; this.positions[i3 + 2] = 0;
                  this.initialPositions[i3] = px; this.initialPositions[i3 + 1] = py; this.initialPositions[i3 + 2] = 0; // Store initial for these new particles
                  this.velocities[i3] = (Math.random() - 0.5) * 0.1; this.velocities[i3 + 1] = (Math.random() - 0.5) * 0.1;
+                 this.isEmitter[i] = 0;
+                 this.baseColors[i3] = this.baseColor.r; this.baseColors[i3 + 1] = this.baseColor.g; this.baseColors[i3 + 2] = this.baseColor.b;
                  if (this.params.useVerticalGradient) {
                      this.tempColor.copy(this.baseColor);
                      const hsl = { h: 0, s: 0, l: 0 };
@@ -240,6 +273,10 @@ class FluidSimulation {
 
     setupGUI() {
         if (this.gui) this.gui.destroy();
+        if (!GUI) {
+            console.error("lil-gui not loaded; GUI controls disabled.");
+            return;
+        }
         this.gui = new GUI();
         this.gui.title("Fluid Controls 2.0");
 
@@ -1236,3 +1273,4 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     } else { console.error("DOM body not found!"); }
 });
+})();

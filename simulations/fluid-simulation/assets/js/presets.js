@@ -1,4 +1,4 @@
-import { MAX_PARTICLES } from './simulationConstants.js';
+const MAX_PARTICLES = window.SIM_CONSTANTS?.MAX_PARTICLES ?? 20000;
 
 const PRESETS = {
     'Low': {
@@ -245,5 +245,5 @@ const PRESETS = {
     },
 };
 
-export default PRESETS;
+window.FLUID_PRESETS = PRESETS;
 

@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>L Game - Discord Activity</title>
+    <script>
+        function applyGameTheme(themeName) {
+            const validTheme = (themeName === 'dark-mode' || themeName === 'light-mode') ? themeName : 'light-mode';
+            document.documentElement.className = validTheme;
+        }
+        try {
+            const savedTheme = localStorage.getItem('theme');
+            applyGameTheme(savedTheme);
+        } catch (e) {
+            applyGameTheme('light-mode');
+        }
+    </script>
+    <style>
+        html.dark-mode body {
+            background-color: #1a1a1a;
+            color: #ccc;
+        }
+    </style>
+    <link rel="icon" href="../../assets/images/favicon.png" type="image/png">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap">
+    <link rel="stylesheet" href="../../assets/css/style.css">
+</head>
+<body>
+    <header class="game-header">
+        <div class="container">
+            <a href="../../index.html#projects" class="btn back-btn">Back to Home</a>
+            <h1>L Game</h1>
+            <button class="theme-toggle" onclick="toggleTheme()" aria-label="Toggle theme">
+                <span id="toggle-icon"></span>
+            </button>
+        </div>
+    </header>
+
+    <main class="container project-detail">
+        <section class="project-hero">
+            <h2>Discord Activity for fast, tactical matches</h2>
+            <p>This Discord Activity adapts the classic L Game into a quick, turn-based challenge that runs right inside a voice channel.</p>
+            <div class="project-meta">
+                <span class="status-pill discord-pill">Discord Activity</span>
+                <span class="tag">Turn-Based</span>
+                <span class="tag">Multiplayer</span>
+                <span class="tag">Web</span>
+            </div>
+            <div class="project-hero-media">
+                <img src="../../assets/images/projects/l-game/LGame.png" alt="L Game Discord Activity gameplay screenshot" class="project-hero-image" loading="lazy">
+            </div>
+        </section>
+
+        <section class="project-section" id="overview">
+            <h2>Overview</h2>
+            <p>The goal is simple: place your L-shaped piece and a neutral block each turn to leave your opponent without any legal moves. The activity focuses on quick setup, clear turn states, and smooth rematches.</p>
+        </section>
+
+        <section class="project-section" id="features">
+            <h2>Key Features</h2>
+            <ul class="project-list">
+                <li>Room-based flow with lobby, settings, and quick rematch support.</li>
+                <li>Turn indicators, history panel, and confirm/undo safeguards.</li>
+                <li>Clean visual hierarchy for at-a-glance board reads.</li>
+            </ul>
+        </section>
+
+        <section class="project-section" id="design-notes">
+            <h2>Design Notes</h2>
+            <ul class="project-list">
+                <li>Describe the matchmaking flow and how players join a room.</li>
+                <li>Explain how turn validation and state updates are handled.</li>
+                <li>Call out any variants, rule tweaks, or accessibility choices.</li>
+            </ul>
+        </section>
+
+        <section class="project-section" id="tech-stack">
+            <h2>Tech Stack</h2>
+            <ul class="project-list">
+                <li>Add the engine or framework used for the UI.</li>
+                <li>Note the real-time layer (WebSockets, WebRTC, etc.).</li>
+                <li>List hosting, analytics, or build tooling highlights.</li>
+            </ul>
+        </section>
+
+        <section class="project-section" id="links">
+            <h2>Links</h2>
+            <div class="project-actions">
+                <a href="https://discord.com/oauth2/authorize?client_id=1455642675373150424" class="btn" target="_blank" rel="noopener noreferrer">Open in Discord</a>
+                <a href="../../index.html#projects" class="btn secondary">Back to Projects</a>
+            </div>
+        </section>
+    </main>
+
+    <footer class="game-footer">
+        <div class="container">
+            <p>c 2024 Gavin - L Game</p>
+        </div>
+    </footer>
+
+    <script src="../../assets/js/main.js"></script>
+</body>
+</html>

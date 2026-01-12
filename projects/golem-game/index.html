@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Golem Game - Project Hub</title>
+    <script>
+        function applyGameTheme(themeName) {
+            const validTheme = (themeName === 'dark-mode' || themeName === 'light-mode') ? themeName : 'light-mode';
+            document.documentElement.className = validTheme;
+        }
+        try {
+            const savedTheme = localStorage.getItem('theme');
+            applyGameTheme(savedTheme);
+        } catch (e) {
+            applyGameTheme('light-mode');
+        }
+    </script>
+    <style>
+        html.dark-mode body {
+            background-color: #1a1a1a;
+            color: #ccc;
+        }
+    </style>
+    <link rel="icon" href="../../assets/images/favicon.png" type="image/png">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap">
+    <link rel="stylesheet" href="../../assets/css/style.css">
+</head>
+<body>
+    <header class="game-header">
+        <div class="container">
+            <a href="../../index.html#projects" class="btn back-btn">Back to Home</a>
+            <h1>Golem Game</h1>
+            <button class="theme-toggle" onclick="toggleTheme()" aria-label="Toggle theme">
+                <span id="toggle-icon"></span>
+            </button>
+        </div>
+    </header>
+
+    <main class="container project-detail">
+        <section class="project-hero">
+            <h2>VR MMORPG focused on exploration and immersion</h2>
+            <p>Golem Game is a VR MMORPG designed for a laid-back, exploratory experience across stand-alone VR, PC (with or without VR), and Android.</p>
+            <div class="project-meta">
+                <span class="status-pill">In Development</span>
+                <span class="tag">VR</span>
+                <span class="tag">PC</span>
+                <span class="tag">Standalone</span>
+                <span class="tag">Android</span>
+            </div>
+        </section>
+
+        <section class="project-section" id="overview">
+            <h2>Overview</h2>
+            <p>Players take on the role of wild golems, mana-based entities connected to the game world and its inhabitants. The core experience emphasizes exploration, interaction, and immersion, with combat as a supporting pillar rather than the primary focus.</p>
+        </section>
+
+        <section class="project-section" id="flow">
+            <h2>Game Flow Diagram</h2>
+            <p>Boot scene loads the game scene, reads saved properties, and spawns the player into the correct location.</p>
+            <pre><code>Boot Scene
+  |
+  v
+Load Game Scene
+  |
+  v
+Read Saved Properties
+  |
+  v
+Apply Scene Settings
+  |
+  v
+Spawn Player In Active Scene</code></pre>
+        </section>
+
+        <section class="project-section" id="media">
+            <h2>Media Gallery</h2>
+            <div class="media-grid">
+                <div class="media-card">
+                    <div class="media-placeholder">Add image: assets/images/projects/golem/shot-01.jpg</div>
+                </div>
+                <div class="media-card">
+                    <div class="media-placeholder">Add image: assets/images/projects/golem/shot-02.jpg</div>
+                </div>
+                <div class="media-card">
+                    <div class="media-placeholder">Add image: assets/images/projects/golem/shot-03.jpg</div>
+                </div>
+                <div class="media-card">
+                    <div class="media-placeholder">Add image: assets/images/projects/golem/shot-04.jpg</div>
+                </div>
+                <div class="media-card">
+                    <div class="media-placeholder">Add video: assets/videos/golem/trailer-01.mp4</div>
+                </div>
+                <div class="media-card">
+                    <div class="media-placeholder">Add video: assets/videos/golem/gameplay-01.mp4</div>
+                </div>
+            </div>
+        </section>
+
+        <section class="project-section" id="builds">
+            <h2>Builds</h2>
+            <ul class="project-list">
+                <li>Add build links for PC, VR, and Android here.</li>
+                <li>Example: Google Drive, itch.io, or Steam demo links.</li>
+            </ul>
+        </section>
+
+        <section class="project-section" id="inventory">
+            <h2>Inventory System Flow</h2>
+            <ul class="project-list">
+                <li>Login process leads to accessing catalog and inventory data.</li>
+                <li>Inventory manager retrieves all item data and maintains a local cache.</li>
+                <li>Provides IsItemInSlot(string slot) functionality.</li>
+                <li>Manages self-sorting of the main inventory.</li>
+                <li>Handles requests to equip or move items.</li>
+                <li>Coordinates item materialization (spawning prefabs) by calling other systems.</li>
+                <li>Manages item stack IDs, moving items into numbered slots as needed.</li>
+            </ul>
+        </section>
+
+        <section class="project-section" id="checklist">
+            <h2>Core Features Checklist</h2>
+            <details open>
+                <summary>Current status</summary>
+                <ul class="project-list">
+                    <li>[x] Make game scene support VR locally</li>
+                    <li>[x] Add VR simulator for easy remote testing</li>
+                    <li>[ ] PlayFab data backend (setup done; auto login pending; lobby display pending)</li>
+                    <li>[x] Make online player follow the VR head</li>
+                    <li>[ ] Make chat work for VR players (VR UI interaction done; chat box and send pending)</li>
+                    <li>[ ] Add voice chat button for mobile</li>
+                    <li>[x] Add health to players</li>
+                    <li>[x] Implement VR combat</li>
+                    <li>[ ] Add healing potion</li>
+                    <li>[ ] Add pixelation drink</li>
+                    <li>[ ] Work on item pickup and trading (prefab integrated; add item; drop; trade; menu; confirmation)</li>
+                    <li>[ ] Add enemies</li>
+                    <li>[ ] Implement loot chest system</li>
+                </ul>
+            </details>
+        </section>
+
+        <section class="project-section" id="notes">
+            <h2>Design Notes</h2>
+            <p>Link or embed your docs here. Suggested sections below.</p>
+            <ul class="project-list">
+                <li>Core Features</li>
+                <li>Core Gameplay</li>
+                <li>World and Story</li>
+                <li>Player Interaction and Social Features</li>
+                <li>Technical and Backend</li>
+                <li>Economy and Progression</li>
+            </ul>
+        </section>
+
+        <section class="project-section" id="progression">
+            <h2>XP Scaling and Progression</h2>
+            <p>Scaling principle: use the Golden Ratio as the scaling value for XP requirements, aiming for a Phi increase every 5 levels.</p>
+            <details>
+                <summary>XP formula (Python)</summary>
+                <pre><code>import math
+
+# Function to calculate XP required to reach level 'n' (0-indexed for formula)
+# n=0 is for completing "level 0" and reaching Player Level 1.
+def get_total_xp_for_formula_level(n, start_xp_for_n0=21, phi=1.618033988749895):
+    if n &lt; 0:
+        raise ValueError("Formula level index 'n' must be a non-negative integer.")
+
+    # Per-level multiplier derived from Phi/5 levels goal: phi ** (1/5)
+    per_level_multiplier = phi ** (1.0 / 5.0)
+
+    # XP for completing formula level 'n'
+    xp = start_xp_for_n0 * (per_level_multiplier ** n)
+    return int(round(xp))
+</code></pre>
+            </details>
+        </section>
+
+        <section class="project-section" id="npcs">
+            <h2>NPCs and Enemies</h2>
+            <ul class="project-list">
+                <li>Rat</li>
+                <li>Lich</li>
+                <li>Wyvern</li>
+                <li>Dragon</li>
+            </ul>
+        </section>
+    </main>
+
+    <footer class="game-footer">
+        <div class="container">
+            <p>c 2024 Gavin - Golem Game</p>
+        </div>
+    </footer>
+
+    <script src="../../assets/js/main.js"></script>
+</body>
+</html>
