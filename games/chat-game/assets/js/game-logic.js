@@ -40,7 +40,7 @@
 // game.js
 
 const serverUrl = window.location.hostname === 'godfreydev.github.io'
-  ? 'https://cool-accessible-pint.glitch.me'
+  ? 'https://chatgame-p5km.onrender.com'
   : 'http://localhost:3000';
 
 const socket = io.connect(serverUrl);
