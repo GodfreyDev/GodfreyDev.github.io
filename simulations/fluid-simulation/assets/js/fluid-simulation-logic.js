@@ -49,6 +49,31 @@ class FluidSimulation {
         this.frameCount = 0;
         this.fpsUpdateTimer = 0;
         this.gui = null;
+        this.gifEncoder = null;
+        this.gifStatusEl = document.getElementById('gifStatus');
+        this.gifCapture = {
+            active: false,
+            rendering: false,
+            frameDelayMs: 0,
+            lastFrameTime: 0,
+            maxFrames: 0,
+            framesCaptured: 0
+        };
+        this.gifSettings = {
+            duration: 3,
+            fps: 15,
+            quality: 10,
+            scale: 0.7,
+            cropMode: 'square',
+            cropScale: 1,
+            offsetX: 0,
+            offsetY: 0,
+            showFrame: true
+        };
+        this.gifCaptureCanvas = document.createElement('canvas');
+        this.gifCaptureCtx = this.gifCaptureCanvas.getContext('2d', { willReadFrequently: true });
+        this.gifCaptureRect = null;
+        this.gifCaptureFrame = document.getElementById('gifCaptureFrame');
 
         // --- Simulation Parameters (will be populated by applyPreset) ---
         this.params = {
@@ -271,6 +296,249 @@ class FluidSimulation {
         if (this.gui) { this.gui.controllersRecursive().forEach(controller => controller.updateDisplay()); }
     }
 
+    updateGifStatus(message) {
+        if (!this.gifStatusEl) return;
+        this.gifStatusEl.textContent = message;
+    }
+
+    startGifCapture() {
+        if (this.gifCapture.active || this.gifCapture.rendering) return;
+        if (!window.GIF) {
+            this.updateGifStatus('GIF: Library missing');
+            return;
+        }
+        if (window.location.protocol === 'file:') {
+            this.updateGifStatus('GIF: Run via local server (file:// blocks workers)');
+            return;
+        }
+        if (!this.renderer || !this.renderer.domElement) {
+            this.updateGifStatus('GIF: Renderer not ready');
+            return;
+        }
+
+        const fps = Math.max(5, Math.min(Math.round(this.gifSettings.fps), 30));
+        const duration = Math.max(1, this.gifSettings.duration);
+        const quality = Math.max(1, Math.min(Math.round(this.gifSettings.quality), 30));
+        const frameDelayMs = Math.round(1000 / fps);
+        const captureRect = this.getGifCaptureRect();
+        if (!captureRect) {
+            this.updateGifStatus('GIF: Capture frame unavailable');
+            return;
+        }
+        this.gifCaptureRect = captureRect;
+        if (!this.ensureGifCaptureCanvas(captureRect)) {
+            this.updateGifStatus('GIF: Capture canvas failed');
+            return;
+        }
+
+        let workerScript = 'assets/vendor/gif.worker.js';
+        try {
+            workerScript = new URL('assets/vendor/gif.worker.js', window.location.href).toString();
+        } catch (error) {
+            console.warn('GIF worker URL fallback used:', error);
+        }
+        try {
+            this.gifEncoder = new GIF({
+                workers: 2,
+                quality,
+                width: captureRect.outputWidth,
+                height: captureRect.outputHeight,
+                workerScript
+            });
+        } catch (error) {
+            console.error('GIF worker failed to initialize:', error);
+            this.updateGifStatus('GIF: Worker blocked');
+            return;
+        }
+
+        this.gifCapture.active = true;
+        this.gifCapture.rendering = false;
+        this.gifCapture.frameDelayMs = frameDelayMs;
+        this.gifCapture.maxFrames = Math.max(1, Math.round(duration * fps));
+        this.gifCapture.framesCaptured = 0;
+        this.gifCapture.lastFrameTime = performance.now();
+        this.updateGifStatus(`GIF: Capturing 0/${this.gifCapture.maxFrames} (${captureRect.outputWidth}x${captureRect.outputHeight})`);
+
+        this.gifEncoder.on('progress', (progress) => {
+            const percent = Math.round(progress * 100);
+            this.updateGifStatus(`GIF: Rendering ${percent}%`);
+        });
+
+        this.gifEncoder.on('finished', (blob) => {
+            this.gifCapture.rendering = false;
+            this.gifEncoder = null;
+            this.downloadGif(blob);
+            this.updateGifStatus('GIF: Ready');
+        });
+    }
+
+    captureGifFrame(now) {
+        if (!this.gifCapture.active || !this.gifEncoder || !this.renderer) return;
+        if (now - this.gifCapture.lastFrameTime < this.gifCapture.frameDelayMs) return;
+
+        this.gifCapture.lastFrameTime = now;
+        try {
+            const rect = this.gifCaptureRect || this.getGifCaptureRect();
+            if (!rect) {
+                this.cancelGifCapture();
+                return;
+            }
+            if (!this.ensureGifCaptureCanvas(rect)) {
+                this.cancelGifCapture();
+                return;
+            }
+            this.gifCaptureRect = rect;
+            this.gifCaptureCtx.drawImage(
+                this.renderer.domElement,
+                rect.sx,
+                rect.sy,
+                rect.sw,
+                rect.sh,
+                0,
+                0,
+                rect.outputWidth,
+                rect.outputHeight
+            );
+            this.gifEncoder.addFrame(this.gifCaptureCtx, { copy: true, delay: this.gifCapture.frameDelayMs });
+        } catch (error) {
+            console.error('GIF capture failed:', error);
+            this.cancelGifCapture();
+            return;
+        }
+
+        this.gifCapture.framesCaptured += 1;
+        this.updateGifStatus(`GIF: Capturing ${this.gifCapture.framesCaptured}/${this.gifCapture.maxFrames}`);
+        if (this.gifCapture.framesCaptured >= this.gifCapture.maxFrames) {
+            this.finishGifCapture();
+        }
+    }
+
+    finishGifCapture() {
+        if (!this.gifEncoder || this.gifCapture.rendering) return;
+        this.gifCapture.active = false;
+        this.gifCapture.rendering = true;
+        this.gifCaptureRect = null;
+        this.updateGifStatus('GIF: Rendering...');
+        this.gifEncoder.render();
+    }
+
+    cancelGifCapture() {
+        if (!this.gifEncoder || this.gifCapture.rendering) {
+            this.updateGifStatus('GIF: Ready');
+            return;
+        }
+        if (typeof this.gifEncoder.abort === 'function') {
+            this.gifEncoder.abort();
+        }
+        this.gifEncoder = null;
+        this.gifCapture.active = false;
+        this.gifCapture.rendering = false;
+        this.gifCaptureRect = null;
+        this.updateGifStatus('GIF: Canceled');
+    }
+
+    downloadGif(blob) {
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = `fluid-simulation-${Date.now()}.gif`;
+        document.body.appendChild(link);
+        link.click();
+        link.remove();
+        setTimeout(() => URL.revokeObjectURL(url), 1000);
+    }
+
+    centerGifFrame() {
+        this.gifSettings.offsetX = 0;
+        this.gifSettings.offsetY = 0;
+        if (this.gui) {
+            this.gui.controllersRecursive().forEach(controller => controller.updateDisplay());
+        }
+        this.updateGifCaptureFrame();
+    }
+
+    getGifCaptureRect() {
+        if (!this.renderer || !this.renderer.domElement) return null;
+        const canvas = this.renderer.domElement;
+        const sourceWidth = canvas.width;
+        const sourceHeight = canvas.height;
+        if (!sourceWidth || !sourceHeight) return null;
+
+        const outputScale = Math.max(0.2, Math.min(this.gifSettings.scale, 1));
+        if (this.gifSettings.cropMode === 'full') {
+            return {
+                sx: 0,
+                sy: 0,
+                sw: sourceWidth,
+                sh: sourceHeight,
+                outputWidth: Math.max(10, Math.round(sourceWidth * outputScale)),
+                outputHeight: Math.max(10, Math.round(sourceHeight * outputScale))
+            };
+        }
+
+        const cropScale = Math.max(0.2, Math.min(this.gifSettings.cropScale, 1));
+        const cropSize = Math.max(10, Math.round(Math.min(sourceWidth, sourceHeight) * cropScale));
+        const offsetX = (this.gifSettings.offsetX || 0) * cropSize;
+        const offsetY = (this.gifSettings.offsetY || 0) * cropSize;
+        const centerX = sourceWidth / 2 + offsetX;
+        const centerY = sourceHeight / 2 + offsetY;
+        let sx = Math.round(centerX - cropSize / 2);
+        let sy = Math.round(centerY - cropSize / 2);
+        sx = Math.max(0, Math.min(sx, sourceWidth - cropSize));
+        sy = Math.max(0, Math.min(sy, sourceHeight - cropSize));
+
+        return {
+            sx,
+            sy,
+            sw: cropSize,
+            sh: cropSize,
+            outputWidth: Math.max(10, Math.round(cropSize * outputScale)),
+            outputHeight: Math.max(10, Math.round(cropSize * outputScale))
+        };
+    }
+
+    ensureGifCaptureCanvas(rect) {
+        if (!rect) return false;
+        if (!this.gifCaptureCanvas) {
+            this.gifCaptureCanvas = document.createElement('canvas');
+        }
+        if (!this.gifCaptureCtx) {
+            this.gifCaptureCtx = this.gifCaptureCanvas.getContext('2d', { willReadFrequently: true });
+        }
+        if (!this.gifCaptureCtx) return false;
+        if (this.gifCaptureCanvas.width !== rect.outputWidth || this.gifCaptureCanvas.height !== rect.outputHeight) {
+            this.gifCaptureCanvas.width = rect.outputWidth;
+            this.gifCaptureCanvas.height = rect.outputHeight;
+        }
+        this.gifCaptureCtx.imageSmoothingEnabled = true;
+        if ('imageSmoothingQuality' in this.gifCaptureCtx) {
+            this.gifCaptureCtx.imageSmoothingQuality = 'high';
+        }
+        return true;
+    }
+
+    updateGifCaptureFrame() {
+        if (!this.gifCaptureFrame || !this.renderer || !this.renderer.domElement) return;
+        if (!this.gifSettings.showFrame) {
+            this.gifCaptureFrame.style.display = 'none';
+            return;
+        }
+        const rect = this.getGifCaptureRect();
+        if (!rect) {
+            this.gifCaptureFrame.style.display = 'none';
+            return;
+        }
+        const canvas = this.renderer.domElement;
+        const bounds = canvas.getBoundingClientRect();
+        const scaleX = bounds.width / canvas.width;
+        const scaleY = bounds.height / canvas.height;
+        this.gifCaptureFrame.style.display = 'block';
+        this.gifCaptureFrame.style.left = `${Math.round(bounds.left + rect.sx * scaleX)}px`;
+        this.gifCaptureFrame.style.top = `${Math.round(bounds.top + rect.sy * scaleY)}px`;
+        this.gifCaptureFrame.style.width = `${Math.round(rect.sw * scaleX)}px`;
+        this.gifCaptureFrame.style.height = `${Math.round(rect.sh * scaleY)}px`;
+    }
+
     setupGUI() {
         if (this.gui) this.gui.destroy();
         if (!GUI) {
@@ -409,10 +677,29 @@ class FluidSimulation {
             fzFolder.add(fz.force, 'x', -0.5, 0.5, 0.001).name('Force X');
             fzFolder.add(fz.force, 'y', -0.5, 0.5, 0.001).name('Force Y');
         });
-         if (!this.params.forceZones || this.params.forceZones.length === 0) {
+        if (!this.params.forceZones || this.params.forceZones.length === 0) {
             forceZonesFolder.add({ Note: "No force zones in current preset" }, 'Note').disable();
         }
         forceZonesFolder.close();
+
+        const exportFolder = this.gui.addFolder('Export GIF');
+        exportFolder.add(this.gifSettings, 'duration', 1, 8, 0.5).name('Duration (s)');
+        exportFolder.add(this.gifSettings, 'fps', 5, 30, 1).name('FPS');
+        exportFolder.add(this.gifSettings, 'quality', 1, 20, 1).name('Quality');
+        exportFolder.add(this.gifSettings, 'scale', 0.3, 1.0, 0.05).name('Output Scale');
+
+        const frameFolder = exportFolder.addFolder('Capture Frame');
+        frameFolder.add(this.gifSettings, 'cropMode', ['square', 'full']).name('Mode').onChange(() => this.updateGifCaptureFrame());
+        frameFolder.add(this.gifSettings, 'cropScale', 0.4, 1.0, 0.05).name('Crop Scale').onChange(() => this.updateGifCaptureFrame());
+        frameFolder.add(this.gifSettings, 'offsetX', -0.5, 0.5, 0.01).name('Offset X').onChange(() => this.updateGifCaptureFrame());
+        frameFolder.add(this.gifSettings, 'offsetY', -0.5, 0.5, 0.01).name('Offset Y').onChange(() => this.updateGifCaptureFrame());
+        frameFolder.add(this.gifSettings, 'showFrame').name('Show Frame').onChange(() => this.updateGifCaptureFrame());
+        frameFolder.add(this, 'centerGifFrame').name('Center Frame');
+        frameFolder.close();
+
+        exportFolder.add(this, 'startGifCapture').name('Start Capture');
+        exportFolder.add(this, 'cancelGifCapture').name('Cancel Capture');
+        exportFolder.close();
     }
 
     applyPreset(name, isInitial = false) {
@@ -771,6 +1058,7 @@ class FluidSimulation {
         this.camera.updateProjectionMatrix();
         this.renderer.setSize(window.innerWidth, window.innerHeight);
         if (this.composer) this.composer.setSize(window.innerWidth, window.innerHeight);
+        this.updateGifCaptureFrame();
     }
 
     createBoat() {
@@ -1211,6 +1499,9 @@ class FluidSimulation {
 
         if (this.composer && this.bloomPass?.enabled) { this.composer.render(deltaTime); }
         else if (this.renderer && this.scene && this.camera) { this.renderer.render(this.scene, this.camera); }
+
+        this.updateGifCaptureFrame();
+        this.captureGifFrame(currentTime);
     }
 
     dispose() {
