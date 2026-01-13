@@ -375,6 +375,11 @@ html.dark-mode .project-card.discord-activity:hover { box-shadow: 0 10px 20px rg
 html.dark-mode .project-card.web-play img {
     background: #0b0b0b;
 }
+#upcoming-projects .project-card img {
+    height: auto;
+    aspect-ratio: 16 / 9;
+    object-fit: cover;
+}
 html.dark-mode .project-card:hover { box-shadow: 0 6px 12px rgba(0,0,0,0.5); }
 .project-info { padding: 15px; }
 .project-info h3 { margin-top: 0; font-size: 1.5em; }

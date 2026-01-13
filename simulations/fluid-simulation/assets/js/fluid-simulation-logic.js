@@ -68,7 +68,7 @@ class FluidSimulation {
             cropScale: 1,
             offsetX: 0,
             offsetY: 0,
-            showFrame: true
+            showFrame: false
         };
         this.gifCaptureCanvas = document.createElement('canvas');
         this.gifCaptureCtx = this.gifCaptureCanvas.getContext('2d', { willReadFrequently: true });
@@ -613,11 +613,11 @@ class FluidSimulation {
 
         // --- Visualization ---
         const vizFolder = this.gui.addFolder('Visualization');
-        vizFolder.addColor(this.params, 'particleBaseColor').name('Base Color').onChange(value => this.baseColor.set(value));
+        vizFolder.addColor(this.params, 'particleBaseColor').name('Base Color').onChange(() => this.updateBaseColors());
         vizFolder.add(this.params, 'particleVelocityColorScale', 0, 15, 0.1).name('Velocity Color Scale');
         vizFolder.add(this.params, 'particleSize', 0.1, 10.0, 0.1).name('Particle Size').onChange(value => { if (this.material) this.material.size = value; });
-        vizFolder.add(this.params, 'useVerticalGradient').name('Vertical Gradient');
-        vizFolder.add(this.params, 'gradientHueScale', 0.0, 1.0, 0.01).name('Gradient Scale');
+        vizFolder.add(this.params, 'useVerticalGradient').name('Vertical Gradient').onChange(() => this.updateBaseColors());
+        vizFolder.add(this.params, 'gradientHueScale', 0.0, 1.0, 0.01).name('Gradient Scale').onChange(() => this.updateBaseColors());
         vizFolder.addColor(this.params, 'bgColor').name('Background Color').onChange(() => this.updateBackgroundColor());
         vizFolder.close();
 
@@ -1255,6 +1255,10 @@ class FluidSimulation {
                 this.velocities[i3] = emitter.initialVelocity.x + (Math.random() - 0.5) * 2 * emitter.velocityVariance.x;
                 this.velocities[i3+1] = emitter.initialVelocity.y + (Math.random() - 0.5) * 2 * emitter.velocityVariance.y;
                 this.velocities[i3+2] = 0;
+                this.isEmitter[i] = 1;
+                this.baseColors[i3] = internal.particleColor.r;
+                this.baseColors[i3+1] = internal.particleColor.g;
+                this.baseColors[i3+2] = internal.particleColor.b;
 
                 if (this.params.useVerticalGradient) {
                     this.tempColor.copy(internal.particleColor);
@@ -1460,11 +1464,11 @@ class FluidSimulation {
 
             // Update Color Based on Velocity
             const speed = Math.sqrt(vx * vx + vy * vy);
-            // For emitted particles, their base color is already set. For others, it's params.particleBaseColor
-            // To make it simpler, let's assume all particles derive hue from their current buffer color
-            // This allows emitted particle colors to also shift with velocity.
-            this.tempColor.setRGB(colArray[i3], colArray[i3+1], colArray[i3+2]);
-            let particleBaseHSL = {h:0, s:0, l:0};
+            const baseR = this.baseColors[i3];
+            const baseG = this.baseColors[i3 + 1];
+            const baseB = this.baseColors[i3 + 2];
+            this.tempColor.setRGB(baseR, baseG, baseB);
+            let particleBaseHSL = { h: 0, s: 0, l: 0 };
             this.tempColor.getHSL(particleBaseHSL);
 
             const hueShift = Math.min(speed * velColorScale, 0.7);
