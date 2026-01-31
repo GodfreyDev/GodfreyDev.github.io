@@ -275,7 +275,7 @@ section h2 { text-align: center; font-size: 2em; margin-bottom: 40px; font-weigh
 /* About Section */
 #about {}
 .about-content { display: flex; flex-wrap: wrap; gap: 20px; align-items: center; }
-.profile-pic { flex: 1 1 250px; max-width: 250px; border-radius: 10px; box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); }
+.profile-pic { flex: 0 0 auto; width: 250px; height: auto; max-width: 300px; border-radius: 10px; box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);}
 html.dark-mode .profile-pic { box-shadow: 0 4px 8px rgba(0, 0, 0, 0.4); }
 .about-text { flex: 2 1 400px; max-width: 600px; margin: 0 auto; }
 .about-text p { margin-bottom: 20px; line-height: 1.6; }
