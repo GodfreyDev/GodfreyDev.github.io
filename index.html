@@ -3,8 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Gavin - Game Developer & Programmer</title>
-    <!-- START: Theme Loading Script -->
+    <title>Gavin Trevillian - Software Engineer & Game Developer</title>
+    
     <script>
         function applyInitialTheme(themeName) {
             const validTheme = (themeName === 'dark-mode' || themeName === 'light-mode') ? themeName : 'light-mode';
@@ -18,25 +18,18 @@
             applyInitialTheme('light-mode');
         }
     </script>
-    <!-- END: Theme Loading Script -->
 
-    <!-- START: Inline Critical CSS for Dark Mode -->
     <style>
         html.dark-mode body {
             background-color: #1a1a1a;
             color: #ccc;
         }
+        .beta-pill { background-color: #e67e22; color: #fff; }
     </style>
-    <!-- END: Inline Critical CSS for Dark Mode -->
 
-    <!-- Favicon -->
     <link rel="icon" href="assets/images/favicon.png" type="image/png">
-
-    <!-- Google Fonts -->
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap">
-    <!-- Font Awesome for Icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <!-- Stylesheet -->
     <link rel="stylesheet" href="assets/css/style.css">
 </head>
 <body>
@@ -53,7 +46,7 @@
             </g>
         </svg>
     </div>
-    <!-- Header -->
+    
     <header>
         <div class="container">
             <h1><a href="#hero">Gavin</a></h1>
@@ -88,7 +81,7 @@
     <section id="hero">
         <div class="container">
             <h2>Welcome to My World of Code & Creativity</h2>
-            <p>I'm Gavin, a Computer Science graduate and passionate game developer, dedicated to creating immersive and interactive experiences through code and creativity.</p>
+            <p>I'm Gavin Trevillian, a Computer Science graduate and Software Engineer specializing in game development, virtual reality, and interactive web experiences.</p>
             <a href="#projects" class="btn">Explore My Work</a>
             <a href="resume.pdf" class="btn" download>View Resume</a>
         </div>
@@ -98,9 +91,8 @@
         <div class="container">
             <h2>About Me</h2>
             <div class="about-content">
-                <img src="assets/images/profile.png" alt="Gavin's Profile Picture" class="profile-pic">
                 <div class="about-text">
-                    <p>Howdy! I'm Gavin, a Computer Science graduate with a passion for game development and programming. I thrive on turning ideas into reality through code and creativity. When I'm not coding, I enjoy learning new things, exploring new technologies, and collaborating on exciting projects.</p>
+                    <p>Howdy! I'm Gavin, a passionate programmer with a degree in Computer Science. I thrive at the intersection of logic and creativity, building everything from immersive VR MMORPGs to engaging browser applications. When I'm not writing code or refining game mechanics, I enjoy exploring emerging technologies, mastering new frameworks, and collaborating on innovative projects.</p>
                 </div>
             </div>
         </div>
@@ -113,22 +105,22 @@
                 <div class="skill">
                     <i class="fas fa-code"></i>
                     <h3>Programming</h3>
-                    <p>Proficient in languages like C++, Python, and JavaScript. Experienced in object-oriented programming and software development best practices.</p>
+                    <p>Proficient in languages like C#, Python, and JavaScript. Experienced in object-oriented programming and software architecture best practices.</p>
                 </div>
                 <div class="skill">
-                    <i class="fas fa-gamepad"></i>
-                    <h3>Game Development</h3>
-                    <p>Skilled in using game engines such as Unity and Unreal Engine. Passionate about creating engaging and interactive gaming experiences.</p>
+                    <i class="fas fa-vr-cardboard"></i>
+                    <h3>Game & VR Development</h3>
+                    <p>Skilled in using Unity. Experienced in VR systems, hand-tracking, and creating deeply engaging multiplayer experiences.</p>
                 </div>
                 <div class="skill">
                     <i class="fas fa-database"></i>
                     <h3>Database Management</h3>
-                    <p>Experienced with SQL and NoSQL databases, ensuring efficient data storage and retrieval for applications.</p>
+                    <p>Experienced with SQL and NoSQL databases, designing efficient schemas, and ensuring fast, secure data storage for full-stack applications.</p>
                 </div>
                 <div class="skill">
-                    <i class="fas fa-mobile-alt"></i>
-                    <h3>Mobile Development</h3>
-                    <p>Developing responsive and user-friendly mobile applications for both Android and iOS platforms.</p>
+                    <i class="fas fa-laptop-code"></i>
+                    <h3>Web & Mobile Dev</h3>
+                    <p>Developing responsive, user-friendly applications and web-based games for cross-platform play on desktop and mobile.</p>
                 </div>
             </div>
         </div>
@@ -137,53 +129,55 @@
     <section id="projects">
         <div class="container">
             <h2>Featured Projects</h2>
-            <p class="section-subtitle">Interactive demos you can play right now on the web or in Discord.</p>
+            <p class="section-subtitle">My flagship projects spanning virtual reality and interactive simulations.</p>
             <div class="projects-grid">
-                <div class="project-card web-play">
-                    <img src="assets/images/projects/chat-game/chat-game.png" alt="Chat Game preview" loading="lazy">
+                <div class="project-card">
+                    <img src="assets/images/projects/golem-game/golem-game.png" alt="Golem Game preview" loading="lazy">
                     <div class="project-info">
-                        <span class="status-pill onsite-pill">Web Play</span>
-                        <h3>Chat Game</h3>
-                        <p>A browser-based game where you can explore a small world and chat with friends.</p>
-                        <a href="games/chat-game/" class="btn">Play Now</a>
+                        <span class="status-pill beta-pill">Closed Beta</span>
+                        <h3>Golem Game</h3>
+                        <p>A VR MMORPG focused on exploration and immersion, featuring custom locomotion mechanics.</p>
+                        <a href="projects/golem-game/index.html" class="btn">View Details</a>
                     </div>
                 </div>
-                <div class="project-card web-play">
-                    <img src="assets/images/projects/casino/casino.png" alt="Casino Games preview" loading="lazy">
-                    <div class="project-info">
-                        <span class="status-pill onsite-pill">Web Play</span>
-                        <h3>Casino Games</h3>
-                        <p>A collection of simple casino style games including slots, poker and more.</p>
-                        <a href="games/casino/index.html" class="btn">Enter Casino</a>
-                    </div>
-                </div>
+
                 <div class="project-card web-play">
                     <img src="assets/images/projects/fluid-simulation/fluid-simulation.gif" alt="Fluid Simulation GIF preview" loading="lazy">
                     <div class="project-info">
                         <span class="status-pill onsite-pill">Web Play</span>
                         <h3>Fluid Simulation</h3>
-                        <p>An interactive particle-based simulation demonstrating fluid dynamics.</p>
+                        <p>An interactive, highly optimized particle-based simulation demonstrating real-time fluid dynamics in the browser.</p>
                         <a href="simulations/fluid-simulation/" class="btn">Launch Simulation</a>
                     </div>
                 </div>
+            </div>
+        </div>
+    </section>
+
+    <section id="discord-activities" style="padding-top: 20px;">
+        <div class="container">
+            <h2>Discord Activities</h2>
+            <p class="section-subtitle">Playable mini-games integrated directly into Discord channels.</p>
+            <div class="projects-grid">
                 <div class="project-card discord-activity">
                     <img src="assets/images/projects/l-game/LGameBoard.png" alt="L Game board preview" loading="lazy">
                     <div class="project-info">
                         <span class="status-pill discord-pill">Discord Activity</span>
                         <h3>L Game</h3>
-                        <p>A Discord Activity adaptation of the classic L Game for quick matches with friends.</p>
+                        <p>A multiplayer adaptation of the classic strategy board game for quick, competitive matches with friends.</p>
                         <div class="project-actions">
                             <a href="https://discord.com/oauth2/authorize?client_id=1455642675373150424" class="btn" target="_blank" rel="noopener noreferrer">Open in Discord</a>
                             <a href="projects/l-game/index.html" class="btn secondary">Details</a>
                         </div>
                     </div>
                 </div>
+
                 <div class="project-card discord-activity">
                     <img src="assets/images/projects/minesweeper/MineSweeperBoard.png" alt="Minesweeper board preview" loading="lazy">
                     <div class="project-info">
                         <span class="status-pill discord-pill">Discord Activity</span>
                         <h3>Minesweeper</h3>
-                        <p>A Discord Activity that generates a new puzzle daily. Compete for the fastest time and fewest retries on the leaderboard.</p>
+                        <p>A daily puzzle challenge generator. Compete for the fastest completion time and fewest retries on global leaderboards.</p>
                         <div class="project-actions">
                             <a href="https://discord.com/oauth2/authorize?client_id=1451279898558730310" class="btn" target="_blank" rel="noopener noreferrer">Open in Discord</a>
                             <a href="projects/minesweeper/index.html" class="btn secondary">Details</a>
@@ -194,25 +188,44 @@
         </div>
     </section>
 
-    <section id="upcoming-projects">
+    <section id="web-games" style="padding-top: 20px;">
         <div class="container">
-            <h2>Upcoming Projects</h2>
-            <p class="section-subtitle">In-development projects with detail hubs for media and notes.</p>
+            <h2>Web Games</h2>
+            <p class="section-subtitle">Casual games and experiences you can play right now in your browser.</p>
             <div class="projects-grid">
-                <div class="project-card">
-                    <img src="assets/images/projects/golem-game/golem-game.png" alt="Golem Game preview" loading="lazy">
+                <div class="project-card web-play">
+                    <img src="assets/images/projects/chat-game/chat-game.png" alt="Chat Game preview" loading="lazy">
                     <div class="project-info">
-                        <h3>Golem Game</h3>
-                        <p>VR MMORPG focused on exploration and immersion using hand based locomation.</p>
-                        <span class="status-pill">In Development</span>
-                        <a href="projects/golem-game/index.html" class="btn">View Details</a>
+                        <span class="status-pill onsite-pill">Web Play</span>
+                        <h3>Chat Game</h3>
+                        <p>A multiplayer browser-based game where you can explore a stylized 2D world and chat with friends in real-time.</p>
+                        <a href="games/chat-game/" class="btn">Play Now</a>
                     </div>
                 </div>
+
+                <div class="project-card web-play">
+                    <img src="assets/images/projects/casino/casino.png" alt="Casino Games preview" loading="lazy">
+                    <div class="project-info">
+                        <span class="status-pill onsite-pill">Web Play</span>
+                        <h3>Casino Games</h3>
+                        <p>A modular collection of simple casino-style games including slots, poker, and more, built with web technologies.</p>
+                        <a href="games/casino/index.html" class="btn">Enter Casino</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section id="upcoming-projects" style="padding-top: 20px;">
+        <div class="container">
+            <h2>In Development</h2>
+            <p class="section-subtitle">A sneak peek at my active, upcoming projects.</p>
+            <div class="projects-grid">
                 <div class="project-card">
                     <img src="assets/images/projects/mana-festo/mana-festo.png" alt="Mana-Festo preview" loading="lazy">
                     <div class="project-info">
                         <h3>Mana-Festo</h3>
-                        <p>Heathstone inspired card game project in active development.</p>
+                        <p>A Hearthstone-inspired digital card game focusing on deep strategy and unique deck-building mechanics.</p>
                         <span class="status-pill">In Development</span>
                         <a href="projects/mana-festo/index.html" class="btn">View Details</a>
                     </div>
@@ -220,6 +233,7 @@
             </div>
         </div>
     </section>
+
     <section id="contact">
         <div class="container">
             <h2>Get In Touch</h2>
@@ -267,7 +281,6 @@
         </div>
     </footer>
 
-    <!-- Scripts -->
     <script src="assets/js/main.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/particles.js@2.0.0/particles.min.js"></script>
     <script>
